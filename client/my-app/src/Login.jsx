@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const PatientLogin = () => {
+const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -24,7 +24,7 @@ const PatientLogin = () => {
       <div className="bg-white shadow-2xl p-8 rounded-2xl w-full max-w-md">
         {/* Title */}
         <h2 className="mb-6 font-bold text-gray-800 text-2xl md:text-3xl text-center">
-          Patient Login
+          Login
         </h2>
 
         {/* Form */}
@@ -89,4 +89,4 @@ const PatientLogin = () => {
   );
 };
 
-export default PatientLogin;
+export default Login;
