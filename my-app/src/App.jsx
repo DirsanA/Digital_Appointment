@@ -1,9 +1,10 @@
 import React from "react";
-import LandingPage from "./LandingPage";
+import PatientRegister from "./PatientRegister";
+import PatientLogin from "./PatientLogin";
 const App = () => {
   return (
     <div className="h-screen">
-      <LandingPage />
+      <PatientRegister />
     </div>
   );
 };
