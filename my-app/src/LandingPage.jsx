@@ -1,6 +1,7 @@
 import React from "react";
-
+import { useNavigate } from "react-router-dom";
 const LandingPage = () => {
+  const navigate = useNavigate();
   return (
     <div className="relative flex flex-col justify-center items-center w-full h-screen text-white">
       <div className="absolute inset-0 bg-img bg-cover bg-center brightness-75"></div>
@@ -11,10 +12,20 @@ const LandingPage = () => {
           <span className="hidden sm:inline"> | THE ECHANNELING PROJECT</span>
         </h1>
         <div className="flex space-x-3 sm:space-x-5">
-          <button className="hover:bg-white px-3 sm:px-4 py-1 sm:py-2 border border-white rounded-md hover:text-black text-xs sm:text-sm transition">
+          <button
+            className="hover:bg-white px-3 sm:px-4 py-1 sm:py-2 border border-white rounded-md hover:text-black text-xs sm:text-sm transition"
+            onClick={function () {
+              navigate("/patient-login");
+            }}
+          >
             LOGIN
           </button>
-          <button className="hover:bg-white px-3 sm:px-4 py-1 sm:py-2 border border-white rounded-md hover:text-black text-xs sm:text-sm transition">
+          <button
+            className="hover:bg-white px-3 sm:px-4 py-1 sm:py-2 border border-white rounded-md hover:text-black text-xs sm:text-sm transition"
+            onClick={function () {
+              navigate("/patient-register");
+            }}
+          >
             REGISTER
           </button>
         </div>

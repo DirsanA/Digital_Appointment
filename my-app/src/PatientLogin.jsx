@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PatientLogin = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -72,7 +74,13 @@ const PatientLogin = () => {
         {/* Don't have an account? */}
         <p className="mt-2 text-gray-600 text-center">
           Don't have an account?{" "}
-          <a href="#" className="font-semibold text-blue-500 hover:underline">
+          <a
+            href="#"
+            className="font-semibold text-blue-500 hover:underline"
+            onClick={function () {
+              navigate("/patient-register");
+            }}
+          >
             Register here
           </a>
         </p>
