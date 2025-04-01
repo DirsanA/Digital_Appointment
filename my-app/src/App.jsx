@@ -1,9 +1,8 @@
 import React from "react";
-import LandingPage from "./pages/LandingPage";
-
+import LandingPage from "./LandingPage";
 const App = () => {
   return (
-    <div>
+    <div className="h-screen">
       <LandingPage />
     </div>
   );
