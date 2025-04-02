@@ -46,7 +46,12 @@ const LandingPage = () => {
           We offer you a free doctor channeling service. Make your appointment
           now.
         </p>
-        <button className="bg-blue-500 hover:bg-blue-600 shadow-lg mt-6 px-8 py-3 rounded-full font-semibold text-lg transition">
+        <button
+          className="bg-blue-500 hover:bg-blue-600 shadow-lg mt-6 px-8 py-3 rounded-full font-semibold text-lg transition"
+          onClick={function () {
+            navigate("/doctor-landingPage");
+          }}
+        >
           Make Appointment
         </button>
       </div>
