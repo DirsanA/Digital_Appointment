@@ -159,7 +159,8 @@ const AppointmentHistory = () => {
       </div>
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:w-1/4`}>
+      <aside className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:translate-x-0 md:w-1/4`}>
+
         <div className="overflow-y-auto">
           <div className="flex items-center mb-6 p-4 md:mt-0 mt-12">
             <div className="flex items-center">
