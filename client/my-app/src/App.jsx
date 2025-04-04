@@ -11,12 +11,22 @@ import Doctors from "./Doctors";
 import AddDoctors from "./AddDoctors";
 import Appointments  from "./Appointments";
 import Departments from "./Department";
+import About from "./About"
+import Service from "./Service"
+import OurDoctors from "./OurDoctors";
+import AddAppointment from "./AddAppointment"
+import Navbar from "./Navbar";
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/Navbar" element={<Navbar />} />
+        <Route path="/About" element={<About />} />
+        <Route path="/Service" element={<Service />} />
+        <Route path="/OurDoctors" element={<OurDoctors />} />
+        <Route path="/AddAppointment" element={<AddAppointment />} />
         <Route path="/Patient-Dashbord" element={<PatientDashboard />} />
         <Route path="/BookAppointment" element={<BookAppointment />} />
         <Route path="/AdminDashboard" element={<AdminDashboard />} />
