@@ -198,7 +198,7 @@ const AddDoctors = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Department:</label>
                 <select name="department" value={formData.department} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                  <option value="">Select Department</option>
+                  <option value="">Select Departments</option>
                   <option value="Cardiology">Cardiology</option>
                   <option value="Neurology">Neurology</option>
                   <option value="Pediatrics">Pediatrics</option>
