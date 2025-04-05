@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LandingPage from "./Home";
+// import LandingPage from "./Home";
 import PatientRegister from "./PatientRegister";
 import Login from "./Login";
 import PatientDashboard from "./PatientDashboard";
@@ -21,7 +21,7 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+  
         <Route path="/Navbar" element={<Navbar />} />
         <Route path="/About" element={<About />} />
         <Route path="/Service" element={<Service />} />
