@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaUserMd, FaPhone, FaEnvelope, FaClinicMedical, FaArrowLeft } from 'react-icons/fa';
+import { FaUserMd, FaPhone, FaEnvelope, FaClinicMedical, FaArrowLeft, FaCalendarAlt, FaClock } from 'react-icons/fa';
 import { useNavigate, Link } from "react-router-dom";
 // Import your local images (adjust paths as needed)
 import drAbreham from './assets/doc9.jpg';
@@ -64,7 +64,7 @@ const OurDoctors = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Our Doctors
+            Our Expert Doctors
           </h1>
           <div className="mt-4 w-20 h-1 bg-blue-600 mx-auto"></div>
           <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto">
@@ -145,44 +145,59 @@ const OurDoctors = () => {
               {doctors.map((doctor) => (
                 <div 
                   key={doctor.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  <div className="relative pb-48 overflow-hidden">
+                  <div className="relative h-60 overflow-hidden">
                     <img 
                       src={doctor.image} 
                       alt={doctor.name}
                       className="absolute h-full w-full object-cover"
                     />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center mb-2">
-                      <FaUserMd className="text-blue-500 mr-2" />
-                      <h3 className="text-xl font-bold text-gray-900">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 p-4">
+                      <h3 className="text-xl font-bold text-white">
                         {doctor.name}
                       </h3>
-                    </div>
-                    <div className="flex items-center mb-4">
-                      <FaClinicMedical className="text-gray-500 mr-2" />
-                      <p className="text-gray-600 font-medium">
+                      <p className="text-blue-300 font-medium">
                         {doctor.specialty}
                       </p>
                     </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center mb-3">
+                      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                        {doctor.experience} experience
+                      </span>
+                    </div>
+                    
                     <p className="text-gray-500 text-sm mb-4 line-clamp-3">
                       {doctor.bio}
                     </p>
-                    <div className="space-y-2">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FaPhone className="mr-2" />
+                    
+                    <div className="space-y-3 mb-5">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <FaClock className="mr-2 text-blue-500" />
+                        {doctor.availability}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <FaPhone className="mr-2 text-blue-500" />
                         {doctor.phone}
                       </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FaEnvelope className="mr-2" />
+                      <div className="flex items-center text-sm text-gray-600">
+                        <FaEnvelope className="mr-2 text-blue-500" />
                         {doctor.email}
                       </div>
                     </div>
-                    <button className="mt-6 w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors" onClick={() => navigate("/AddAppointment")}>
-                      Book Appointment
-                    </button>
+                    
+                    <div className="flex space-x-2">
+                      <button 
+                        className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+                        onClick={() => navigate("/AddAppointment")}
+                      >
+                        <FaCalendarAlt className="mr-2" />
+                        Book Now
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -191,9 +206,9 @@ const OurDoctors = () => {
             <div className="mt-12 text-center">
               <button 
                 onClick={toggleView}
-                className="px-6 py-3 border border-blue-600 text-blue-600 font-medium rounded-md hover:bg-blue-50 transition-colors"
+                className="px-6 py-3 border border-blue-600 text-blue-600 font-medium rounded-md hover:bg-blue-50 transition-colors flex items-center mx-auto"
               >
-                View all doctors
+                View All Doctors in Table
               </button>
             </div>
           </>
