@@ -39,7 +39,7 @@ const PatientRegister = () => {
               name="name"
               placeholder="Enter your name"
               onChange={handleChange}
-              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black"
               required
             />
           </div>
@@ -52,7 +52,7 @@ const PatientRegister = () => {
               name="email"
               placeholder="Enter your email"
               onChange={handleChange}
-              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black"
               required
             />
           </div>
@@ -67,7 +67,7 @@ const PatientRegister = () => {
               name="phone"
               placeholder="Enter your phone number"
               onChange={handleChange}
-              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black"
               required
             />
           </div>
@@ -80,7 +80,7 @@ const PatientRegister = () => {
               name="password"
               placeholder="Create a password"
               onChange={handleChange}
-              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black"
               required
             />
           </div>
