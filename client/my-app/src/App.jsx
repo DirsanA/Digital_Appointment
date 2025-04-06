@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LandingPage from "./LandingPage"; // ✅ Import added
 import PatientRegister from "./PatientRegister";
 import Login from "./Login";
 import DoctorLandingPage from "./DoctorLandingPage";
@@ -9,6 +8,7 @@ import PatientDashboard from "./PatientDashboard";
 import BookAppointment from "./BookAppointment";
 import AppointmentHistory from "./AppointmentHistory";
 import AdminDashboard from "./AdminDashboard";
+import LandingPage from "./LandingPage";
 const App = () => {
   return (
     <Router>
