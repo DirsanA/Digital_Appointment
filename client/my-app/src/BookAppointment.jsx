@@ -12,7 +12,8 @@ const BookAppointment = () => {
     email: "",
     doctor: "",
     time: "",
-    phone: ""
+    phone: "",
+    gender: "" // Added gender field
   });
   const currentPatientName = "Abenezer"; // Replace with dynamic patient data
 
@@ -132,6 +133,23 @@ const BookAppointment = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-700"
                   required
                 />
+              </div>
+
+              {/* Gender - NEW FIELD ADDED HERE */}
+              <div>
+                <label className="block text-gray-700 text-sm font-medium mb-1">Gender</label>
+                <select
+                  name="gender"
+                  value={appointment.gender}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-700"
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
               {/* Department */}

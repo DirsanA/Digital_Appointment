@@ -34,9 +34,9 @@ const LandingPage = () => {
           <Link to="/OurDoctors" className="hover:text-gray-300 transition">
             Our Doctors
           </Link>
-          <Link to="/AddAppointment" className="hover:text-gray-300 transition">
+          {/* <Link to="/AddAppointment" className="hover:text-gray-300 transition">
             Add Appointment
-          </Link>
+          </Link> */}
           <div className="flex space-x-3 sm:space-x-5 ml-4">
             <button
               className="hover:bg-white px-3 sm:px-4 py-1 sm:py-2 border border-white rounded-md hover:text-black text-xs sm:text-sm transition"
@@ -113,13 +113,13 @@ const LandingPage = () => {
             >
               Our Doctors
             </Link>
-            <Link
+            {/* <Link
               to="/AddAppointment"
               className="py-2 hover:text-gray-300 transition"
               onClick={toggleMenu}
             >
               Add Appointment
-            </Link>
+            </Link> */}
             <div className="flex space-x-3 pt-2">
               <button
                 className="hover:bg-white px-4 py-2 border border-white rounded-md w-full hover:text-black text-sm transition"
@@ -161,9 +161,9 @@ const LandingPage = () => {
         </p>
         <button
           className="bg-blue-500 hover:bg-blue-600 shadow-lg mt-6 px-8 py-3 rounded-full font-semibold text-lg transition"
-          onClick={() => navigate("/AddAppointment")}
+          onClick={() => navigate("/patient-login")}
         >
-          Make Appointment
+          Contact us
         </button>
       </div>
 

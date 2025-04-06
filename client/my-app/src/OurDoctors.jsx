@@ -129,8 +129,8 @@ const OurDoctors = () => {
                         {doctor.experience}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700" onClick={() => navigate("/AddAppointment")}>
-                          Book
+                        <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700" onClick={() => navigate("/patient-login")}>
+                          Contact us
                         </button>
                       </td>
                     </tr>
@@ -192,10 +192,10 @@ const OurDoctors = () => {
                     <div className="flex space-x-2">
                       <button 
                         className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
-                        onClick={() => navigate("/AddAppointment")}
+                        onClick={() => navigate("/patient-login")}
                       >
                         <FaCalendarAlt className="mr-2" />
-                        Book Now
+                        Contact us
                       </button>
                     </div>
                   </div>
