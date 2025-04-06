@@ -9,12 +9,8 @@ const PatientDashboard = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md p-4 z-10 flex justify-between items-center">
-        <div className="flex items-center">
-          <FaUserCircle className="text-blue-500 text-2xl mr-3" />
-          <h1 className="text-lg font-bold text-blue-600">{patientName}</h1>
-        </div>
+      {/* Mobile Header - Right-aligned hamburger */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md p-4 z-10 flex justify-end">
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="text-gray-700 focus:outline-none"
@@ -23,8 +19,8 @@ const PatientDashboard = () => {
         </button>
       </div>
 
-      {/* Sidebar - Mobile */}
-      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:w-1/4`}>
+      {/* Sidebar - Right Side */}
+      <aside className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:right-0 md:translate-x-0 md:w-1/4`}>
         <div>
           <div className="flex items-center mb-6 p-4 md:mt-0 mt-12">
             <div className="flex items-center">
@@ -81,7 +77,7 @@ const PatientDashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:ml-0 mt-16 md:mt-0">
+      <main className="flex-1 p-6 md:mr-0 mt-16 md:mt-0">
         {/* Welcome Message with Background Image */}
         <div
           className="relative p-6 rounded-lg shadow-md text-white w-full h-48 md:h-60 flex flex-col justify-center"
@@ -114,7 +110,7 @@ const PatientDashboard = () => {
 
           <Link 
             to="/AppointmentHistory" 
-            className="bg-gradient-to-r from-blue-300 to-blue-500  text-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center transform transition hover:scale-105"
+            className="bg-gradient-to-r from-green-300 to-green-500 text-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center transform transition hover:scale-105"
             onClick={() => setSidebarOpen(false)}
           >
             <FaHistory size={40} />

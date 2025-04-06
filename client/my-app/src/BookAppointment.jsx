@@ -28,12 +28,8 @@ const BookAppointment = () => {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md p-4 z-10 flex justify-between items-center">
-        <div className="flex items-center">
-          <FaUserCircle className="text-blue-500 text-2xl mr-3" />
-          <h1 className="text-lg font-bold text-blue-600">{currentPatientName}</h1>
-        </div>
+      {/* Mobile Header - Right-aligned */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md p-4 z-10 flex justify-end">
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="text-gray-700 focus:outline-none"
@@ -42,8 +38,8 @@ const BookAppointment = () => {
         </button>
       </div>
 
-      {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:w-1/4`}>
+      {/* Sidebar - Right Side */}
+      <aside className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:right-0 md:translate-x-0 md:w-1/4`}>
         <div className="overflow-y-auto">
           <div className="flex items-center mb-6 p-4 md:mt-0 mt-12">
             <div className="flex items-center">
@@ -100,7 +96,7 @@ const BookAppointment = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:ml-0 mt-16 md:mt-0 overflow-y-auto">
+      <main className="flex-1 p-6 md:mr-0 mt-16 md:mt-0 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
           {/* Welcome Section */}
           <div
@@ -111,7 +107,7 @@ const BookAppointment = () => {
               backgroundPosition: "center",
             }}
           >
-            <h2 className="text-2xl font-bold text-blue-500">Wellcome {currentPatientName} </h2>
+            <h2 className="text-2xl font-bold text-blue-500">Welcome {currentPatientName}</h2>
             <p className="mt-2 text-blue-500">
               Schedule your medical appointment with our specialists
             </p>
