@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
-import { FaUserMd, FaPhone, FaEnvelope, FaClinicMedical, FaArrowLeft, FaCalendarAlt, FaClock } from 'react-icons/fa';
+import React, { useState } from "react";
+import {
+  FaUserMd,
+  FaPhone,
+  FaEnvelope,
+  FaClinicMedical,
+  FaArrowLeft,
+  FaCalendarAlt,
+  FaClock,
+} from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 // Import your local images (adjust paths as needed)
-import drAbreham from './assets/doc9.jpg';
-import drSarah from './assets/doc2.jpg';
-import drMichael from './assets/doc4.jpg';
-import drEmily from './assets/doc8.jpg';
+import drAbreham from "./assets/doc9.jpg";
+import drSarah from "./assets/doc2.jpg";
+import drMichael from "./assets/doc4.jpg";
+import drEmily from "./assets/doc8.jpg";
 
 const OurDoctors = () => {
   const [showTableView, setShowTableView] = useState(false);
@@ -20,7 +28,7 @@ const OurDoctors = () => {
       phone: "+251907412708",
       email: "dr.abreham@gmail.com",
       availability: "Mon-Fri: 9AM-5PM",
-      experience: "10 years"
+      experience: "10 years",
     },
     {
       id: 2,
@@ -31,7 +39,7 @@ const OurDoctors = () => {
       phone: "+251907412708",
       email: "dr.sahra@gmail.com",
       availability: "Mon-Wed, Fri: 8AM-4PM",
-      experience: "12 years"
+      experience: "12 years",
     },
     {
       id: 3,
@@ -42,7 +50,7 @@ const OurDoctors = () => {
       phone: "+251907412708",
       email: "dr.desu@gmail.com",
       availability: "Tue-Thu: 10AM-6PM",
-      experience: "8 years"
+      experience: "8 years",
     },
     {
       id: 4,
@@ -53,30 +61,31 @@ const OurDoctors = () => {
       phone: "+251907412708",
       email: "dr.girsan@gmail.com",
       availability: "Mon-Fri: 8AM-3PM",
-      experience: "7 years"
-    }
+      experience: "7 years",
+    },
   ];
 
   const toggleView = () => setShowTableView(!showTableView);
 
   return (
-    <div className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+    <div className="bg-gray-50 px-4 sm:px-6 lg:px-8 py-16 min-h-screen">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 text-center">
+          <h1 className="font-extrabold text-gray-900 text-3xl sm:text-4xl">
             Our Expert Doctors
           </h1>
-          <div className="mt-4 w-20 h-1 bg-blue-600 mx-auto"></div>
-          <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto">
-            Meet our team of highly qualified and compassionate healthcare professionals
+          <div className="bg-blue-600 mx-auto mt-4 w-20 h-1"></div>
+          <p className="mx-auto mt-6 max-w-2xl text-gray-600 text-xl">
+            Meet our team of highly qualified and compassionate healthcare
+            professionals
           </p>
         </div>
 
         {showTableView ? (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-4 flex justify-between items-center border-b">
-              <h2 className="text-xl font-bold text-gray-800">All Doctors</h2>
-              <button 
+          <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="font-bold text-gray-800 text-xl">All Doctors</h2>
+              <button
                 onClick={toggleView}
                 className="flex items-center text-blue-600 hover:text-blue-800"
               >
@@ -84,30 +93,46 @@ const OurDoctors = () => {
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="divide-y divide-gray-200 min-w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialty</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Photo
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Specialty
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Availability
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Experience
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {doctors.map((doctor) => (
                     <tr key={doctor.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <img 
-                          src={doctor.image} 
+                        <img
+                          src={doctor.image}
                           alt={doctor.name}
-                          className="h-12 w-12 rounded-full object-cover"
+                          className="rounded-full w-12 h-12 object-cover"
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{doctor.name}</div>
+                        <div className="font-medium text-gray-900">
+                          {doctor.name}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-gray-600">{doctor.specialty}</div>
@@ -118,18 +143,22 @@ const OurDoctors = () => {
                             <FaPhone className="mr-1 text-sm" /> {doctor.phone}
                           </div>
                           <div className="flex items-center">
-                            <FaEnvelope className="mr-1 text-sm" /> {doctor.email}
+                            <FaEnvelope className="mr-1 text-sm" />{" "}
+                            {doctor.email}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                      <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
                         {doctor.availability}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                      <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
                         {doctor.experience}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700" onClick={() => navigate("/AddAppointment")}>
+                        <button
+                          className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-sm"
+                          onClick={() => navigate("/AddAppointment")}
+                        >
                           Book
                         </button>
                       </td>
@@ -141,58 +170,58 @@ const OurDoctors = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="gap-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {doctors.map((doctor) => (
-                <div 
+                <div
                   key={doctor.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                  className="bg-white shadow-md hover:shadow-xl rounded-xl overflow-hidden transition-all hover:-translate-y-1 duration-300 transform"
                 >
                   <div className="relative h-60 overflow-hidden">
-                    <img 
-                      src={doctor.image} 
+                    <img
+                      src={doctor.image}
                       alt={doctor.name}
-                      className="absolute h-full w-full object-cover"
+                      className="absolute w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                    <div className="absolute bottom-0 left-0 p-4">
-                      <h3 className="text-xl font-bold text-white">
+                    <div className="bottom-0 left-0 absolute p-4">
+                      <h3 className="font-bold text-white text-xl">
                         {doctor.name}
                       </h3>
-                      <p className="text-blue-300 font-medium">
+                      <p className="font-medium text-blue-300">
                         {doctor.specialty}
                       </p>
                     </div>
                   </div>
                   <div className="p-5">
                     <div className="flex items-center mb-3">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                      <span className="bg-blue-100 px-2.5 py-0.5 rounded font-semibold text-blue-800 text-xs">
                         {doctor.experience} experience
                       </span>
                     </div>
-                    
-                    <p className="text-gray-500 text-sm mb-4 line-clamp-3">
+
+                    <p className="mb-4 text-gray-500 text-sm line-clamp-3">
                       {doctor.bio}
                     </p>
-                    
+
                     <div className="space-y-3 mb-5">
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-gray-600 text-sm">
                         <FaClock className="mr-2 text-blue-500" />
                         {doctor.availability}
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-gray-600 text-sm">
                         <FaPhone className="mr-2 text-blue-500" />
                         {doctor.phone}
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-gray-600 text-sm">
                         <FaEnvelope className="mr-2 text-blue-500" />
                         {doctor.email}
                       </div>
                     </div>
-                    
+
                     <div className="flex space-x-2">
-                      <button 
-                        className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
-                        onClick={() => navigate("/AddAppointment")}
+                      <button
+                        className="flex flex-1 justify-center items-center bg-blue-600 hover:bg-blue-700 py-2 rounded-md text-white transition-colors"
+                        onClick={() => navigate("/patient-login")}
                       >
                         <FaCalendarAlt className="mr-2" />
                         Book Now
@@ -204,9 +233,9 @@ const OurDoctors = () => {
             </div>
 
             <div className="mt-12 text-center">
-              <button 
+              <button
                 onClick={toggleView}
-                className="px-6 py-3 border border-blue-600 text-blue-600 font-medium rounded-md hover:bg-blue-50 transition-colors flex items-center mx-auto"
+                className="flex items-center hover:bg-blue-50 mx-auto px-6 py-3 border border-blue-600 rounded-md font-medium text-blue-600 transition-colors"
               >
                 View All Doctors in Table
               </button>
