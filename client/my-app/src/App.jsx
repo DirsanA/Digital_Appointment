@@ -17,6 +17,9 @@ import Doctors from "./OurDoctors";
 import PatientsContent from "./PatientsContent";
 import Department from "./Department";
 import AboutUs from "./About";
+import AddDoctors from "./AddDoctors";
+import Appointments from "./Appointments"
+
 const App = () => {
   return (
     <Router>
@@ -37,6 +40,8 @@ const App = () => {
         <Route path="/Doctors" element={<Doctors />} />
         <Route path="/PatientContent" element={<PatientsContent />} />
         <Route path="/Department" element={<Department />} />
+        <Route path="/AddDoctors" element={<AddDoctors />} />
+        <Route path="/Appointments" element={<Appointments />} />
       </Routes>
     </Router>
   );

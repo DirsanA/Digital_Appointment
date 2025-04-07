@@ -10,7 +10,7 @@ const Login = () => {
   function Handler(e) {
     e.preventDefault();
     if (email === "pat@gmail.com" && password === "pat") {
-      navigate("/patient-dashboard");
+      navigate("/patient-dashbord");
     } else if (email === "admin@gmail.com" && password === "admin") {
       navigate("/AdminDashboard");
     }
