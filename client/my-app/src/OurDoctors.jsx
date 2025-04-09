@@ -157,7 +157,7 @@ const OurDoctors = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-sm"
-                          onClick={() => navigate("/AddAppointment")}
+                          onClick={() => navigate("/patient-login")}
                         >
                           Book
                         </button>

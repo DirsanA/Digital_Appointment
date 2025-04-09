@@ -152,7 +152,9 @@ const LandingPage = () => {
               Our Doctors
             </button>
             <button
-              onClick={() => scrollToSection(appointmentRef)}
+              onClick={function () {
+                navigate("/patient-login");
+              }}
               className="py-2 hover:text-gray-300 text-left transition"
             >
               Make Appointment
