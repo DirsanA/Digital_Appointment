@@ -13,6 +13,8 @@ const Login = () => {
       navigate("/patient-dashbord");
     } else if (email === "admin@gmail.com" && password === "admin") {
       navigate("/AdminDashboard");
+    } else if (email === "doc@gmail.com" && password === "doc") {
+      navigate("/doctor-landingPage");
     }
   }
 
