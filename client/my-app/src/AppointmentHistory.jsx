@@ -6,11 +6,7 @@ import {
   FaUserCircle, 
   FaPowerOff, 
   FaBars, 
-  FaTimes, 
-  FaTrash, 
-  FaEdit,
-  FaCheck,
-  FaTimes as FaClose
+  FaTimes
 } from "react-icons/fa";
 import bgImage from "./assets/b4.jpg";
 
@@ -19,6 +15,7 @@ const AppointmentHistory = () => {
   const [editingId, setEditingId] = useState(null);
   const [editedAppointment, setEditedAppointment] = useState({});
   const [dateError, setDateError] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(null);
   const [appointments, setAppointments] = useState([
     {
       id: 1,
@@ -29,7 +26,7 @@ const AppointmentHistory = () => {
       doctor: "Dr. Desu",
       time: "10:00",
       phone: "090742",
-      status: "Completed"
+      status: "Approved"
     },
     {
       id: 2,
@@ -40,7 +37,7 @@ const AppointmentHistory = () => {
       doctor: "Dr. Elias",
       time: "14:30",
       phone: "090742",
-      status: "Upcoming"
+      status: "Pending"
     },
     {
       id: 3,
@@ -51,7 +48,7 @@ const AppointmentHistory = () => {
       doctor: "Dr. Haileeysus",
       time: "09:00",
       phone: "090742",
-      status: "Upcoming"
+      status: "Declined"
     }
   ]);
 
@@ -68,10 +65,22 @@ const AppointmentHistory = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setDropdownOpen(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const toggleDropdown = (id, e) => {
+    e.stopPropagation();
+    setDropdownOpen(dropdownOpen === id ? null : id);
+  };
+
   const handleCancelAppointment = (id) => {
-    if (window.confirm("Are you sure you want to cancel this appointment?")) {
+    if (window.confirm("Are you sure you want to cancle this appointment?")) {
       setAppointments(appointments.map(appt => 
-        appt.id === id ? { ...appt, status: "Cancelled" } : appt
+        appt.id === id ? { ...appt, status: "Canclled" } : appt
       ));
     }
   };
@@ -86,6 +95,7 @@ const AppointmentHistory = () => {
     setEditingId(appointment.id);
     setEditedAppointment({ ...appointment });
     setDateError("");
+    setDropdownOpen(null);
   };
 
   const validateDate = (date) => {
@@ -119,7 +129,6 @@ const AppointmentHistory = () => {
       [name]: value
     });
 
-    // Validate date immediately when changed
     if (name === "date") {
       if (!validateDate(value)) {
         setDateError("Please select a future date");
@@ -160,7 +169,6 @@ const AppointmentHistory = () => {
 
       {/* Sidebar */}
       <aside className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:translate-x-0 md:w-1/4`}>
-
         <div className="overflow-y-auto">
           <div className="flex items-center mb-6 p-4 md:mt-0 mt-12">
             <div className="flex items-center">
@@ -338,10 +346,12 @@ const AppointmentHistory = () => {
                       {/* Status */}
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          appointment.status === "Completed" 
+                          appointment.status === "Approved" 
                             ? "bg-green-100 text-green-800" 
-                            : appointment.status === "Cancelled"
+                            : appointment.status === "Declined" || appointment.status === "Cancelled"
                             ? "bg-red-100 text-red-800"
+                            : appointment.status === "Cancelled"
+                            ? "bg-gray-100 text-gray-800"
                             : "bg-yellow-100 text-yellow-800"
                         }`}>
                           {appointment.status}
@@ -349,58 +359,83 @@ const AppointmentHistory = () => {
                       </td>
                       
                       {/* Actions */}
-                      <td className="p-3 flex space-x-2">
-                        {editingId === appointment.id ? (
-                          <>
-                            <button
-                              onClick={handleUpdateAppointment}
-                              disabled={dateError}
-                              className={`p-1 rounded-full transition-colors ${
-                                dateError 
-                                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                  : "text-green-500 hover:text-green-700 hover:bg-green-50"
-                              }`}
-                              title={dateError ? "Fix errors to save" : "Save Changes"}
+                      <td className="p-3 relative">
+                        <div className="dropdown relative">
+                          <button 
+                            onClick={(e) => toggleDropdown(appointment.id, e)}
+                            className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-50 transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
+                          </button>
+                          {dropdownOpen === appointment.id && (
+                            <div 
+                              className="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <FaCheck size={16} />
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-50 transition-colors"
-                              title="Cancel Edit"
-                            >
-                              <FaClose size={16} />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            {appointment.status === "Upcoming" && (
-                              <>
-                                <button
-                                  onClick={() => handleEditAppointment(appointment)}
-                                  className="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-50 transition-colors"
-                                  title="Edit Appointment"
-                                >
-                                  <FaEdit size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleCancelAppointment(appointment.id)}
-                                  className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
-                                  title="Cancel Appointment"
-                                >
-                                  <FaTimes size={16} />
-                                </button>
-                              </>
-                            )}
-                            <button
-                              onClick={() => handleDeleteAppointment(appointment.id)}
-                              className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-50 transition-colors"
-                              title="Delete Record"
-                            >
-                              <FaTrash size={16} />
-                            </button>
-                          </>
-                        )}
+                              {editingId === appointment.id ? (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateAppointment();
+                                    }}
+                                    disabled={dateError}
+                                    className={`block w-full text-left px-4 py-2 text-sm ${
+                                      dateError ? "text-gray-400 cursor-not-allowed" : "text-green-600 hover:bg-green-50"
+                                    }`}
+                                  >
+                                    Save Changes
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCancelEdit();
+                                    }}
+                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                  >
+                                    Cancel Edit
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  {appointment.status === "Pending" && (
+                                    <>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditAppointment(appointment);
+                                        }}
+                                        className="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                                      >
+                                        Update
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCancelAppointment(appointment.id);
+                                        }}
+                                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  )}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteAppointment(appointment.id);
+                                    }}
+                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
