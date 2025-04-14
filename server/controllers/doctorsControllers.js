@@ -13,8 +13,8 @@ const getDoctors = (req, res) => {
 const addDoctors = (req, res) => {
     const doctor = req.body[0]; // Assuming you're sending one doctor at a time in an array
     const { doctor_name, email_id, password, department, contact, experiance, photo } = doctor;
-    const query = ` INSERT INTO doctor (doctor_name, email_id, password, department, contact, experiance, photo)
-        VALUES (?, ?, ?, ?, ?, ?, ?) `;
+    const query = ` insert into doctor (doctor_name, email_id, password, department, contact, experiance, photo)
+        values (?, ?, ?, ?, ?, ?, ?) `;
     sql.query(query, [doctor_name, email_id, password, department, contact, experiance, photo], (err, result) => {
         if (err) {
             console.error('Insert error:', err);

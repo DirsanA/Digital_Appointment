@@ -11,7 +11,6 @@ app.use(express.json()); // handles JSON request bodies
 app.use(cors());
 
 app.use('/doctor', doctorsRoutes);
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

@@ -2,10 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FaUserCircle, FaUserMd, FaUsers, FaCalendarCheck,
-  FaThLarge, FaSignOutAlt, FaBars, FaTimes, FaSearch
+  FaThLarge, FaSignOutAlt, FaBars, FaTimes, FaSearch,
+  FaEdit, FaTrash, FaCheck,FaEllipsisV, FaTimes as FaClose
 } from "react-icons/fa";
 import drAbreham from './assets/doc9.jpg';
 import drEmily from './assets/doc8.jpg';
+import { Menu } from "@headlessui/react";
+
+
 // Sample JSON data
 const sampleData = {
   stats: {
@@ -15,14 +19,16 @@ const sampleData = {
   },
   doctors: [
     {
+      id: 1,
       name: "Dr. Dirsan Antehun",
       email: "dirsan@gmail.com",
       department: "Cardiology",
       contact: "0916783478",
-      photo:  drAbreham,
+      photo: drAbreham,
       experience: "8 years"
     },
     {
+      id: 2,
       name: "Dr. Desu Mulat",
       email: "desu@gmail.com",
       department: "Neurology",
@@ -42,10 +48,37 @@ const Doctors = () => {
     totalAppointments: 0
   });
   const [email, setEmail] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    department: "",
+    contact: "",
+    experience: ""
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Simulate fetching data from backend
   useEffect(() => {
-    setStats(sampleData.stats);
-    setDoctors(sampleData.doctors);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // In a real app, you would fetch from your API endpoint
+        // const response = await fetch('your-api-endpoint/doctors');
+        // const data = await response.json();
+        
+        // For demo purposes, we're using the sample data
+        setStats(sampleData.stats);
+        setDoctors(sampleData.doctors);
+      } catch (err) {
+        setError("Failed to fetch doctors data");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleSearch = (e) => {
@@ -54,6 +87,72 @@ const Doctors = () => {
       doctor.email.toLowerCase().includes(email.toLowerCase())
     );
     setDoctors(filteredDoctors);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this doctor?")) {
+      setIsLoading(true);
+      try {
+        // In a real app, you would call your API to delete
+        // await fetch(`your-api-endpoint/doctors/${id}`, { method: 'DELETE' });
+        
+        // For demo, we'll filter out the deleted doctor
+        const updatedDoctors = doctors.filter(doctor => doctor.id !== id);
+        setDoctors(updatedDoctors);
+        setStats(prev => ({ ...prev, totalDoctors: prev.totalDoctors - 1 }));
+      } catch (err) {
+        setError("Failed to delete doctor");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleEdit = (doctor) => {
+    setEditingId(doctor.id);
+    setEditFormData({
+      name: doctor.name,
+      department: doctor.department,
+      contact: doctor.contact,
+      experience: doctor.experience
+    });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const handleSaveEdit = async (id) => {
+    setIsLoading(true);
+    try {
+      // In a real app, you would call your API to update
+      // await fetch(`your-api-endpoint/doctors/${id}`, {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(editFormData)
+      // });
+      
+      // For demo, we'll update the local state
+      const updatedDoctors = doctors.map(doctor => 
+        doctor.id === id ? { ...doctor, ...editFormData } : doctor
+      );
+      setDoctors(updatedDoctors);
+      setEditingId(null);
+    } catch (err) {
+      setError("Failed to update doctor");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,6 +248,20 @@ const Doctors = () => {
             </form>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="text-center py-4">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          )}
+
           {/* Doctor Table */}
           <div className="bg-white p-4 rounded-lg shadow-md">
             <div className="overflow-x-auto">
@@ -162,11 +275,12 @@ const Doctors = () => {
                     <th className="border p-2">Department</th>
                     <th className="border p-2">Contact</th>
                     <th className="border p-2">Experience</th>
+                    <th className="border p-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {doctors.map((doctor, index) => (
-                    <tr key={index} className="text-center border-t">
+                  {doctors.map((doctor) => (
+                    <tr key={doctor.id} className="text-center border-t">
                       <td className="border p-2">
                         <img
                           src={doctor.photo || "https://via.placeholder.com/50"}
@@ -174,12 +288,129 @@ const Doctors = () => {
                           className="w-12 h-12 rounded-full mx-auto"
                         />
                       </td>
-                      <td className="border p-2">{doctor.name}</td>
+                      <td className="border p-2">
+                        {editingId === doctor.id ? (
+                          <input
+                            type="text"
+                            name="name"
+                            value={editFormData.name}
+                            onChange={handleEditChange}
+                            className="border p-1 w-full"
+                          />
+                        ) : (
+                          doctor.name
+                        )}
+                      </td>
                       <td className="border p-2">••••••••</td>
                       <td className="border p-2">{doctor.email}</td>
-                      <td className="border p-2">{doctor.department}</td>
-                      <td className="border p-2">{doctor.contact}</td>
-                      <td className="border p-2">{doctor.experience}</td>
+                      <td className="border p-2">
+                        {editingId === doctor.id ? (
+                          <input
+                            type="text"
+                            name="department"
+                            value={editFormData.department}
+                            onChange={handleEditChange}
+                            className="border p-1 w-full"
+                          />
+                        ) : (
+                          doctor.department
+                        )}
+                      </td>
+                      <td className="border p-2">
+                        {editingId === doctor.id ? (
+                          <input
+                            type="text"
+                            name="contact"
+                            value={editFormData.contact}
+                            onChange={handleEditChange}
+                            className="border p-1 w-full"
+                          />
+                        ) : (
+                          doctor.contact
+                        )}
+                      </td>
+                      <td className="border p-2">
+                        {editingId === doctor.id ? (
+                          <input
+                            type="text"
+                            name="experience"
+                            value={editFormData.experience}
+                            onChange={handleEditChange}
+                            className="border p-1 w-full"
+                          />
+                        ) : (
+                          doctor.experience
+                        )}
+                      </td>
+                      <td className="border p-2 relative">
+                    <Menu as="div" className="relative inline-block text-left">
+                    <Menu.Button className="p-2 text-gray-600 hover:text-black">
+                            <FaEllipsisV />
+                                  </Menu.Button>
+
+                                    <Menu.Items className="absolute right-0 z-10 mt-2 w-28 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                     <div className="p-1 text-sm text-gray-700">
+                                   {editingId === doctor.id ? (
+                                      <>
+                                     <Menu.Item>
+                             {({ active }) => (
+                          <button
+                  onClick={() => handleSaveEdit(doctor.id)}
+                  className={`${
+                    active ? "bg-green-100" : ""
+                  } flex items-center w-full px-2 py-1 text-green-600 hover:bg-green-50`}
+                >
+                  <FaCheck className="mr-2" /> Save
+                </button>
+              )}
+                     </Menu.Item>
+                            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={handleCancelEdit}
+                  className={`${
+                    active ? "bg-gray-100" : ""
+                  } flex items-center w-full px-2 py-1 text-gray-600 hover:bg-gray-50`}
+                >
+                  <FaClose className="mr-2" /> Cancel
+                </button>
+              )}
+            </Menu.Item>
+          </>
+        ) : (
+          <>
+            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={() => handleEdit(doctor)}
+                  className={`${
+                    active ? "bg-blue-100" : ""
+                  } flex items-center w-full px-2 py-1 text-blue-600 hover:bg-blue-50`}
+                >
+                  <FaEdit className="mr-2" /> Edit
+                </button>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={() => handleDelete(doctor.id)}
+                  className={`${
+                    active ? "bg-red-100" : ""
+                  } flex items-center w-full px-2 py-1 text-red-600 hover:bg-red-50`}
+                >
+                  <FaTrash className="mr-2" /> Delate
+                </button>
+              )}
+            </Menu.Item>
+                       </>
+                           )}
+                       </div>
+                 </Menu.Items>
+                </Menu>
+                    </td>
+
+
                     </tr>
                   ))}
                 </tbody>
