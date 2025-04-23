@@ -7,11 +7,12 @@ const connection = mysql.createConnection({
   database: "digital_app",
 });
 
-connection.connect(function (err) {
+connection.connect((err) => {
   if (err) {
-    console.log(err);
+    console.error("❌ Error connecting to the database:", err);
   } else {
-    console.log("connected");
+    console.log("✅ Connected to the MySQL database.");
   }
 });
+
 module.exports = connection;

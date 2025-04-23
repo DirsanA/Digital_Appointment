@@ -9,8 +9,9 @@ const PatientRegister = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState(null); // for feedback
-  const [error, setError] = useState(null); // for error
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Validation functions
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -37,26 +38,34 @@ const PatientRegister = () => {
       return setError("Password must be at least 6 characters long.");
     }
 
+    setIsLoading(true);
+
     // Send request
     axios
-      .post("http://localhost:4000/users/patient-register", {
+      .post("http://localhost:5000/patient", {
         name,
         email,
         phone,
         password,
       })
       .then((response) => {
+        console.log("✅ Response:", response.data);
         setMessage(response.data.message || "Patient registered successfully!");
         setName("");
         setEmail("");
         setPhone("");
         setPassword("");
+
+        // Redirect after 2 seconds
+        setTimeout(() => navigate("/patient-login"), 2000);
       })
       .catch((err) => {
+        console.error("❌ Error:", err.response?.data);
         setError(
-          err.response?.data?.error || "An error occurred while registering."
+          err.response?.data?.message || "An error occurred while registering."
         );
-      });
+      })
+      .finally(() => setIsLoading(false));
   }
 
   return (
@@ -115,7 +124,7 @@ const PatientRegister = () => {
               name="phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g., 0912345678"
+              placeholder="e.g., 0943599259"
               className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black"
               required
             />
@@ -136,9 +145,12 @@ const PatientRegister = () => {
 
           <button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-600 shadow-lg p-3 rounded-lg w-full font-semibold text-white transition duration-300"
+            disabled={isLoading}
+            className={`bg-blue-500 hover:bg-blue-600 shadow-lg p-3 rounded-lg w-full font-semibold text-white transition duration-300 ${
+              isLoading ? "opacity-70 cursor-not-allowed" : ""
+            }`}
           >
-            Register
+            {isLoading ? "Registering..." : "Register"}
           </button>
         </form>
 

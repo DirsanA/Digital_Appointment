@@ -1,108 +1,138 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FaUserCircle, FaUserPlus, FaUserMd, FaUsers, FaCalendarCheck, FaThLarge, FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import {
+  FaUserCircle,
+  FaUserPlus,
+  FaUserMd,
+  FaUsers,
+  FaCalendarCheck,
+  FaThLarge,
+  FaSignOutAlt,
+  FaBars,
+  FaTimes,
+} from "react-icons/fa";
 
 const AddDoctors = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [isEditMode, setIsEditMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    doctor_name: "",
+    email_id: "",
     password: "",
     contact: "",
     department: "",
-    experience: "",
-    photo: null,
+    experiance: "",
   });
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     totalPatients: 0,
     totalDoctors: 0,
-    totalAppointments: 0
+    totalAppointments: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch("/api/stats");
-        const data = await response.json();
-        setStats({
-          totalPatients: data.totalPatients || 0,
-          totalDoctors: data.totalDoctors || 0,
-          totalAppointments: data.totalAppointments || 0
-        });
-      } catch (error) {
-        console.error("Error fetching statistics:", error);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
+    if (id) {
+      setIsEditMode(true);
+      fetchDoctorData(id);
+    }
     fetchStats();
-  }, []);
+  }, [id]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/doctor");
+      if (!response.ok) {
+        throw new Error("Failed to fetch stats");
+      }
+      const data = await response.json();
+      setStats({
+        totalPatients: data.totalPatients || 0,
+        totalDoctors: data.totalDoctors || 0,
+        totalAppointments: data.totalAppointments || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: name === "experiance" ? parseInt(value) || 0 : value,
     });
   };
 
   const handleFileChange = (e) => {
     setFormData({
       ...formData,
-      photo: e.target.files[0]
+      photo: e.target.files[0],
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        data.append(key, value);
+      // Validate required fields
+      if (!formData.doctor_name || !formData.email_id || !formData.department) {
+        throw new Error("Doctor name, email, and department are required");
+      }
+
+      const requestData = {
+        doctorfullname: formData.doctor_name,
+        email: formData.email_id,
+        pwd: formData.password || "",
+        contact: formData.contact || "",
+        department: formData.department,
+        experiance: formData.experiance,
+      };
+
+      const url = isEditMode
+        ? `http://localhost:5000/doctor/${id}`
+        : "http://localhost:5000/admin/doctors";
+
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
       });
 
-      const response = await fetch("/api/doctors", {
-        method: "POST",
-        body: data,
-      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Operation failed");
+      }
 
       const result = await response.json();
-      if (response.ok) {
-        alert("Doctor added successfully!");
-        setFormData({
-          name: "",
-          email: "",
-          password: "",
-          contact: "",
-          department: "",
-          experience: "",
-          photo: null,
-        });
-
-        const statsResponse = await fetch("/api/stats");
-        const statsData = await statsResponse.json();
-        setStats({
-          totalPatients: statsData.totalPatients || 0,
-          totalDoctors: statsData.totalDoctors || 0,
-          totalAppointments: statsData.totalAppointments || 0,
-        });
-      } else {
-        throw new Error(result.message || "Failed to add doctor");
-      }
+      alert(
+        isEditMode
+          ? "Doctor updated successfully!"
+          : "Doctor added successfully!"
+      );
+      navigate("/Doctors");
     } catch (error) {
-      alert(error.message);
+      console.error("Submission error:", error);
+      alert(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden text-black">
+    <div className="flex bg-gray-100 h-screen overflow-hidden text-black">
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md p-4 z-10 flex justify-end">
-        <button 
+      <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-end bg-white shadow-md p-4">
+        <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="focus:outline-none"
           aria-label={sidebarOpen ? "Close menu" : "Open menu"}
@@ -112,92 +142,192 @@ const AddDoctors = () => {
       </div>
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:right-0 md:translate-x-0 md:w-1/4`}>
+      <aside
+        className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        } md:relative md:right-0 md:translate-x-0 md:w-1/4`}
+      >
         <div className="overflow-y-auto">
-          <h2 className="text-lg font-bold mb-6 flex items-center p-4">
-            <FaUserCircle className="text-blue-500 text-4xl mr-3" /> Admin
+          <h2 className="flex items-center mb-6 p-4 font-bold text-lg">
+            <FaUserCircle className="mr-3 text-blue-500 text-4xl" /> Admin
           </h2>
           <nav className="space-y-2">
-            <Link to="/AdminDashboard" className="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded-md" onClick={() => setSidebarOpen(false)}>
-              <FaThLarge size={20} /><span>Dashboard</span>
+            <Link
+              to="/AdminDashboard"
+              className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaThLarge size={20} />
+              <span>Dashboard</span>
             </Link>
-            <Link to="/Doctors" className="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded-md" onClick={() => setSidebarOpen(false)}>
-              <FaUserMd size={20} /><span>Doctors</span>
+            <Link
+              to="/admin/getAllDoctors"
+              className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaUserMd size={20} />
+              <span>Doctors</span>
             </Link>
-            <Link to="/Departments" className="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded-md" onClick={() => setSidebarOpen(false)}>
-              <FaUsers size={20} /><span>Departments</span>
+            <Link
+              to="/Departments"
+              className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaUsers size={20} />
+              <span>Departments</span>
             </Link>
-            <Link to="/Appointments" className="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded-md" onClick={() => setSidebarOpen(false)}>
-              <FaCalendarCheck size={20} /><span>Appointments</span>
+            <Link
+              to="/Appointments"
+              className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaCalendarCheck size={20} />
+              <span>Appointments</span>
             </Link>
-            <Link to="/AddDoctors" className="flex items-center space-x-2 p-2 bg-gray-200 rounded-md font-semibold" onClick={() => setSidebarOpen(false)}>
-              <FaUserPlus size={20} /><span>Add Doctors</span>
+            <Link
+              to="/admin/doctors"
+              className="flex items-center space-x-2 bg-gray-200 p-2 rounded-md font-semibold"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaUserPlus size={20} />
+              <span>Add Doctors</span>
             </Link>
           </nav>
         </div>
-        <Link to="/Logout" className="flex items-center space-x-2 p-2 text-red-500 hover:bg-red-50 rounded-md" onClick={() => setSidebarOpen(false)}>
-          <FaSignOutAlt size={20} /><span>Log out</span>
+        <Link
+          to="/Logout"
+          className="flex items-center space-x-2 hover:bg-red-50 p-2 rounded-md text-red-500"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <FaSignOutAlt size={20} />
+          <span>Log out</span>
         </Link>
       </aside>
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="md:hidden z-10 fixed inset-0 bg-black bg-opacity-50"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:ml-0 mt-16 md:mt-0 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
+      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
+        <div className="mx-auto max-w-4xl">
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
-              <FaUsers size={32} className="text-blue-500 mr-4" />
+          <div className="gap-4 grid grid-cols-1 md:grid-cols-3 mb-8">
+            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
+              <FaUsers size={32} className="mr-4 text-blue-500" />
               <div>
-                <p className="text-sm text-gray-500">Total Patients</p>
-                {statsLoading ? <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div> : <p className="text-2xl font-bold">{stats.totalPatients}</p>}
+                <p className="text-gray-500 text-sm">Total Patients</p>
+                {statsLoading ? (
+                  <div className="bg-gray-200 rounded w-16 h-8 animate-pulse"></div>
+                ) : (
+                  <p className="font-bold text-2xl">{stats.totalPatients}</p>
+                )}
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
-              <FaUserMd size={32} className="text-green-500 mr-4" />
+            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
+              <FaUserMd size={32} className="mr-4 text-green-500" />
               <div>
-                <p className="text-sm text-gray-500">Total Doctors</p>
-                {statsLoading ? <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div> : <p className="text-2xl font-bold">{stats.totalDoctors}</p>}
+                <p className="text-gray-500 text-sm">Total Doctors</p>
+                {statsLoading ? (
+                  <div className="bg-gray-200 rounded w-16 h-8 animate-pulse"></div>
+                ) : (
+                  <p className="font-bold text-2xl">{stats.totalDoctors}</p>
+                )}
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
-              <FaCalendarCheck size={32} className="text-purple-500 mr-4" />
+            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
+              <FaCalendarCheck size={32} className="mr-4 text-purple-500" />
               <div>
-                <p className="text-sm text-gray-500">Total Appointments</p>
-                {statsLoading ? <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div> : <p className="text-2xl font-bold">{stats.totalAppointments}</p>}
+                <p className="text-gray-500 text-sm">Total Appointments</p>
+                {statsLoading ? (
+                  <div className="bg-gray-200 rounded w-16 h-8 animate-pulse"></div>
+                ) : (
+                  <p className="font-bold text-2xl">
+                    {stats.totalAppointments}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Form */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-6 flex items-center">
-              <FaUserPlus className="mr-2 text-blue-600" /> Add New Doctor
+          <div className="bg-white shadow-md p-6 rounded-lg">
+            <h3 className="flex items-center mb-6 font-semibold text-xl">
+              <FaUserPlus className="mr-2 text-blue-600" />
+              {isEditMode ? "Edit Doctor" : "Add New Doctor"}
             </h3>
-            <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4"
+              encType="multipart/form-data"
+            >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Doctor Name:</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
+                  Doctor Name:
+                </label>
+                <input
+                  type="text"
+                  name="doctor_name"
+                  value={formData.doctor_name}
+                  onChange={handleChange}
+                  required
+                  className="px-4 py-2 border border-gray-300 rounded-lg w-full"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email ID:</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
+                  Email ID:
+                </label>
+                <input
+                  type="email"
+                  name="email_id"
+                  value={formData.email_id}
+                  onChange={handleChange}
+                  required
+                  className="px-4 py-2 border border-gray-300 rounded-lg w-full"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password:</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
+                  Password:
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required={!isEditMode}
+                  className="px-4 py-2 border border-gray-300 rounded-lg w-full"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact:</label>
-                <input type="tel" name="contact" value={formData.contact} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
+                  Contact:
+                </label>
+                <input
+                  type="tel"
+                  name="contact"
+                  value={formData.contact}
+                  onChange={handleChange}
+                  required
+                  className="px-4 py-2 border border-gray-300 rounded-lg w-full"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department:</label>
-                <select name="department" value={formData.department} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
+                  Department:
+                </label>
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  required
+                  className="px-4 py-2 border border-gray-300 rounded-lg w-full"
+                >
                   <option value="">Select Departments</option>
                   <option value="Cardiology">Cardiology</option>
                   <option value="Neurology">Neurology</option>
@@ -206,15 +336,33 @@ const AddDoctors = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Experience (years):</label>
-                <input type="number" name="experience" value={formData.experience} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
+                  Experiance (years):
+                </label>
+                <input
+                  type="number"
+                  name="experiance"
+                  value={formData.experiance}
+                  onChange={handleChange}
+                  min="0"
+                  max="50"
+                  required
+                  className="px-4 py-2 border border-gray-300 rounded-lg w-full"
+                />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Photo:</label>
-                <input type="file" accept="image/*" onChange={handleFileChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-              </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-blue-400" disabled={loading}>
-                {loading ? "Adding..." : "Add Doctor"}
+
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 shadow-md py-3 rounded-lg w-full font-semibold text-white transition-all"
+                disabled={loading}
+              >
+                {loading
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Adding..."
+                  : isEditMode
+                  ? "Update Doctor"
+                  : "Add Doctor"}
               </button>
             </form>
           </div>
