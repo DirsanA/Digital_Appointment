@@ -127,7 +127,7 @@ const AdminDashboard = () => {
               <span>Dashboard</span>
             </Link>
             <Link
-              to="/admin/getAllDoctors"
+              to="/Doctors"
               className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md text-gray-700"
               onClick={() => setSidebarOpen(false)}
             >
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
               <span>Appointments</span>
             </Link>
             <Link
-              to="/admin/doctors"
+              to="/AddDoctors"
               className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md text-gray-700"
               onClick={() => setSidebarOpen(false)}
             >
