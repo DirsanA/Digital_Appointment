@@ -4,6 +4,10 @@ const doctorController = require("../controllers/doctorController.controller");
 
 // Error handling wrapper
 const asyncHandler = (fn) => (req, res, next) => {
+  if (typeof fn !== "function") {
+    console.error("Route handler is not a function:", fn);
+    return next(new Error("Route handler is not a function"));
+  }
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
@@ -17,10 +21,13 @@ router.post(
   "/admin/doctors",
   asyncHandler(doctorController.doctorRegistration)
 );
-router.put("/admin/doctors/:id", asyncHandler(doctorController.updateDoctor));
+router.put(
+  "/admin/doctors/:id",
+  asyncHandler(doctorController.updateDoctorById)
+);
 router.delete(
   "/admin/doctors/:id",
-  asyncHandler(doctorController.deleteDoctor)
+  asyncHandler(doctorController.deleteDoctorById)
 );
 
 module.exports = router;
