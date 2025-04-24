@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { FaUserCircle, FaUserPlus, FaUserMd, FaUsers, FaCalendarCheck, FaThLarge, FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
 
 const AddDoctors = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [isEditMode, setIsEditMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    doctor_name: "",
+    email_id: "",
     password: "",
     contact: "",
     department: "",
-    experience: "",
+    experiance: "",
     photo: null,
   });
   const [loading, setLoading] = useState(false);
@@ -22,28 +25,65 @@ const AddDoctors = () => {
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch("/api/stats");
-        const data = await response.json();
-        setStats({
-          totalPatients: data.totalPatients || 0,
-          totalDoctors: data.totalDoctors || 0,
-          totalAppointments: data.totalAppointments || 0
-        });
-      } catch (error) {
-        console.error("Error fetching statistics:", error);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
+    if (id) {
+      setIsEditMode(true);
+      fetchDoctorData(id);
+    }
     fetchStats();
-  }, []);
+  }, [id]);
+
+  const fetchDoctorData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:5000/doctor`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch doctor data');
+      }
+      
+      const data = await response.json();
+      setFormData({
+        doctor_name: data.doctor_name || "",
+        email_id: data.email_id || "",
+        password: data.password || "",
+        contact: data.contact || "",
+        department: data.department || "",
+        experiance: data.experiance || "",
+        photo: data.photo || null,
+      });
+    } catch (error) {
+      console.error("Error fetching doctor data:", error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/doctor");
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats');
+      }
+      const data = await response.json();
+      setStats({
+        totalPatients: data.totalPatients || 0,
+        totalDoctors: data.totalDoctors || 0,
+        totalAppointments: data.totalAppointments || 0
+      });
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: name === 'experiance' ? parseInt(value) || 0 : value
     });
   };
 
@@ -57,42 +97,46 @@ const AddDoctors = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
-      const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        data.append(key, value);
-      });
+      // Validate required fields
+      if (!formData.doctor_name || !formData.email_id || !formData.department) {
+        throw new Error('Doctor name, email, and department are required');
+      }
 
-      const response = await fetch("/api/doctors", {
-        method: "POST",
+      const data = new FormData();
+      data.append('doctor_name', formData.doctor_name);
+      data.append('email_id', formData.email_id);
+      data.append('password', formData.password || '');
+      data.append('contact', formData.contact || '');
+      data.append('department', formData.department);
+      data.append('experiance', formData.experiance);
+      if (formData.photo) {
+        data.append('photo', formData.photo);
+      }
+
+      const url = isEditMode 
+        ? `http://localhost:5000/doctor/${id}`
+        : "http://localhost:5000/doctor";
+      
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         body: data,
       });
 
-      const result = await response.json();
-      if (response.ok) {
-        alert("Doctor added successfully!");
-        setFormData({
-          name: "",
-          email: "",
-          password: "",
-          contact: "",
-          department: "",
-          experience: "",
-          photo: null,
-        });
-
-        const statsResponse = await fetch("/api/stats");
-        const statsData = await statsResponse.json();
-        setStats({
-          totalPatients: statsData.totalPatients || 0,
-          totalDoctors: statsData.totalDoctors || 0,
-          totalAppointments: statsData.totalAppointments || 0,
-        });
-      } else {
-        throw new Error(result.message || "Failed to add doctor");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Operation failed');
       }
+
+      const result = await response.json();
+      alert(isEditMode ? "Doctor updated successfully!" : "Doctor added successfully!");
+      navigate("/Doctors");
     } catch (error) {
-      alert(error.message);
+      console.error("Submission error:", error);
+      alert(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -176,28 +220,63 @@ const AddDoctors = () => {
           {/* Form */}
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-6 flex items-center">
-              <FaUserPlus className="mr-2 text-blue-600" /> Add New Doctor
+              <FaUserPlus className="mr-2 text-blue-600" /> 
+              {isEditMode ? "Edit Doctor" : "Add New Doctor"}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Doctor Name:</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <input 
+                  type="text" 
+                  name="doctor_name" 
+                  value={formData.doctor_name} 
+                  onChange={handleChange} 
+                  required 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email ID:</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <input 
+                  type="email" 
+                  name="email_id" 
+                  value={formData.email_id} 
+                  onChange={handleChange} 
+                  required 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password:</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <input 
+                  type="password" 
+                  name="password" 
+                  value={formData.password} 
+                  onChange={handleChange} 
+                  required={!isEditMode}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contact:</label>
-                <input type="tel" name="contact" value={formData.contact} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <input 
+                  type="tel" 
+                  name="contact" 
+                  value={formData.contact} 
+                  onChange={handleChange} 
+                  required 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Department:</label>
-                <select name="department" value={formData.department} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <select 
+                  name="department" 
+                  value={formData.department} 
+                  onChange={handleChange} 
+                  required 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                >
                   <option value="">Select Departments</option>
                   <option value="Cardiology">Cardiology</option>
                   <option value="Neurology">Neurology</option>
@@ -206,15 +285,34 @@ const AddDoctors = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Experience (years):</label>
-                <input type="number" name="experience" value={formData.experience} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Experiance (years):</label>
+                <input 
+                  type="number" 
+                  name="experiance" 
+                  value={formData.experiance} 
+                  onChange={handleChange} 
+                  min="0"
+                  max="50"
+                  required 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Photo:</label>
-                <input type="file" accept="image/*" onChange={handleFileChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
+                  required={!isEditMode}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                />
               </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-blue-400" disabled={loading}>
-                {loading ? "Adding..." : "Add Doctor"}
+              <button 
+                type="submit" 
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-blue-400" 
+                disabled={loading}
+              >
+                {loading ? (isEditMode ? "Updating..." : "Adding...") : (isEditMode ? "Update Doctor" : "Add Doctor")}
               </button>
             </form>
           </div>

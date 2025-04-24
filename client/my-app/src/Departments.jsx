@@ -1,18 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  FaUserCircle,
-  FaUsers,
-  FaThLarge,
-  FaUserMd,
-  FaCalendarCheck,
-  FaSignOutAlt,
-  FaBars,
-  FaTimes,
-  FaSearch,
-  FaBuilding,
-  FaUserNurse,
-  FaStethoscope,
+import { FaUserCircle,FaUsers,FaThLarge,FaUserMd, FaCalendarCheck,FaSignOutAlt, FaBars, FaTimes,FaSearch, FaBuilding,FaUserNurse,FaStethoscope,
 } from "react-icons/fa";
 
 const Departments = () => {
@@ -30,12 +18,10 @@ const Departments = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch statistics
-        const statsResponse = await fetch("/api/stats");
+      
+        const statsResponse = await fetch("http://localhost:5000/department");
         const statsData = await statsResponse.json();
-
-        // Fetch departments
-        const deptResponse = await fetch("/api/departments");
+        const deptResponse = await fetch("http://localhost:5000/department");
         const deptData = await deptResponse.json();
 
         setStats((prev) => ({ ...prev, ...statsData }));
@@ -46,7 +32,6 @@ const Departments = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -54,7 +39,7 @@ const Departments = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await fetch(`/api/departments?contact=${contact}`);
+      const response = await fetch(`http://localhost:5000/department`);
       const data = await response.json();
       setDepartments(data);
     } catch (error) {
