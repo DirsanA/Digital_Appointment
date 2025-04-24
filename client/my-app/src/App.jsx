@@ -21,13 +21,13 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/AppointmentHistory" element={<AppointmentHistory />} />
-        <Route path="/AddDoctors" element={<AddDoctors />} />
+        <Route path="/admin/doctors" element={<AddDoctors />} />
         <Route path="/Appointments" element={<Appointments />} />
         <Route path="/Departments" element={<Departments />} />
         <Route path="/About" element={<About />} />
         <Route path="/Service" element={<Service />} />
         <Route path="/OurDoctors" element={<OurDoctors />} />
-        <Route path="Doctors" element={<Doctors />} />
+        <Route path="/admin/getAllDoctors" element={<Doctors />} />
         <Route path="/" element={<LandingPage />} />
         <Route path="/BookAppointment" element={<BookAppointment />} />
         <Route path="/patient-register" element={<PatientRegister />} />
