@@ -119,7 +119,7 @@ const AddDoctors = () => {
           ? "Doctor updated successfully!"
           : "Doctor added successfully!"
       );
-      navigate("/Doctors");
+      navigate("/admin/getAllDoctors");
     } catch (error) {
       console.error("Submission error:", error);
       alert(`Error: ${error.message}`);

@@ -11,9 +11,8 @@ import {
   FaTimes,
   FaSearch,
   FaBuilding,
-  FaUserNurse,
-  FaStethoscope,
 } from "react-icons/fa";
+import axios from "axios";
 
 const Departments = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,25 +23,48 @@ const Departments = () => {
     totalAppointments: 0,
     desktopCount: 16,
   });
-  const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statsResponse = await fetch("http://localhost:5000/department");
-        const statsData = await statsResponse.json();
-        const deptResponse = await fetch("http://localhost:5000/department");
-        const deptData = await deptResponse.json();
+        setLoading(true);
+        setError(null);
 
-        setStats((prev) => ({ ...prev, ...statsData }));
-        setDepartments(deptData);
+        const response = await axios.get(
+          "http://localhost:5000/admin/getAllDepartments"
+        );
+
+        // Ensure we have valid array data
+        const responseData = response.data;
+        const departmentsData = Array.isArray(responseData)
+          ? responseData
+          : Array.isArray(responseData?.departments)
+          ? responseData.departments
+          : [];
+
+        setDepartments(departmentsData);
+
+        // Calculate total doctors
+        const totalDoctors = departmentsData.reduce(
+          (sum, dept) => sum + (dept.doctor_count || dept.doctorCount || 0),
+          0
+        );
+
+        setStats((prev) => ({
+          ...prev,
+          totalDoctors: totalDoctors,
+        }));
       } catch (error) {
         console.error("Error fetching data:", error);
+        setError("Failed to load departments data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
@@ -50,11 +72,21 @@ const Departments = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/department`);
-      const data = await response.json();
-      setDepartments(data);
+      const response = await axios.get(
+        `http://localhost:5000/admin/getAllDepartments?search=${searchTerm}`
+      );
+
+      const responseData = response.data;
+      const filteredData = Array.isArray(responseData)
+        ? responseData
+        : Array.isArray(responseData?.departments)
+        ? responseData.departments
+        : [];
+
+      setDepartments(filteredData);
     } catch (error) {
       console.error("Error searching departments:", error);
+      setError("Failed to search departments. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -64,6 +96,14 @@ const Departments = () => {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-red-500 text-lg">{error}</div>
       </div>
     );
   }
@@ -100,7 +140,7 @@ const Departments = () => {
               <span>Dashboard</span>
             </Link>
             <Link
-              to="/Doctors"
+              to="/admin/getAllDoctors"
               className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md text-black"
               onClick={() => setSidebarOpen(false)}
             >
@@ -124,7 +164,7 @@ const Departments = () => {
               <span>Appointments</span>
             </Link>
             <Link
-              to="/AddDoctors"
+              to="/admin/doctors"
               className="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-md text-black"
               onClick={() => setSidebarOpen(false)}
             >
@@ -184,9 +224,9 @@ const Departments = () => {
             <form onSubmit={handleSearch} className="flex">
               <input
                 type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                placeholder="Enter Department ID"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search departments..."
                 className="flex-1 px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-l-lg focus:ring-2 focus:ring-blue-500"
               />
               <button
@@ -212,8 +252,12 @@ const Departments = () => {
                 {departments.length > 0 ? (
                   departments.map((dept) => (
                     <tr key={dept.id} className="text-center">
-                      <td className="p-2 border">{dept.name}</td>
-                      <td className="p-2 border">{dept.doctorCount}</td>
+                      <td className="p-2 border">
+                        {dept.department_name || dept.name}
+                      </td>
+                      <td className="p-2 border">
+                        {dept.doctor_count || dept.doctorCount || 0}
+                      </td>
                       <td className="p-2 border">{dept.id}</td>
                     </tr>
                   ))
