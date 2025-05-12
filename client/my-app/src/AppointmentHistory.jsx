@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { 
-  FaCalendarPlus, 
-  FaHistory, 
-  FaUserCircle, 
-  FaPowerOff, 
-  FaBars, 
-  FaTimes
+import axios from "axios";
+import {
+  FaCalendarPlus,
+  FaHistory,
+  FaUserCircle,
+  FaPowerOff,
+  FaBars,
+  FaTimes,
+  FaSpinner,
 } from "react-icons/fa";
 import bgImage from "./assets/b4.jpg";
 
@@ -16,60 +18,68 @@ const AppointmentHistory = () => {
   const [editedAppointment, setEditedAppointment] = useState({});
   const [dateError, setDateError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(null);
-  const [appointments, setAppointments] = useState([
-    {
-      id: 1,
-      patientName: "Abenezer",
-      department: "Cardiology",
-      date: "2025-04-05",
-      email: "abenezer@example.com",
-      doctor: "Dr. Desu",
-      time: "10:00",
-      phone: "090742",
-      status: "Approved"
-    },
-    {
-      id: 2,
-      patientName: "Abenezer",
-      department: "Neurology",
-      date: "2025-04-10",
-      email: "abenezer@example.com",
-      doctor: "Dr. Elias",
-      time: "14:30",
-      phone: "090742",
-      status: "Pending"
-    },
-    {
-      id: 3,
-      patientName: "Abenezer",
-      department: "Pediatrics",
-      date: "2025-04-15",
-      email: "abenezer@example.com",
-      doctor: "Dr. Haileeysus",
-      time: "09:00",
-      phone: "090742",
-      status: "Declined"
-    }
-  ]);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [updating, setUpdating] = useState(false);
 
   const patientName = "Abenezer";
   const departments = ["Cardiology", "Neurology", "Pediatrics", "Orthopedics"];
-  const doctors = ["Dr. Desu", "Dr. Elias", "Dr. Haileeysus"];
+  // This should ideally come from your backend
+  const doctors = [
+    { id: 1, name: "Dr. Desu" },
+    { id: 2, name: "Dr. Elias" },
+    { id: 3, name: "Dr. Haileeysus" },
+  ];
+
+  // Fetch appointments from backend
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("http://localhost:5000/appointments");
+        const formattedAppointments = response.data.map((appt) => ({
+          id: appt.id,
+          patientName: appt.patient_name,
+          department: appt.department,
+          date: appt.appointment_date,
+          email: appt.patient_email,
+          doctor:
+            doctors.find((d) => d.id === appt.doctor_id)?.name ||
+            `Dr. ${appt.doctor_id}`,
+          time: appt.appointment_time,
+          phone: appt.patient_phone,
+          status:
+            appt.status.charAt(0).toUpperCase() +
+            appt.status.slice(1).toLowerCase(),
+        }));
+        setAppointments(formattedAppointments);
+        setError(null);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        setError("Failed to load appointments. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
     const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setDropdownOpen(null);
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   const toggleDropdown = (id, e) => {
@@ -77,17 +87,39 @@ const AppointmentHistory = () => {
     setDropdownOpen(dropdownOpen === id ? null : id);
   };
 
-  const handleCancelAppointment = (id) => {
-    if (window.confirm("Are you sure you want to cancle this appointment?")) {
-      setAppointments(appointments.map(appt => 
-        appt.id === id ? { ...appt, status: "Canclled" } : appt
-      ));
+  const handleCancelAppointment = async (id) => {
+    if (window.confirm("Are you sure you want to cancel this appointment?")) {
+      try {
+        setUpdating(true);
+        await axios.patch(`http://localhost:5000/appointment/${id}`, {
+          status: "cancelled",
+        });
+        setAppointments(
+          appointments.map((appt) =>
+            appt.id === id ? { ...appt, status: "Cancelled" } : appt
+          )
+        );
+      } catch (error) {
+        console.error("Error cancelling appointment:", error);
+        alert("Failed to cancel appointment. Please try again.");
+      } finally {
+        setUpdating(false);
+      }
     }
   };
 
-  const handleDeleteAppointment = (id) => {
+  const handleDeleteAppointment = async (id) => {
     if (window.confirm("Are you sure you want to delete this appointment?")) {
-      setAppointments(appointments.filter(appt => appt.id !== id));
+      try {
+        setUpdating(true);
+        await axios.delete(`http://localhost:5000/appointment/${id}`);
+        setAppointments(appointments.filter((appt) => appt.id !== id));
+      } catch (error) {
+        console.error("Error deleting appointment:", error);
+        alert("Failed to delete appointment. Please try again.");
+      } finally {
+        setUpdating(false);
+      }
     }
   };
 
@@ -104,17 +136,52 @@ const AppointmentHistory = () => {
     return selectedDate >= today;
   };
 
-  const handleUpdateAppointment = () => {
+  const handleUpdateAppointment = async () => {
     if (!validateDate(editedAppointment.date)) {
       setDateError("Please select a future date");
       return;
     }
-    
-    setAppointments(appointments.map(appt => 
-      appt.id === editingId ? editedAppointment : appt
-    ));
-    setEditingId(null);
-    setDateError("");
+
+    try {
+      setUpdating(true);
+      // Find the doctor ID from the selected doctor name
+      const selectedDoctor = doctors.find(
+        (d) => d.name === editedAppointment.doctor
+      );
+
+      if (!selectedDoctor) {
+        throw new Error("Selected doctor not found");
+      }
+
+      await axios.put(`http://localhost:5000/appointment/${editingId}`, {
+        patient_name: editedAppointment.patientName,
+        department: editedAppointment.department,
+        appointment_date: editedAppointment.date,
+        patient_email: editedAppointment.email,
+        doctor_id: selectedDoctor.id,
+        appointment_time: editedAppointment.time,
+        patient_phone: editedAppointment.phone,
+        status: editedAppointment.status || "pending",
+      });
+
+      setAppointments(
+        appointments.map((appt) =>
+          appt.id === editingId
+            ? {
+                ...editedAppointment,
+                doctor: selectedDoctor.name, // Ensure we store the doctor name for display
+              }
+            : appt
+        )
+      );
+      setEditingId(null);
+      setDateError("");
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      alert("Failed to update appointment. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -126,7 +193,7 @@ const AppointmentHistory = () => {
     const { name, value } = e.target;
     setEditedAppointment({
       ...editedAppointment,
-      [name]: value
+      [name]: value,
     });
 
     if (name === "date") {
@@ -139,66 +206,72 @@ const AppointmentHistory = () => {
   };
 
   const formatDateForDisplay = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const options = { year: "numeric", month: "long", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   const formatTimeForDisplay = (timeString) => {
-    const [hours, minutes] = timeString.split(':');
+    const [hours, minutes] = timeString.split(":");
     const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex bg-gray-100 h-screen overflow-hidden">
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md p-4 z-10 flex justify-between items-center">
+      <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
         <div className="flex items-center">
-          <FaUserCircle className="text-blue-500 text-2xl mr-3" />
-          <h1 className="text-lg font-bold text-blue-600">{patientName}</h1>
+          <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
+          <h1 className="font-bold text-blue-600 text-lg">{patientName}</h1>
         </div>
-        <button 
+        <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="text-gray-700 focus:outline-none"
+          className="focus:outline-none text-gray-700"
         >
           {sidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
         </button>
       </div>
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:translate-x-0 md:w-1/4`}>
+      <aside
+        className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        } md:relative md:translate-x-0 md:w-1/4`}
+      >
         <div className="overflow-y-auto">
-          <div className="flex items-center mb-6 p-4 md:mt-0 mt-12">
+          <div className="flex items-center mt-12 md:mt-0 mb-6 p-4">
             <div className="flex items-center">
-              <FaUserCircle className="text-blue-500 text-4xl mr-3" />
+              <FaUserCircle className="mr-3 text-blue-500 text-4xl" />
               <div>
-                <h1 className="text-xl font-bold text-blue-600">{patientName}</h1>
-                <p className="text-sm text-gray-500">Registered Patient</p>
+                <h1 className="font-bold text-blue-600 text-xl">
+                  {patientName}
+                </h1>
+                <p className="text-gray-500 text-sm">Registered Patient</p>
               </div>
             </div>
           </div>
           <nav className="space-y-4 pt-12">
-            <Link 
-              to="/Patient-Dashbord" 
+            <Link
+              to="/Patient-Dashbord"
               className="flex items-center space-x-2 text-gray-700 hover:text-blue-500"
               onClick={() => setSidebarOpen(false)}
             >
               <FaUserCircle size={20} />
               <span className="font-semibold">Dashboard</span>
             </Link>
-            <Link 
-              to="/BookAppointment" 
+            <Link
+              to="/BookAppointment"
               className="flex items-center space-x-2 text-gray-700 hover:text-blue-500"
               onClick={() => setSidebarOpen(false)}
             >
               <FaCalendarPlus size={20} />
               <span>Book Appointment</span>
             </Link>
-            <Link 
-              to="/AppointmentHistory" 
-              className="flex items-center space-x-2 text-blue-500 font-bold"
+            <Link
+              to="/AppointmentHistory"
+              className="flex items-center space-x-2 font-bold text-blue-500"
               onClick={() => setSidebarOpen(false)}
             >
               <FaHistory size={20} />
@@ -206,8 +279,8 @@ const AppointmentHistory = () => {
             </Link>
           </nav>
         </div>
-        <Link 
-          to="/logout" 
+        <Link
+          to="/logout"
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
           onClick={() => setSidebarOpen(false)}
         >
@@ -218,233 +291,282 @@ const AppointmentHistory = () => {
 
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden"
+        <div
+          className="md:hidden z-10 fixed inset-0 bg-black bg-opacity-50"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:ml-0 mt-16 md:mt-0 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
+      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
+        <div className="mx-auto max-w-6xl">
           {/* Welcome Section */}
           <div
-            className="relative p-6 rounded-lg shadow-md text-white w-full h-48 flex flex-col justify-center mb-8"
+            className="relative flex flex-col justify-center shadow-md mb-8 p-6 rounded-lg w-full h-48 text-white"
             style={{
               backgroundImage: `url(${bgImage})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           >
-            <h2 className="text-2xl font-bold text-blue-500">Welcome {patientName}</h2>
+            <h2 className="font-bold text-blue-500 text-2xl">
+              Welcome {patientName}
+            </h2>
             <p className="mt-2 text-blue-500">
-              Manage your medical appointments, you can update, delete and 
+              Manage your medical appointments, you can update, delete and
               cancel your appointments.
             </p>
           </div>
 
           {/* Appointment History Table */}
-          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+          <div className="bg-white shadow-md p-4 md:p-6 rounded-lg">
+            <h3 className="flex items-center mb-6 font-semibold text-gray-800 text-xl">
               <FaHistory className="mr-2 text-blue-600" />
               Your Appointments
             </h3>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
-                    <th className="p-3 text-left rounded-l-lg">Patient</th>
-                    <th className="p-3 text-left">Department</th>
-                    <th className="p-3 text-left">Doctor</th>
-                    <th className="p-3 text-left">Date</th>
-                    <th className="p-3 text-left">Time</th>
-                    <th className="p-3 text-left">Status</th>
-                    <th className="p-3 text-left rounded-r-lg">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appointments.map((appointment) => (
-                    <tr 
-                      key={appointment.id} 
-                      className="border-b border-gray-200 hover:bg-blue-50 transition-colors"
-                    >
-                      <td className="p-3 text-gray-700">{appointment.patientName}</td>
-                      
-                      {/* Department */}
-                      <td className="p-3 text-gray-700">
-                        {editingId === appointment.id ? (
-                          <select
-                            name="department"
-                            value={editedAppointment.department}
-                            onChange={handleEditChange}
-                            className="w-full px-2 py-1 border rounded"
-                          >
-                            {departments.map(dept => (
-                              <option key={dept} value={dept}>{dept}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          appointment.department
-                        )}
-                      </td>
-                      
-                      {/* Doctor */}
-                      <td className="p-3 text-gray-700">
-                        {editingId === appointment.id ? (
-                          <select
-                            name="doctor"
-                            value={editedAppointment.doctor}
-                            onChange={handleEditChange}
-                            className="w-full px-2 py-1 border rounded"
-                          >
-                            {doctors.map(doc => (
-                              <option key={doc} value={doc}>{doc}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          appointment.doctor
-                        )}
-                      </td>
-                      
-                      {/* Date */}
-                      <td className="p-3 text-gray-700">
-                        {editingId === appointment.id ? (
-                          <div className="flex flex-col">
-                            <input
-                              type="date"
-                              name="date"
-                              value={editedAppointment.date}
+
+            {loading ? (
+              <div className="py-8 text-gray-500 text-center">
+                <FaSpinner className="inline-block mr-2 animate-spin" />
+                Loading appointments...
+              </div>
+            ) : error ? (
+              <div className="py-8 text-red-500 text-center">
+                {error}
+                <button
+                  onClick={() => window.location.reload()}
+                  className="ml-2 text-blue-500 hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+                      <th className="p-3 rounded-l-lg text-left">Patient</th>
+                      <th className="p-3 text-left">Department</th>
+                      <th className="p-3 text-left">Doctor</th>
+                      <th className="p-3 text-left">Date</th>
+                      <th className="p-3 text-left">Time</th>
+                      <th className="p-3 text-left">Status</th>
+                      <th className="p-3 rounded-r-lg text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {appointments.map((appointment) => (
+                      <tr
+                        key={appointment.id}
+                        className="hover:bg-blue-50 border-gray-200 border-b transition-colors"
+                      >
+                        <td className="p-3 text-gray-700">
+                          {appointment.patientName}
+                        </td>
+
+                        {/* Department */}
+                        <td className="p-3 text-gray-700">
+                          {editingId === appointment.id ? (
+                            <select
+                              name="department"
+                              value={editedAppointment.department}
                               onChange={handleEditChange}
-                              min={getTodayDate()}
-                              className="w-full px-2 py-1 border rounded"
-                            />
-                            {dateError && (
-                              <span className="text-red-500 text-xs mt-1">{dateError}</span>
-                            )}
-                          </div>
-                        ) : (
-                          formatDateForDisplay(appointment.date)
-                        )}
-                      </td>
-                      
-                      {/* Time */}
-                      <td className="p-3 text-gray-700">
-                        {editingId === appointment.id ? (
-                          <input
-                            type="time"
-                            name="time"
-                            value={editedAppointment.time}
-                            onChange={handleEditChange}
-                            className="w-full px-2 py-1 border rounded"
-                          />
-                        ) : (
-                          formatTimeForDisplay(appointment.time)
-                        )}
-                      </td>
-                      
-                      {/* Status */}
-                      <td className="p-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          appointment.status === "Approved" 
-                            ? "bg-green-100 text-green-800" 
-                            : appointment.status === "Declined" || appointment.status === "Cancelled"
-                            ? "bg-red-100 text-red-800"
-                            : appointment.status === "Cancelled"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {appointment.status}
-                        </span>
-                      </td>
-                      
-                      {/* Actions */}
-                      <td className="p-3 relative">
-                        <div className="dropdown relative">
-                          <button 
-                            onClick={(e) => toggleDropdown(appointment.id, e)}
-                            className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-50 transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                            </svg>
-                          </button>
-                          {dropdownOpen === appointment.id && (
-                            <div 
-                              className="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200"
-                              onClick={(e) => e.stopPropagation()}
+                              className="px-2 py-1 border rounded w-full"
                             >
-                              {editingId === appointment.id ? (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleUpdateAppointment();
-                                    }}
-                                    disabled={dateError}
-                                    className={`block w-full text-left px-4 py-2 text-sm ${
-                                      dateError ? "text-gray-400 cursor-not-allowed" : "text-green-600 hover:bg-green-50"
-                                    }`}
-                                  >
-                                    Save Changes
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCancelEdit();
-                                    }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                  >
-                                    Cancel Edit
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  {appointment.status === "Pending" && (
-                                    <>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleEditAppointment(appointment);
-                                        }}
-                                        className="block w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
-                                      >
-                                        Update
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleCancelAppointment(appointment.id);
-                                        }}
-                                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </>
-                                  )}
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteAppointment(appointment.id);
-                                    }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                  >
-                                    Delete
-                                  </button>
-                                </>
+                              {departments.map((dept) => (
+                                <option key={dept} value={dept}>
+                                  {dept}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            appointment.department
+                          )}
+                        </td>
+
+                        {/* Doctor */}
+                        <td className="p-3 text-gray-700">
+                          {editingId === appointment.id ? (
+                            <select
+                              name="doctor"
+                              value={editedAppointment.doctor}
+                              onChange={handleEditChange}
+                              className="px-2 py-1 border rounded w-full"
+                            >
+                              {doctors.map((doc) => (
+                                <option key={doc.id} value={doc.name}>
+                                  {doc.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            appointment.doctor
+                          )}
+                        </td>
+
+                        {/* Date */}
+                        <td className="p-3 text-gray-700">
+                          {editingId === appointment.id ? (
+                            <div className="flex flex-col">
+                              <input
+                                type="date"
+                                name="date"
+                                value={editedAppointment.date}
+                                onChange={handleEditChange}
+                                min={getTodayDate()}
+                                className="px-2 py-1 border rounded w-full"
+                              />
+                              {dateError && (
+                                <span className="mt-1 text-red-500 text-xs">
+                                  {dateError}
+                                </span>
                               )}
                             </div>
+                          ) : (
+                            formatDateForDisplay(appointment.date)
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </td>
 
-            {appointments.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+                        {/* Time */}
+                        <td className="p-3 text-gray-700">
+                          {editingId === appointment.id ? (
+                            <input
+                              type="time"
+                              name="time"
+                              value={editedAppointment.time}
+                              onChange={handleEditChange}
+                              className="px-2 py-1 border rounded w-full"
+                            />
+                          ) : (
+                            formatTimeForDisplay(appointment.time)
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              appointment.status.toLowerCase() === "approved"
+                                ? "bg-green-100 text-green-800"
+                                : appointment.status.toLowerCase() ===
+                                    "declined" ||
+                                  appointment.status.toLowerCase() ===
+                                    "cancelled"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {appointment.status}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="relative p-3">
+                          <div className="relative dropdown">
+                            <button
+                              onClick={(e) => toggleDropdown(appointment.id, e)}
+                              className="hover:bg-gray-50 p-1 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
+                              disabled={updating}
+                            >
+                              {updating && dropdownOpen === appointment.id ? (
+                                <FaSpinner className="w-5 h-5 animate-spin" />
+                              ) : (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="w-5 h-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                              )}
+                            </button>
+                            {dropdownOpen === appointment.id && (
+                              <div
+                                className="right-0 z-10 absolute bg-white shadow-lg mt-2 border border-gray-200 rounded-md w-48 dropdown-menu"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {editingId === appointment.id ? (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleUpdateAppointment();
+                                      }}
+                                      disabled={dateError || updating}
+                                      className={`block w-full text-left px-4 py-2 text-sm ${
+                                        dateError || updating
+                                          ? "text-gray-400 cursor-not-allowed"
+                                          : "text-green-600 hover:bg-green-50"
+                                      }`}
+                                    >
+                                      {updating ? "Saving..." : "Save Changes"}
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCancelEdit();
+                                      }}
+                                      disabled={updating}
+                                      className="block hover:bg-gray-100 px-4 py-2 w-full text-gray-700 text-sm text-left"
+                                    >
+                                      Cancel Edit
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    {appointment.status.toLowerCase() ===
+                                      "pending" && (
+                                      <>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEditAppointment(appointment);
+                                          }}
+                                          disabled={updating}
+                                          className="block hover:bg-blue-50 px-4 py-2 w-full text-blue-600 text-sm text-left"
+                                        >
+                                          Update
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleCancelAppointment(
+                                              appointment.id
+                                            );
+                                          }}
+                                          disabled={updating}
+                                          className="block hover:bg-red-50 px-4 py-2 w-full text-red-600 text-sm text-left"
+                                        >
+                                          Cancel Appointment
+                                        </button>
+                                      </>
+                                    )}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteAppointment(appointment.id);
+                                      }}
+                                      disabled={updating}
+                                      className="block hover:bg-gray-100 px-4 py-2 w-full text-gray-700 text-sm text-left"
+                                    >
+                                      Delete
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {!loading && appointments.length === 0 && !error && (
+              <div className="py-8 text-gray-500 text-center">
                 No appointment history found
               </div>
             )}

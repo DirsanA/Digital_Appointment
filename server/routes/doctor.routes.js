@@ -30,4 +30,10 @@ router.delete(
   asyncHandler(doctorController.deleteDoctorById)
 );
 
+// FIX THIS ONE TOO (wrap it in asyncHandler)
+router.get(
+  "/getDoctorsByDepartment",
+  asyncHandler(doctorController.getDoctorsByDepartment)
+);
+
 module.exports = router;

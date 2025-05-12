@@ -1,22 +1,41 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const navigate = useNavigate();
 
-  function Handler(e) {
+  const Handler = (e) => {
     e.preventDefault();
-    if (email === "pat@gmail.com" && password === "pat") {
-      navigate("/patient-dashbord");
-    } else if (email === "admin@gmail.com" && password === "admin") {
-      navigate("/AdminDashboard");
-    } else if (email === "doc@gmail.com" && password === "doc") {
-      navigate("/doctor-landingPage");
-    }
-  }
+    axios
+      .post("http://localhost:5000/login", { email, password })
+      .then((res) => {
+        const { token, role } = res.data;
+
+        if (token && role) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("role", role);
+
+          // Redirect based on role
+          if (role === "admin") {
+            navigate("/AdminDashboard");
+          } else if (role === "doctor") {
+            navigate("/doctor-landingPage");
+          } else if (role === "patient") {
+            navigate("/Patient-Dashbord");
+          } else {
+            // fallback if role is unknown
+            navigate("/dashboard");
+          }
+        }
+      })
+      .catch((err) => {
+        alert("Login failed: " + err.response?.data?.message || "Server error");
+        console.error(err);
+      });
+  };
 
   return (
     <div className="flex justify-center items-center bg-gradient-to-r from-purple-500 to-blue-600 px-4 min-h-screen">
@@ -30,7 +49,6 @@ const Login = () => {
             <label className="block font-medium text-gray-600">Email</label>
             <input
               type="email"
-              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
@@ -43,7 +61,6 @@ const Login = () => {
             <label className="block font-medium text-gray-600">Password</label>
             <input
               type="password"
-              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
@@ -71,9 +88,7 @@ const Login = () => {
           <a
             href="#"
             className="font-semibold text-blue-500 hover:underline"
-            onClick={function () {
-              navigate("/patient-register");
-            }}
+            onClick={() => navigate("/patient-register")}
           >
             Register here
           </a>
