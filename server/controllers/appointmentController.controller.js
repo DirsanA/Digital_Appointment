@@ -1,7 +1,8 @@
-const db = require("../config/db"); // Database connection
+const db = require("../config/db");
 
+// ✅ Book an appointment
 // Book appointment
-exports.bookAppointment = (req, res) => {
+const bookAppointment = (req, res) => {
   const {
     patient_name,
     department,
@@ -13,10 +14,27 @@ exports.bookAppointment = (req, res) => {
     patient_gender,
   } = req.body;
 
+  // Check required fields
+  if (
+    !patient_name ||
+    !department ||
+    !appointment_date ||
+    !patient_email ||
+    !doctor_id ||
+    !appointment_time ||
+    !patient_phone ||
+    !patient_gender
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "All fields are required",
+    });
+  }
+
   const sql = `
     INSERT INTO appointments 
     (patient_name, department, appointment_date, patient_email, doctor_id, appointment_time, patient_phone, patient_gender, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
   `;
 
   db.query(
@@ -30,111 +48,142 @@ exports.bookAppointment = (req, res) => {
       appointment_time,
       patient_phone,
       patient_gender,
-      "pending", // Default status when booking
     ],
     (err, result) => {
       if (err) {
-        console.error("Error inserting appointment:", err);
-        return res.status(500).json({ message: "Failed to book appointment" });
+        console.error("❌ Error inserting appointment:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to book appointment",
+          error: err.sqlMessage,
+        });
       }
+
       res.status(201).json({
-        message: "Appointment booked successfully",
+        success: true,
+        message: "✅ Appointment booked successfully",
         appointmentId: result.insertId,
       });
     }
   );
 };
 
-// Fetch all appointments
-exports.getAllAppointments = (req, res) => {
-  const sql = `SELECT * FROM appointments`;
+// ✅ Get all appointments
+const getAllAppointments = async (req, res) => {
+  try {
+    const sql = `SELECT * FROM appointments ORDER BY appointment_date DESC`;
+    const [appointments] = await db.promise().query(sql);
 
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error fetching appointments:", err);
-      return res.status(500).json({ message: "Failed to fetch appointments" });
-    }
-    res.status(200).json(results);
-  });
+    res.status(200).json(appointments);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch appointments",
+    });
+  }
 };
 
-// Update appointment status (Approve / Decline)
-exports.updateAppointmentStatus = (req, res) => {
-  const { appointmentId } = req.params;
+// ✅ Update appointment status
+const updateAppointmentStatus = async (req, res) => {
+  const { id } = req.params;
   const { status } = req.body;
 
-  const sql = `UPDATE appointments SET status = ? WHERE id = ?`;
+  if (!id || !status) {
+    return res.status(400).json({
+      success: false,
+      message: "Appointment ID and status are required",
+    });
+  }
 
-  db.query(sql, [status, appointmentId], (err, result) => {
-    if (err) {
-      console.error("Error updating appointment status:", err);
-      return res.status(500).json({ message: "Failed to update status" });
+  const validStatuses = ["pending", "accepted", "cancelled", "completed"];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid status value",
+      validStatuses,
+    });
+  }
+
+  try {
+    const conn = db.promise();
+    await conn.beginTransaction();
+
+    const checkSql = `SELECT id FROM appointments WHERE id = ? FOR UPDATE`;
+    const [existingAppointment] = await conn.query(checkSql, [id]);
+
+    if (existingAppointment.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
     }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Appointment not found" });
-    }
-    res.status(200).json({ message: `Appointment ${status} successfully` });
-  });
-};
 
-exports.updateAppointment = (req, res) => {
-  const { appointmentId } = req.params;
-
-  const {
-    patient_name,
-    department,
-    doctor_id,
-    appointment_date,
-    appointment_time,
-    status,
-  } = req.body;
-
-  console.log(appointment_date);
-
-  const sql = `
-      UPDATE appointments SET  patient_name = ?,  department = ?,  doctor_id = ?, appointment_date = ?, appointment_time = ?, status = ?
-      WHERE id = ?
-    `;
-
-  const values = [
-    patient_name,
-    department,
-    doctor_id,
-    appointment_date,
-    appointment_time,
-    status,
-    appointmentId,
-  ];
-
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.error("Error updating appointment:", err);
-      return res.status(500).json({ message: "Failed to update appointment" });
-    }
+    const updateSql = `UPDATE appointments SET status = ?, updated_at = NOW() WHERE id = ?`;
+    const [result] = await conn.query(updateSql, [status, id]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Appointment not found" });
+      await conn.rollback();
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update appointment status",
+      });
     }
 
-    res.status(200).json({ message: "Appointment updated successfully" });
-  });
+    const getSql = `SELECT * FROM appointments WHERE id = ?`;
+    const [updatedAppointment] = await conn.query(getSql, [id]);
+
+    await conn.commit();
+
+    res.status(200).json({
+      success: true,
+      message: `Appointment status updated to '${status}' successfully`,
+      data: updatedAppointment[0],
+    });
+  } catch (err) {
+    await db.promise().rollback();
+    console.error("Database error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
 };
 
-exports.deleteAppointment = async (req, res) => {
+// ✅ Delete an appointment
+const deleteAppointment = async (req, res) => {
   const { appointmentId } = req.params;
 
   try {
-    const [result] = await db
-      .promise()
-      .query(`DELETE FROM appointments WHERE id = ?`, [appointmentId]);
+    const sql = `DELETE FROM appointments WHERE id = ?`;
+    const [result] = await db.promise().query(sql, [appointmentId]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Appointment not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
     }
 
-    res.status(200).json({ message: "Appointment deleted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Appointment deleted successfully",
+    });
   } catch (err) {
-    console.error("Error deleting appointment:", err);
-    res.status(500).json({ message: "Failed to delete appointment" });
+    console.error("Database error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete appointment",
+    });
   }
+};
+
+// ⛳ Export all controllers
+module.exports = {
+  bookAppointment,
+  getAllAppointments,
+  updateAppointmentStatus,
+  deleteAppointment,
 };
