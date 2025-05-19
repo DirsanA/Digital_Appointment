@@ -245,3 +245,4 @@ const AboutUs = () => {
 };
 
 export default AboutUs;
+// this is the comment
