@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// added comment
+// added comment in about page
 const AboutUs = () => {
   const [activeTab, setActiveTab] = useState("mission");
   const [hoveredValue, setHoveredValue] = useState(null);
