@@ -4,7 +4,7 @@ import AboutUs from "./About";
 import Services from "./Service";
 import OurDoctors from "./OurDoctors";
 
-const LandingPage = () => {
+const LandingPage = () => { //this is comment
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
