@@ -51,8 +51,8 @@ const LandingPage = () => { //this is comment
       >
         <div className="flex items-center">
           <h1 className="font-bold text-lg sm:text-xl tracking-wide">
-            <span className="text-white">eDoc.</span>
-            <span className="hidden sm:inline"> | THE ECHANNELING PROJECT</span>
+            <span className="text-white ">D²</span>
+            <span className="hidden sm:inline"> | Hospital Appointment</span>
           </h1>
         </div>
 
@@ -255,7 +255,7 @@ const LandingPage = () => { //this is comment
             ))}
           </div>
           <p className="text-blue-300">
-            © {new Date().getFullYear()} City General Hospital. All rights reserved.
+            © {new Date().getFullYear()} D² Hospital Appointment. All rights reserved.
           </p>
           <p className="text-sm text-blue-400 mt-2">
             Committed to your health and wellbeing
