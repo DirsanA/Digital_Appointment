@@ -1,10 +1,12 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from 'framer-motion';
 import AboutUs from "./About";
 import Services from "./Service";
 import OurDoctors from "./OurDoctors";
+import ContactPage from "./ContactPage";
 
-const LandingPage = () => {
+const LandingPage = () => { //this is comment
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -12,7 +14,8 @@ const LandingPage = () => {
   const aboutRef = useRef(null);
   const servicesRef = useRef(null);
   const doctorsRef = useRef(null);
-  const appointmentRef = useRef(null);
+  // const appointmentRef = useRef(null);
+  const contactRef = useRef(null)
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -48,8 +51,8 @@ const LandingPage = () => {
       >
         <div className="flex items-center">
           <h1 className="font-bold text-lg sm:text-xl tracking-wide">
-            <span className="text-white">eDoc.</span>
-            <span className="hidden sm:inline"> | THE ECHANNELING PROJECT</span>
+            <span className="text-white ">D²</span>
+            <span className="hidden sm:inline"> | Hospital Appointment</span>
           </h1>
         </div>
 
@@ -74,16 +77,18 @@ const LandingPage = () => {
             Our Doctors
           </button>
           <button
-            onClick={() => scrollToSection(appointmentRef)}
+            onClick={() => scrollToSection(contactRef)}
             className="hover:text-gray-300 transition"
           >
-            Make Appointment
+            Contact Us
           </button>
+      
           <div className="flex space-x-3 sm:space-x-5 ml-4">
             <button
               className="hover:bg-white px-3 sm:px-4 py-1 sm:py-2 border border-white rounded-md hover:text-black text-xs sm:text-sm transition"
               onClick={() => navigate("/patient-login")}
             >
+
               LOGIN
             </button>
             <button
@@ -151,13 +156,19 @@ const LandingPage = () => {
             >
               Our Doctors
             </button>
-            <button
+            {/* <button
               onClick={function () {
                 navigate("/patient-login");
               }}
               className="py-2 hover:text-gray-300 text-left transition"
             >
               Make Appointment
+            </button> */}
+            <button
+              onClick={() => scrollToSection(contactRef)}
+              className="py-2 hover:text-gray-300 text-left transition"
+            >
+              Contact Us
             </button>
             <div className="flex space-x-3 pt-2">
               <button
@@ -215,14 +226,42 @@ const LandingPage = () => {
       <div ref={doctorsRef} className="w-full">
         <OurDoctors />
       </div>
+      <div ref={contactRef} className="w-full">
+        <ContactPage />
+      </div>
 
-      {/* Footer */}
-      <footer className="bg-black py-8 w-full text-center">
-        <p className="text-gray-400">A Web Solution by Desu and Dirsan.</p>
-        <p className="mt-2 text-gray-500 text-sm">
-          © 2023 eDoc. All rights reserved.
-        </p>
-      </footer>
+      {/* Footer  */}
+      <motion.footer 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2 }}
+        className="bg-blue-900 text-white py-8"
+      >
+        <div className="container mx-auto px-4 text-center">
+          <div className="flex justify-center space-x-6 mb-4">
+            {['🏥', '💉', '🩺', '❤️'].map((emoji, i) => (
+              <motion.span
+                key={i}
+                animate={{ y: [0, -5, 0] }}
+                transition={{ 
+                  repeat: Infinity,
+                  delay: i * 0.2,
+                  duration: 2
+                }}
+                className="text-2xl"
+              >
+                {emoji}
+              </motion.span>
+            ))}
+          </div>
+          <p className="text-blue-300">
+            © {new Date().getFullYear()} D² Hospital Appointment. All rights reserved.
+          </p>
+          <p className="text-sm text-blue-400 mt-2">
+            Committed to your health and wellbeing
+          </p>
+        </div>
+      </motion.footer>
     </div>
   );
 };

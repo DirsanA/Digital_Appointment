@@ -9,6 +9,7 @@ import BookAppointment from "./BookAppointment";
 import AdminDashboard from "./AdminDashboard";
 import LandingPage from "./LandingPage";
 import OurDoctors from "./OurDoctors";
+import ContactPage from "./ContactPage";
 import About from "./About";
 import Service from "./Service";
 import Doctors from "./Doctors";
@@ -27,6 +28,7 @@ const App = () => {
         <Route path="/About" element={<About />} />
         <Route path="/Service" element={<Service />} />
         <Route path="/OurDoctors" element={<OurDoctors />} />
+        <Route path="/ContactPage" element={<ContactPage />} />
         <Route path="/admin/getAllDoctors" element={<Doctors />} />
         <Route path="/" element={<LandingPage />} />
         <Route path="/BookAppointment" element={<BookAppointment />} />

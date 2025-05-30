@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
-// comments added new
+// comments added new for home page
 const AppointmentsContent = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);

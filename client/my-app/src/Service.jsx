@@ -11,6 +11,8 @@ import {
   FaTimes
 } from 'react-icons/fa';
 
+import MedicalServices from './MedicalService';
+
 const OurServices = () => {
   const [selectedService, setSelectedService] = useState(null);
 
@@ -77,7 +79,7 @@ const OurServices = () => {
             Comprehensive healthcare services delivered with compassion and cutting-edge technology
           </p>
         </div>
-
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
           {services.map((service, index) => (
             <div 
@@ -159,6 +161,7 @@ const OurServices = () => {
           </div>
         )}
       </div>
+      <MedicalServices />
     </div>
   );
 };
