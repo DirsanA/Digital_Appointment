@@ -1,6 +1,6 @@
 const db = require("../config/db");
 
-// ✅ Book an appointment
+// ✅ Book an appointment d
 // Book appointment
 const bookAppointment = (req, res) => {
   const {
