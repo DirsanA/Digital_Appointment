@@ -112,6 +112,7 @@ const updateAppointmentStatus = async (req, res) => {
     const checkSql = `SELECT id FROM appointments WHERE id = ? FOR UPDATE`;
     const [existingAppointment] = await conn.query(checkSql, [id]);
 
+    // check it out
     if (existingAppointment.length === 0) {
       await conn.rollback();
       return res.status(404).json({
