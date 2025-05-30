@@ -1,33 +1,21 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const PatientsContent = () => {
-  // Sample patient data
-  const patients = [
-    {
-      id: 1,
-      name: "John Doe",
-      age: 42,
-      gender: "Male",
-      lastVisit: "2023-06-10",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      age: 35,
-      gender: "Female",
-      lastVisit: "2023-06-05",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Robert Johnson",
-      age: 58,
-      gender: "Male",
-      lastVisit: "2023-05-28",
-      status: "Inactive",
-    },
-  ];
+  const [appointments, setAppointments] = useState([]);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/appointments");
+        setAppointments(response.data);
+      } catch (error) {
+        console.error("Failed to fetch appointments:", error);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   return (
     <>
@@ -40,7 +28,7 @@ const PatientsContent = () => {
             Total Patients
           </span>
           <p className="font-semibold text-gray-700 text-md md:text-lg">
-            {patients.length}
+            {appointments.length}
           </p>
         </div>
       </div>
@@ -52,13 +40,13 @@ const PatientsContent = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Patient Name
+                  Name
                 </th>
                 <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Age
+                  Email
                 </th>
                 <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Gender
+                  Phone
                 </th>
                 <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                   Last Visit
@@ -69,34 +57,31 @@ const PatientsContent = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {patients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="bg-gray-300 mr-3 rounded-full w-8 h-8"></div>
-                      <div className="font-medium text-gray-900 text-sm">
-                        {patient.name}
-                      </div>
-                    </div>
+              {appointments.map((appt) => (
+                <tr key={appt.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-gray-900 text-sm whitespace-nowrap">
+                    {appt.patient_name}
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm whitespace-nowrap">
-                    {patient.age}
+                    {appt.patient_email}
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm whitespace-nowrap">
-                    {patient.gender}
+                    {appt.patient_phone}
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm whitespace-nowrap">
-                    {patient.lastVisit}
+                    {appt.appointment_date}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
-                        patient.status === "Active"
+                        appt.status === "approved"
                           ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
+                          : appt.status === "declined"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {patient.status}
+                      {appt.status}
                     </span>
                   </td>
                 </tr>
