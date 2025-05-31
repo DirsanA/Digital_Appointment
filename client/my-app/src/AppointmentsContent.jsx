@@ -17,8 +17,22 @@ const AppointmentsContent = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
+      const doctorEmail = localStorage.getItem("doctorEmail");
+      const doctorName = localStorage.getItem("doctorName");
+      
+      if (!doctorEmail && !doctorName) {
+        throw new Error("Doctor information not found");
+      }
+
       const response = await axios.get("http://localhost:5000/appointments");
-      setPatients(response.data);
+      
+      // Filter appointments for the current doctor
+      const doctorAppointments = response.data.filter(appointment => 
+        appointment.doctorfullname === doctorName || 
+        appointment.doctor_email === doctorEmail
+      );
+      
+      setPatients(doctorAppointments);
       setError(null);
     } catch (err) {
       console.error("Failed to fetch appointments:", err);
