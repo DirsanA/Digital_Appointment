@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   FaCalendarPlus,
   FaHistory,
@@ -25,10 +26,59 @@ const BookAppointment = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchingDoctors, setFetchingDoctors] = useState(false);
-  const currentPatientName = "Abenezer";
+  const [currentPatientName, setCurrentPatientName] = useState("");
+  const navigate = useNavigate();
 
   // Predefined departments
   const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics"];
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/patient-login");
+      return;
+    }
+
+    // Fetch patient details
+    const fetchPatientDetails = async () => {
+      try {
+        const patientId = localStorage.getItem("patientId");
+        if (!patientId) {
+          throw new Error("Patient ID not found");
+        }
+
+        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.data.success) {
+          const patientData = response.data.patient;
+          setCurrentPatientName(patientData.full_name);
+          // Pre-fill the appointment form with patient details
+          setAppointment(prev => ({
+            ...prev,
+            patientName: patientData.full_name,
+            email: patientData.email,
+            phone: patientData.phone
+          }));
+        } else {
+          throw new Error(response.data.message || "Failed to fetch patient details");
+        }
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          localStorage.removeItem("patientId");
+          navigate("/patient-login");
+        }
+      }
+    };
+
+    fetchPatientDetails();
+  }, [navigate]);
 
   // Fetch doctors when department changes
   useEffect(() => {
@@ -118,8 +168,12 @@ const BookAppointment = () => {
 
   return (
     <div className="flex bg-gray-100 h-screen overflow-hidden">
-      {/* Mobile Header - Right-aligned */}
-      <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-end bg-white shadow-md p-4">
+      {/* Mobile Header */}
+      <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
+        <div className="flex items-center">
+          <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
+          <h1 className="font-bold text-blue-600 text-lg">{currentPatientName || "Loading..."}</h1>
+        </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="focus:outline-none text-gray-700"
@@ -128,11 +182,11 @@ const BookAppointment = () => {
         </button>
       </div>
 
-      {/* Sidebar - Right Side */}
+      {/* Sidebar */}
       <aside
         className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "translate-x-full"
-        } md:relative md:right-0 md:translate-x-0 md:w-1/4`}
+        } md:relative md:translate-x-0 md:w-1/4`}
       >
         <div className="overflow-y-auto">
           <div className="flex items-center mt-12 md:mt-0 mb-6 p-4">
@@ -140,7 +194,7 @@ const BookAppointment = () => {
               <FaUserCircle className="mr-3 text-blue-500 text-4xl" />
               <div>
                 <h1 className="font-bold text-blue-600 text-xl">
-                  {currentPatientName}
+                  {currentPatientName || "Loading..."}
                 </h1>
                 <p className="text-gray-500 text-sm">Registered Patient</p>
               </div>
@@ -192,7 +246,7 @@ const BookAppointment = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 mt-16 md:mt-0 md:mr-0 p-6 overflow-y-auto">
+      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-4xl">
           {/* Welcome Section */}
           <div
@@ -204,7 +258,7 @@ const BookAppointment = () => {
             }}
           >
             <h2 className="font-bold text-blue-500 text-2xl">
-              Welcome {currentPatientName}
+              Welcome {currentPatientName || "Loading..."}
             </h2>
             <p className="mt-2 text-blue-500">
               Schedule your medical appointment with our specialists

@@ -14,7 +14,10 @@ const dashboardRoutes = require("./routes/dashboardRoutes.routes");
 app.use(express.json());
 app.use(cors());
 
-// Use routes
+// Mount login routes first to ensure they take precedence
+app.use("/", loginRoutes);
+
+// Use other routes
 app.use("/", patientRoutes);
 app.use("/", doctorRoutes);
 app.use("/", departmentRoutes);

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   FaCalendarPlus,
   FaHistory,
@@ -12,7 +13,56 @@ import bgImage from "./assets/b4.jpg";
 
 const PatientDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const patientName = "Abenzer"; // Replace with dynamic patient name from your state/context
+  const [patientData, setPatientData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+  });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/patient-login");
+      return;
+    }
+
+    // Fetch patient details
+    const fetchPatientDetails = async () => {
+      try {
+        const patientId = localStorage.getItem("patientId");
+        if (!patientId) {
+          throw new Error("Patient ID not found");
+        }
+
+        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.data.success) {
+          setPatientData({
+            full_name: response.data.patient.full_name,
+            email: response.data.patient.email,
+            phone: response.data.patient.phone
+          });
+        } else {
+          throw new Error(response.data.message || "Failed to fetch patient details");
+        }
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          localStorage.removeItem("patientId");
+          navigate("/patient-login");
+        }
+      }
+    };
+
+    fetchPatientDetails();
+  }, [navigate]);
 
   return (
     <div className="flex bg-gray-100 h-screen">
@@ -38,7 +88,7 @@ const PatientDashboard = () => {
               <FaUserCircle className="mr-3 text-blue-500 text-4xl" />
               <div>
                 <h1 className="font-bold text-blue-600 text-xl">
-                  {patientName}
+                  {patientData.full_name}
                 </h1>
                 <p className="text-gray-500 text-sm">Registered Patient</p>
               </div>
@@ -101,7 +151,7 @@ const PatientDashboard = () => {
           }}
         >
           <h2 className="font-bold text-blue-500 text-2xl">
-            Welcome, {patientName}
+            Welcome, {patientData.full_name}
           </h2>
           <p className="mt-2 text-blue-500 text-sm">
             The hospital management systems provide real-time updates on patient

@@ -12,11 +12,20 @@ const Login = () => {
     axios
       .post("http://localhost:5000/login", { email, password })
       .then((res) => {
-        const { token, role } = res.data;
+        const { token, role, patientId, doctorId } = res.data;
 
         if (token && role) {
           localStorage.setItem("token", token);
           localStorage.setItem("role", role);
+          localStorage.setItem("userEmail", email);
+          localStorage.setItem("loginTimestamp", new Date().getTime().toString());
+          
+          // Store IDs based on role
+          if (role === "patient" && patientId) {
+            localStorage.setItem("patientId", patientId);
+          } else if (role === "doctor" && doctorId) {
+            localStorage.setItem("doctorId", doctorId);
+          }
 
           // Redirect based on role
           if (role === "admin") {

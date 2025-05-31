@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import bgImg from "/assets/doctorBg.png";
 import AppointmentsContent from "./AppointmentsContent";
 import PatientsContent from "./PatientsContent";
@@ -6,6 +8,74 @@ import PatientsContent from "./PatientsContent";
 const DoctorLandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeContent, setActiveContent] = useState("dashboard");
+  const [doctorData, setDoctorData] = useState({
+    doctorfullname: "",
+    email: "",
+    department: "",
+    experiance: ""
+  });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    // Fetch doctor details
+    const fetchDoctorDetails = async () => {
+      try {
+        const doctorId = localStorage.getItem("doctorId");
+        if (!doctorId) {
+          throw new Error("Doctor ID not found");
+        }
+
+        const response = await axios.get(`http://localhost:5000/admin/doctors/${doctorId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.data.success) {
+          const doctorDetails = response.data.doctor;
+          setDoctorData({
+            doctorfullname: doctorDetails.doctorfullname,
+            email: doctorDetails.email,
+            department: doctorDetails.department,
+            experiance: doctorDetails.experiance
+          });
+          
+          // Store doctor's name and email in localStorage
+          localStorage.setItem("doctorName", doctorDetails.doctorfullname);
+          localStorage.setItem("doctorEmail", doctorDetails.email);
+        } else {
+          throw new Error(response.data.message || "Failed to fetch doctor details");
+        }
+      } catch (error) {
+        console.error("Error fetching doctor details:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          localStorage.removeItem("doctorId");
+          localStorage.removeItem("doctorName");
+          localStorage.removeItem("doctorEmail");
+          navigate("/login");
+        }
+      }
+    };
+
+    fetchDoctorDetails();
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("doctorId");
+    localStorage.removeItem("doctorName");
+    localStorage.removeItem("doctorEmail");
+    navigate("/login");
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -30,7 +100,7 @@ const DoctorLandingPage = () => {
                   Today's Date
                 </span>
                 <p className="font-semibold text-gray-700 text-md md:text-lg">
-                  2022-06-03
+                  {new Date().toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -45,11 +115,13 @@ const DoctorLandingPage = () => {
               <div className="z-10 relative flex md:flex-row flex-col items-center">
                 <div className="flex-1">
                   <h2 className="font-semibold text-gray-800 text-xl md:text-2xl">
-                    Welcome!
+                    Welcome Dr. {doctorData.doctorfullname}!
                   </h2>
+                  <p className="text-gray-600 text-sm md:text-base mt-2">
+                    {doctorData.email}
+                  </p>
                   <p className="text-gray-600 text-sm md:text-base">
-                    Thanks for joining us. We are always trying to get you a
-                    complete service...
+                    {doctorData.department} Department • {doctorData.experiance} Years Experience
                   </p>
                   <div className="flex space-x-3 mt-3 md:mt-4">
                     <button
@@ -102,11 +174,14 @@ const DoctorLandingPage = () => {
         <div className="text-center">
           <div className="bg-gray-300 mx-auto rounded-full w-20 h-20"></div>
           <h2 className="mt-2 font-semibold text-gray-700 text-lg">
-            Test Doctor
+            Dr. {doctorData.doctorfullname}
           </h2>
-          <p className="text-gray-500 text-sm">doctor@edoc.com</p>
+          <p className="text-gray-500 text-sm">{doctorData.email}</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 shadow-md mt-6 py-3 rounded-lg w-full font-semibold text-white text-base">
+        <button 
+          onClick={handleLogout}
+          className="bg-blue-600 hover:bg-blue-700 shadow-md mt-6 py-3 rounded-lg w-full font-semibold text-white text-base"
+        >
           Log out
         </button>
         <nav className="space-y-3 mt-8 text-gray-700">
@@ -196,9 +271,9 @@ const DoctorLandingPage = () => {
               <div className="flex-1 text-center">
                 <div className="bg-gray-300 mx-auto rounded-full w-16 h-16"></div>
                 <h2 className="mt-2 font-semibold text-gray-700">
-                  Test Doctor
+                  Dr. {doctorData.doctorfullname}
                 </h2>
-                <p className="text-gray-500 text-sm">doctor@edoc.com</p>
+                <p className="text-gray-500 text-sm">{doctorData.email}</p>
               </div>
               <button
                 onClick={toggleMenu}
@@ -222,7 +297,10 @@ const DoctorLandingPage = () => {
             </div>
 
             {/* Logout button */}
-            <button className="bg-blue-600 hover:bg-blue-700 shadow-md mb-6 py-3 rounded-lg w-full font-semibold text-white">
+            <button 
+              onClick={handleLogout}
+              className="bg-blue-600 hover:bg-blue-700 shadow-md mb-6 py-3 rounded-lg w-full font-semibold text-white"
+            >
               Log out
             </button>
 
