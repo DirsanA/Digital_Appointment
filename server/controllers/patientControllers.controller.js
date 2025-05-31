@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const jwt = require("jsonwebtoken");
 
 function registerPatient(req, res) {
   const { name, email, phone, password } = req.body;
@@ -366,10 +367,66 @@ function deletePatientById(req, res) {
   });
 }
 
+// Get current patient profile using JWT token
+function getCurrentPatient(req, res) {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "No token provided"
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    if (!decoded.id || decoded.role !== 'patient') {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token"
+      });
+    }
+
+    const query = "SELECT id, full_name, email, phone FROM patient WHERE id = ?";
+    
+    db.query(query, [decoded.id], function(err, results) {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to fetch patient profile",
+          error: err.message
+        });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Patient not found"
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Patient profile fetched successfully",
+        data: results[0]
+      });
+    });
+  } catch (error) {
+    console.error("Token verification error:", error);
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token"
+    });
+  }
+}
+
 module.exports = {
   registerPatient,
   getAllPatients,
   getPatientById,
   updatePatientById,
   deletePatientById,
+  getCurrentPatient
 };

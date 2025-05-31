@@ -71,8 +71,27 @@ const bookAppointment = (req, res) => {
 // ✅ Get all appointments
 const getAllAppointments = async (req, res) => {
   try {
-    const sql = `SELECT * FROM appointments ORDER BY appointment_date DESC`;
-    const [appointments] = await db.promise().query(sql);
+    const { patient_email } = req.query;
+    
+    let sql = `
+      SELECT 
+        a.*,
+        d.doctorfullname
+      FROM appointments a
+      LEFT JOIN doctor d ON a.doctor_id = d.id
+    `;
+
+    // Add WHERE clause if patient_email is provided
+    if (patient_email) {
+      sql += ` WHERE a.patient_email = ?`;
+    }
+
+    sql += ` ORDER BY a.appointment_date DESC`;
+
+    const [appointments] = await db.promise().query(
+      sql,
+      patient_email ? [patient_email] : []
+    );
 
     res.status(200).json(appointments);
   } catch (err) {

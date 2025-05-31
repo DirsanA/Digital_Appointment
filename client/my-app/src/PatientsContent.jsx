@@ -3,19 +3,53 @@ import axios from "axios";
 
 const PatientsContent = () => {
   const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
+        setLoading(true);
+        const doctorEmail = localStorage.getItem("doctorEmail");
+        const doctorName = localStorage.getItem("doctorName");
+        
+        if (!doctorEmail && !doctorName) {
+          throw new Error("Doctor information not found");
+        }
+
         const response = await axios.get("http://localhost:5000/appointments");
-        setAppointments(response.data);
+        
+        // Filter appointments for the current doctor
+        const doctorAppointments = response.data.filter(appointment => 
+          appointment.doctorfullname === doctorName || 
+          appointment.doctor_email === doctorEmail
+        );
+        
+        setAppointments(doctorAppointments);
+        setError(null);
       } catch (error) {
         console.error("Failed to fetch appointments:", error);
+        setError("Failed to load appointments. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchAppointments();
   }, []);
+
+  // Get unique patients from appointments
+  const uniquePatients = Array.from(new Set(appointments.map(a => a.patient_email)))
+    .map(email => {
+      const appointment = appointments.find(a => a.patient_email === email);
+      return {
+        name: appointment.patient_name,
+        email: appointment.patient_email,
+        phone: appointment.patient_phone,
+        lastVisit: appointment.appointment_date,
+        status: appointment.status
+      };
+    });
 
   return (
     <>
@@ -28,10 +62,21 @@ const PatientsContent = () => {
             Total Patients
           </span>
           <p className="font-semibold text-gray-700 text-md md:text-lg">
-            {appointments.length}
+            {loading ? (
+              <span className="block bg-gray-200 rounded w-12 h-6 animate-pulse"></span>
+            ) : (
+              uniquePatients.length
+            )}
           </p>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 mb-4 p-4 border-red-500 border-l-4 text-red-700">
+          <p>{error}</p>
+        </div>
+      )}
 
       {/* Patients Table */}
       <div className="bg-white shadow-md mt-6 rounded-lg overflow-hidden">
@@ -57,31 +102,33 @@ const PatientsContent = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {appointments.map((appt) => (
-                <tr key={appt.id} className="hover:bg-gray-50">
+              {uniquePatients.map((patient, index) => (
+                <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-gray-900 text-sm whitespace-nowrap">
-                    {appt.patient_name}
+                    {patient.name}
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm whitespace-nowrap">
-                    {appt.patient_email}
+                    {patient.email}
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm whitespace-nowrap">
-                    {appt.patient_phone}
+                    {patient.phone}
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-sm whitespace-nowrap">
-                    {appt.appointment_date}
+                    {new Date(patient.lastVisit).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
-                        appt.status === "approved"
+                        patient.status === "completed"
                           ? "bg-green-100 text-green-800"
-                          : appt.status === "declined"
+                          : patient.status === "cancelled"
                           ? "bg-red-100 text-red-800"
+                          : patient.status === "accepted"
+                          ? "bg-blue-100 text-blue-800"
                           : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {appt.status}
+                      {patient.status.charAt(0).toUpperCase() + patient.status.slice(1)}
                     </span>
                   </td>
                 </tr>

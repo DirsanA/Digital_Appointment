@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   FaCalendarPlus,
@@ -22,31 +22,106 @@ const AppointmentHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState(false);
+  const [patientName, setPatientName] = useState("");
+  const [doctors, setDoctors] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const navigate = useNavigate();
 
-  const patientName = "Abenezer";
-  const departments = ["Cardiology", "Neurology", "Pediatrics", "Orthopedics"];
-  // This should ideally come from your backend
-  const doctors = [
-    { id: 1, name: "Dr. Desu" },
-    { id: 2, name: "Dr. Elias" },
-    { id: 3, name: "Dr. Haileeysus" },
-  ];
+  // Fetch departments from the database
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/admin/getAllDepartments");
+        if (response.data.success) {
+          setDepartments(response.data.departments);
+        }
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
+  // Fetch doctors from the database
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/admin/getAllDoctors");
+        if (response.data.success) {
+          const doctorsData = response.data.doctors.map(doctor => ({
+            id: doctor.id,
+            name: doctor.doctorfullname // Use doctorfullname consistently
+          }));
+          console.log("Fetched doctors:", doctorsData); // For debugging
+          setDoctors(doctorsData);
+        }
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/patient-login");
+      return;
+    }
+
+    // Fetch patient details
+    const fetchPatientDetails = async () => {
+      try {
+        const patientId = localStorage.getItem("patientId");
+        if (!patientId) {
+          throw new Error("Patient ID not found");
+        }
+
+        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.data.success) {
+          setPatientName(response.data.patient.full_name);
+        } else {
+          throw new Error(response.data.message || "Failed to fetch patient details");
+        }
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          localStorage.removeItem("patientId");
+          navigate("/patient-login");
+        }
+      }
+    };
+
+    fetchPatientDetails();
+  }, [navigate]);
 
   // Fetch appointments from backend
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5000/appointments");
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          throw new Error("User email not found");
+        }
+
+        const response = await axios.get(`http://localhost:5000/appointments?patient_email=${userEmail}`);
         const formattedAppointments = response.data.map((appt) => ({
           id: appt.id,
           patientName: appt.patient_name,
           department: appt.department,
           date: appt.appointment_date,
           email: appt.patient_email,
-          doctor:
-            doctors.find((d) => d.id === appt.doctor_id)?.name ||
-            `Dr. ${appt.doctor_id}`,
+          doctor: appt.doctorfullname,
           time: appt.appointment_time,
           phone: appt.patient_phone,
           status:
@@ -58,13 +133,16 @@ const AppointmentHistory = () => {
       } catch (error) {
         console.error("Error fetching appointments:", error);
         setError("Failed to load appointments. Please try again later.");
+        if (error.message === "User email not found") {
+          navigate("/patient-login");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchAppointments();
-  }, []);
+  }, [navigate]);
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -144,21 +222,13 @@ const AppointmentHistory = () => {
 
     try {
       setUpdating(true);
-      // Find the doctor ID from the selected doctor name
-      const selectedDoctor = doctors.find(
-        (d) => d.name === editedAppointment.doctor
-      );
-
-      if (!selectedDoctor) {
-        throw new Error("Selected doctor not found");
-      }
 
       await axios.put(`http://localhost:5000/appointment/${editingId}`, {
         patient_name: editedAppointment.patientName,
         department: editedAppointment.department,
         appointment_date: editedAppointment.date,
         patient_email: editedAppointment.email,
-        doctor_id: selectedDoctor.id,
+        doctorfullname: editedAppointment.doctor, // Use doctorfullname consistently
         appointment_time: editedAppointment.time,
         patient_phone: editedAppointment.phone,
         status: editedAppointment.status || "pending",
@@ -169,7 +239,7 @@ const AppointmentHistory = () => {
           appt.id === editingId
             ? {
                 ...editedAppointment,
-                doctor: selectedDoctor.name, // Ensure we store the doctor name for display
+                doctor: editedAppointment.doctor,
               }
             : appt
         )
@@ -224,7 +294,7 @@ const AppointmentHistory = () => {
       <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
         <div className="flex items-center">
           <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
-          <h1 className="font-bold text-blue-600 text-lg">{patientName}</h1>
+          <h1 className="font-bold text-blue-600 text-lg">{patientName || "Loading..."}</h1>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -246,7 +316,7 @@ const AppointmentHistory = () => {
               <FaUserCircle className="mr-3 text-blue-500 text-4xl" />
               <div>
                 <h1 className="font-bold text-blue-600 text-xl">
-                  {patientName}
+                  {patientName || "Loading..."}
                 </h1>
                 <p className="text-gray-500 text-sm">Registered Patient</p>
               </div>
@@ -310,7 +380,7 @@ const AppointmentHistory = () => {
             }}
           >
             <h2 className="font-bold text-blue-500 text-2xl">
-              Welcome {patientName}
+              Welcome {patientName || "Loading..."}
             </h2>
             <p className="mt-2 text-blue-500">
               Manage your medical appointments, you can update, delete and
@@ -393,6 +463,7 @@ const AppointmentHistory = () => {
                               onChange={handleEditChange}
                               className="px-2 py-1 border rounded w-full"
                             >
+                              <option value="">Select Doctor</option>
                               {doctors.map((doc) => (
                                 <option key={doc.id} value={doc.name}>
                                   {doc.name}

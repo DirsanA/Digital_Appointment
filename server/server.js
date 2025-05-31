@@ -13,12 +13,20 @@ const loginRoutes = require("./routes/login.routes");
 app.use(express.json());
 app.use(cors());
 
-// Use routes
+// Mount login routes first to ensure they take precedence
+app.use("/", loginRoutes);
+
+// Use other routes
 app.use("/", patientRoutes);
 app.use("/", doctorRoutes);
 app.use("/", departmentRoutes);
 app.use("/", appointment);
-app.use("/", loginRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!", error: err.message });
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;
