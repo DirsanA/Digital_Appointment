@@ -234,24 +234,6 @@ const Doctors = () => {
 
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-6xl">
-          <div className="gap-4 grid grid-cols-1 md:grid-cols-3 mb-8">
-            <StatCard
-              icon={<FaUsers size={32} className="text-blue-500" />}
-              label="Total Patients"
-              value={stats.totalPatients}
-            />
-            <StatCard
-              icon={<FaUserMd size={32} className="text-green-500" />}
-              label="Total Doctors"
-              value={stats.totalDoctors}
-            />
-            <StatCard
-              icon={<FaCalendarCheck size={32} className="text-purple-500" />}
-              label="Total Appointments"
-              value={stats.totalAppointments}
-            />
-          </div>
-
           <form
             onSubmit={handleSearch}
             className="flex bg-white shadow-md mb-6 p-4 rounded-lg"

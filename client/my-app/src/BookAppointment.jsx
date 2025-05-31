@@ -28,7 +28,7 @@ const BookAppointment = () => {
   const currentPatientName = "Abenezer";
 
   // Predefined departments
-  const departments = ["Cardiology", "Neurology", "Orthopedics"];
+  const departments = ["Cardiology", "Neurology", "Orthopedics", "Pediatrics"];
 
   // Fetch doctors when department changes
   useEffect(() => {

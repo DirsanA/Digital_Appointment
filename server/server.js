@@ -8,6 +8,7 @@ const doctorRoutes = require("./routes/doctor.routes");
 const departmentRoutes = require("./routes/department.routes");
 const appointment = require("./routes/appointment.routes");
 const loginRoutes = require("./routes/login.routes");
+const dashboardRoutes = require("./routes/dashboardRoutes.routes");
 
 // Middleware
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use("/", doctorRoutes);
 app.use("/", departmentRoutes);
 app.use("/", appointment);
 app.use("/", loginRoutes);
+app.use("/api", dashboardRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;

@@ -155,58 +155,6 @@ const Appointments = () => {
       {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-6xl">
-          {/* Stats Section with Icons */}
-          <div className="gap-4 grid grid-cols-1 md:grid-cols-3 mb-8">
-            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
-              <FaUsers size={32} className="mr-4 text-blue-500" />
-              <div>
-                <p className="text-gray-500 text-sm">Total Patients</p>
-                <p className="font-bold text-black text-2xl">
-                  {stats.totalPatients}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
-              <FaUserMd size={32} className="mr-4 text-green-500" />
-              <div>
-                <p className="text-gray-500 text-sm">Total Doctors</p>
-                <p className="font-bold text-black text-2xl">
-                  {stats.totalDoctors}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
-              <FaCalendarCheck size={32} className="mr-4 text-purple-500" />
-              <div>
-                <p className="text-gray-500 text-sm">Total Appointments</p>
-                <p className="font-bold text-black text-2xl">
-                  {stats.totalAppointments}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Search Section */}
-          <div className="bg-white shadow-md mb-6 p-4 rounded-lg">
-            <form onSubmit={handleSearch} className="flex">
-              <input
-                type="text"
-                value={departmentId}
-                onChange={(e) => setDepartmentId(e.target.value)}
-                placeholder="Enter patient email ID"
-                className="flex-1 px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-l-lg focus:ring-2 focus:ring-blue-500 text-gray-700"
-              />
-              <button
-                type="submit"
-                className="flex items-center bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-r-lg text-white"
-                disabled={loading}
-              >
-                <FaSearch className="mr-2" />{" "}
-                {loading ? "Searching..." : "Search"}
-              </button>
-            </form>
-          </div>
-
           {/* Appointments Table */}
           <div className="bg-white shadow-md p-4 rounded-lg overflow-x-auto">
             <table className="border w-full">

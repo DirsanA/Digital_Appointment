@@ -215,45 +215,6 @@ const AddDoctors = () => {
       {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-4xl">
-          {/* Stats */}
-          <div className="gap-4 grid grid-cols-1 md:grid-cols-3 mb-8">
-            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
-              <FaUsers size={32} className="mr-4 text-blue-500" />
-              <div>
-                <p className="text-gray-500 text-sm">Total Patients</p>
-                {statsLoading ? (
-                  <div className="bg-gray-200 rounded w-16 h-8 animate-pulse"></div>
-                ) : (
-                  <p className="font-bold text-2xl">{stats.totalPatients}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
-              <FaUserMd size={32} className="mr-4 text-green-500" />
-              <div>
-                <p className="text-gray-500 text-sm">Total Doctors</p>
-                {statsLoading ? (
-                  <div className="bg-gray-200 rounded w-16 h-8 animate-pulse"></div>
-                ) : (
-                  <p className="font-bold text-2xl">{stats.totalDoctors}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
-              <FaCalendarCheck size={32} className="mr-4 text-purple-500" />
-              <div>
-                <p className="text-gray-500 text-sm">Total Appointments</p>
-                {statsLoading ? (
-                  <div className="bg-gray-200 rounded w-16 h-8 animate-pulse"></div>
-                ) : (
-                  <p className="font-bold text-2xl">
-                    {stats.totalAppointments}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Form */}
           <div className="bg-white shadow-md p-6 rounded-lg">
             <h3 className="flex items-center mb-6 font-semibold text-xl">
