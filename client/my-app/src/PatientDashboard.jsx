@@ -35,20 +35,25 @@ const PatientDashboard = () => {
           throw new Error("Patient ID not found");
         }
 
-        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
+        const response = await axios.get(
+          `http://localhost:5000/patient/${patientId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         if (response.data.success) {
           setPatientData({
             full_name: response.data.patient.full_name,
             email: response.data.patient.email,
-            phone: response.data.patient.phone
+            phone: response.data.patient.phone,
           });
         } else {
-          throw new Error(response.data.message || "Failed to fetch patient details");
+          throw new Error(
+            response.data.message || "Failed to fetch patient details"
+          );
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
@@ -122,7 +127,7 @@ const PatientDashboard = () => {
           </nav>
         </div>
         <Link
-          to="/logout"
+          to="/"
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
           onClick={() => setSidebarOpen(false)}
         >

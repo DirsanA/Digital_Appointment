@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import dayjs from "dayjs";
 import {
   FaUserCircle,
   FaCalendarCheck,
@@ -15,58 +17,71 @@ import {
 const Appointments = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [appointments, setAppointments] = useState([]);
-  const [stats, setStats] = useState({
-    totalPatients: 0,
-    totalDoctors: 0,
-    totalAppointments: 0,
-  });
-  const [departmentId, setDepartmentId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch statistics
-        const statsRes = await fetch("/api/stats");
-        const statsData = await statsRes.json();
-
-        // Fetch appointments
-        const apptRes = await fetch("/api/appointments");
-        const apptData = await apptRes.json();
-
-        setStats(statsData);
-        setAppointments(apptData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchAppointments();
   }, []);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
+  const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/appointments?department=${departmentId}`);
-      const data = await res.json();
-      setAppointments(data);
-    } catch (error) {
-      console.error("Error searching appointments:", error);
+      const response = await axios.get("http://localhost:5000/appointments");
+      setAppointments(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch appointments:", err);
+      setError("Failed to load appointments. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
+  const filteredAppointments = appointments.filter((appointment) => {
+    const matchesSearch =
+      appointment.patient_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      appointment.patient_email
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      appointment.patient_phone.includes(searchTerm);
+
+    const matchesFilter =
+      filter === "all" ||
+      appointment.status.toLowerCase() === filter.toLowerCase();
+
+    return matchesSearch && matchesFilter;
+  });
+
+  const getStatusBadge = (status) => {
+    const statusClasses = {
+      pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      accepted: "bg-green-100 text-green-800 border-green-200",
+      cancelled: "bg-red-100 text-red-800 border-red-200",
+      completed: "bg-blue-100 text-blue-800 border-blue-200",
+    };
+
+    const statusText = {
+      pending: "Pending",
+      accepted: "Accepted",
+      cancelled: "Cancelled",
+      completed: "Completed",
+    };
+
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
-      </div>
+      <span
+        className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full border ${
+          statusClasses[status] || "bg-gray-100 text-gray-800 border-gray-200"
+        }`}
+      >
+        {statusText[status] || status}
+      </span>
     );
-  }
+  };
 
   return (
     <div className="flex bg-gray-100 h-screen overflow-hidden">
@@ -155,48 +170,200 @@ const Appointments = () => {
       {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-6xl">
-          {/* Appointments Table */}
-          <div className="bg-white shadow-md p-4 rounded-lg overflow-x-auto">
-            <table className="border w-full">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="p-2 border text-black">Full Name</th>
-                  <th className="p-2 border text-black">Email</th>
-                  <th className="p-2 border text-black">Contact</th>
-                  <th className="p-2 border text-black">Doctor Name</th>
-                  <th className="p-2 border text-black">Department</th>
-                  <th className="p-2 border text-black">Appointment Date</th>
-                  <th className="p-2 border text-black">Appointment Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.length > 0 ? (
-                  appointments.map((appt, index) => (
-                    <tr key={index} className="hover:bg-gray-50 text-center">
-                      <td className="p-2 border">
-                        {appt.patientName || "Desu"}
-                      </td>
-                      <td className="p-2 border">
-                        {appt.email || "desu@gmail.com"}
-                      </td>
-                      <td className="p-2 border">{appt.contact || "97486"}</td>
-                      <td className="p-2 border">{appt.doctor || "Dirsan"}</td>
-                      <td className="p-2 border">{appt.fees || "500"}</td>
-                      <td className="p-2 border">
-                        {appt.date || "12-12-2017"}
-                      </td>
-                      <td className="p-2 border">{appt.time || "10:30am"}</td>
+          {/* Header */}
+          <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <h1 className="font-bold text-gray-900 text-2xl md:text-3xl">
+                Patient Appointments
+              </h1>
+              <p className="mt-1 text-gray-500 text-sm">
+                Manage and track all patient appointments
+              </p>
+            </div>
+
+            <div className="flex sm:flex-row flex-col gap-3 w-full md:w-auto">
+              <div className="bg-white shadow-sm px-4 py-3 border border-gray-200 rounded-lg w-full md:w-48">
+                <span className="text-gray-500 text-xs">
+                  Total Appointments
+                </span>
+                <p className="font-semibold text-gray-800 text-lg">
+                  {loading ? (
+                    <span className="block bg-gray-200 rounded w-12 h-6 animate-pulse"></span>
+                  ) : (
+                    appointments.length
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-100 mb-4 p-4 border-red-500 border-l-4 text-red-700">
+              <p>{error}</p>
+            </div>
+          )}
+
+          {/* Filters */}
+          <div className="bg-white shadow-sm mb-6 p-4 border border-gray-200 rounded-xl">
+            <div className="flex md:flex-row flex-col gap-4">
+              <div className="flex-1">
+                <label htmlFor="search" className="sr-only">
+                  Search
+                </label>
+                <div className="relative">
+                  <div className="left-0 absolute inset-y-0 flex items-center pl-3 pointer-events-none">
+                    <FaSearch className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="search"
+                    className="block bg-gray-50 py-2 pr-3 pl-10 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full text-black sm:text-sm"
+                    placeholder="Search patients..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="w-full md:w-48">
+                <label htmlFor="filter" className="sr-only text-black-500">
+                  Filter by status
+                </label>
+                <select
+                  id="filter"
+                  className="block bg-gray-50 py-2 pr-10 pl-3 border border-gray-300 focus:border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black sm:text-sm text-base"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+            {loading ? (
+              <div className="p-6">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex space-x-4 mb-4 animate-pulse">
+                    <div className="flex-1 space-y-4 py-1">
+                      <div className="bg-gray-200 rounded w-3/4 h-4"></div>
+                      <div className="space-y-2">
+                        <div className="bg-gray-200 rounded h-4"></div>
+                        <div className="bg-gray-200 rounded w-5/6 h-4"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredAppointments.length === 0 ? (
+              <div className="p-8 text-center">
+                <svg
+                  className="mx-auto w-12 h-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h3 className="mt-2 font-medium text-gray-900 text-sm">
+                  No appointments
+                </h3>
+                <p className="mt-1 text-gray-500 text-sm">
+                  {searchTerm || filter !== "all"
+                    ? "No appointments match your search criteria."
+                    : "No appointments have been scheduled yet."}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="divide-y divide-gray-200 min-w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                        Patient
+                      </th>
+                      <th className="hidden sm:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                        Department
+                      </th>
+                      <th className="hidden md:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                        Date & Time
+                      </th>
+                      <th className="hidden lg:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                        Status
+                      </th>
                     </tr>
-                  ))
-                ) : (
-                  <tr className="text-center">
-                    <td colSpan="7" className="p-4 text-gray-500">
-                      No appointments found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredAppointments.map((appointment) => (
+                      <tr
+                        key={appointment.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-10 h-10">
+                              <span className="font-medium text-blue-600">
+                                {appointment.patient_name
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="ml-4">
+                              <div className="font-medium text-gray-900 text-sm">
+                                {appointment.patient_name}
+                              </div>
+                              <div className="sm:hidden text-gray-500 text-sm">
+                                {appointment.department}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-900 text-sm">
+                            {appointment.department}
+                          </div>
+                        </td>
+                        <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-900 text-sm">
+                            {dayjs(appointment.appointment_date).format(
+                              "MMM D, YYYY"
+                            )}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            {appointment.appointment_time}
+                          </div>
+                        </td>
+                        <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-900 text-sm">
+                            {appointment.patient_email}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            {appointment.patient_phone}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(appointment.status)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </main>
