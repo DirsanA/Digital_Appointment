@@ -4,10 +4,6 @@ const doctorController = require("../controllers/doctorController.controller");
 
 // Error handling wrapper
 const asyncHandler = (fn) => (req, res, next) => {
-  if (typeof fn !== "function") {
-    console.error("Route handler is not a function:", fn);
-    return next(new Error("Route handler is not a function"));
-  }
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
@@ -30,7 +26,12 @@ router.delete(
   asyncHandler(doctorController.deleteDoctorById)
 );
 
-// FIX THIS ONE TOO (wrap it in asyncHandler)
+// Updated password change route without auth middleware
+router.post(
+  "/doctor/change-password",
+  asyncHandler(doctorController.changePassword)
+);
+
 router.get(
   "/getDoctorsByDepartment",
   asyncHandler(doctorController.getDoctorsByDepartment)

@@ -1,38 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  Divider,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Avatar,
-  Grid,
-} from "@mui/material";
-import LockResetIcon from "@mui/icons-material/LockReset";
-import PersonIcon from "@mui/icons-material/Person";
-import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
-import PhoneIcon from "@mui/icons-material/Phone";
-import EmailIcon from "@mui/icons-material/Email";
-import WorkIcon from "@mui/icons-material/Work";
+import { useNavigate } from "react-router-dom";
 
-const DoctorProfile = () => {
-  const [doctor, setDoctor] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+function DoctorProfile() {
+  const [doctor, setDoctor] = useState({
+    id: "",
+    doctorfullname: "",
+    email: "",
+    contact: "",
+    department: "",
+    experience: "",
+    role: "",
   });
-  const [validationErrors, setValidationErrors] = useState({});
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,83 +30,69 @@ const DoctorProfile = () => {
           return;
         }
 
-        const response = await axios.get("/api/doctor/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const doctorId = localStorage.getItem("doctorId");
+        if (!doctorId) {
+          throw new Error("Doctor ID not found");
+        }
 
-        setDoctor(response.data.doctor);
-      } catch (err) {
-        setError(
-          err.response?.data?.message || "Failed to fetch doctor profile"
+        const response = await axios.get(
+          `http://localhost:5000/admin/doctors/${doctorId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-        if (err.response?.status === 401) {
+
+        if (response.data.success && response.data.doctor) {
+          const doctorData = response.data.doctor;
+          setDoctor({
+            id: doctorData._id || doctorData.id,
+            doctorfullname: doctorData.doctorfullname || "",
+            email: doctorData.email || "",
+            contact: doctorData.contact || "",
+            department: doctorData.department || "",
+            experience: doctorData.experiance || doctorData.experience || "0", // Handle both spellings
+            role: doctorData.role || "doctor",
+          });
+        } else {
+          throw new Error(
+            response.data.message || "Failed to fetch doctor data"
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching doctor profile:", error);
+        setError(
+          error.response?.data?.message || "Failed to load doctor profile"
+        );
+        if (error.response?.status === 401) {
           localStorage.removeItem("token");
+          localStorage.removeItem("doctorId");
           navigate("/login");
         }
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchDoctorProfile();
   }, [navigate]);
 
-  const handlePasswordChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setPasswordData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear validation error when user types
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
-    }
+    setDoctor({ ...doctor, [name]: value });
   };
 
-  const validatePasswordForm = () => {
-    const errors = {};
-    let isValid = true;
-
-    if (!passwordData.currentPassword) {
-      errors.currentPassword = "Current password is required";
-      isValid = false;
-    }
-
-    if (!passwordData.newPassword) {
-      errors.newPassword = "New password is required";
-      isValid = false;
-    } else if (passwordData.newPassword.length < 8) {
-      errors.newPassword = "Password must be at least 8 characters long";
-      isValid = false;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
-      isValid = false;
-    }
-
-    setValidationErrors(errors);
-    return isValid;
-  };
-
-  const handlePasswordSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validatePasswordForm()) return;
-
     try {
-      setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        "/api/doctor/update-password",
+        `http://localhost:5000/admin/doctors/${doctor.id}`,
         {
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
+          doctorfullname: doctor.doctorfullname,
+          email: doctor.email,
+          contact: doctor.contact,
+          department: doctor.department,
+          experiance: doctor.experience,
         },
         {
           headers: {
@@ -129,229 +101,304 @@ const DoctorProfile = () => {
         }
       );
 
-      setSuccess("Password updated successfully");
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to update password. Please try again."
-      );
-      if (err.response?.status === 401) {
+      if (response.data.success) {
+        setEditMode(false);
+        setSuccessMessage("Profile updated successfully!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        throw new Error(response.data.message || "Update failed");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      setError(error.response?.data?.message || "Failed to update profile");
+      if (error.response?.status === 401) {
         localStorage.removeItem("token");
+        localStorage.removeItem("doctorId");
         navigate("/login");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleCloseAlert = () => {
-    setError("");
-    setSuccess("");
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const doctorId = localStorage.getItem("doctorId"); // Get doctor ID from storage
+
+      if (!doctorId) {
+        throw new Error("Doctor ID not found");
+      }
+
+      const response = await axios.post(
+        "http://localhost:5000/doctor/change-password",
+        {
+          currentPassword,
+          newPassword,
+          id: doctorId, // Include doctor ID in request
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setSuccessMessage("Password changed successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setPasswordError("");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        throw new Error(response.data.message || "Password change failed");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setPasswordError(
+        error.response?.data?.message || "Error changing password"
+      );
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("doctorId");
+        navigate("/login");
+      }
+    }
   };
 
-  if (loading && !doctor) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="80vh"
-      >
-        <CircularProgress size={60} />
-      </Box>
-    );
-  }
-
-  if (!doctor) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="80vh"
-      >
-        <Typography variant="h5">Doctor profile not found</Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Box sx={{ maxWidth: 800, margin: "auto", p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", mb: 4 }}>
-        Doctor Profile
-      </Typography>
+    <div className="bg-gray-50 px-4 py-8 min-h-screen">
+      <div className="bg-white shadow-md mx-auto rounded-xl max-w-4xl overflow-hidden">
+        <div className="bg-blue-600 p-6 text-white">
+          <h1 className="font-bold text-2xl">Doctor Profile</h1>
+          <p className="opacity-90">Manage your professional information</p>
+        </div>
 
-      <Snackbar
-        open={!!error || !!success}
-        autoHideDuration={6000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseAlert}
-          severity={error ? "error" : "success"}
-          sx={{ width: "100%" }}
-        >
-          {error || success}
-        </Alert>
-      </Snackbar>
+        <div className="p-6">
+          {error && (
+            <div className="bg-red-100 mb-4 p-3 rounded text-red-700">
+              {error}
+            </div>
+          )}
 
-      <Card elevation={3} sx={{ mb: 4 }}>
-        <CardContent>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              mb: 3,
-              gap: 2,
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 80,
-                height: 80,
-                bgcolor: "primary.main",
-                fontSize: "2rem",
-              }}
-            >
-              {doctor.doctorfullname.charAt(0).toUpperCase()}
-            </Avatar>
-            <Typography variant="h5" component="div">
-              {doctor.doctorfullname}
-            </Typography>
-          </Box>
+          {successMessage && (
+            <div className="bg-green-100 mb-4 p-3 rounded text-green-700">
+              {successMessage}
+            </div>
+          )}
 
-          <Divider sx={{ my: 2 }} />
+          <div className="flex md:flex-row flex-col gap-8">
+            {/* Profile Information */}
+            <div className="flex-1">
+              <h2 className="mb-4 font-semibold text-gray-800 text-xl">
+                Personal Information
+              </h2>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <PersonIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="body1">
-                  <strong>Name:</strong> {doctor.doctorfullname}
-                </Typography>
-              </Box>
+              {!editMode ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-medium text-gray-500 text-sm">
+                      Full Name
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {doctor.doctorfullname}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-500 text-sm">
+                      Email
+                    </label>
+                    <p className="mt-1 text-gray-900">{doctor.email}</p>
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-500 text-sm">
+                      Contact
+                    </label>
+                    <p className="mt-1 text-gray-900">{doctor.contact}</p>
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-500 text-sm">
+                      Department
+                    </label>
+                    <p className="mt-1 text-gray-900">{doctor.department}</p>
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-500 text-sm">
+                      Experience
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {doctor.experience} years
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block font-medium text-gray-500 text-sm">
+                      Role
+                    </label>
+                    <p className="mt-1 text-gray-900">{doctor.role}</p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block font-medium text-gray-700 text-sm">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="doctorfullname"
+                        value={doctor.doctorfullname}
+                        onChange={handleInputChange}
+                        className="block shadow-sm mt-1 border-gray-300 focus:border-blue-500 rounded-md focus:ring-blue-500 w-full"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-gray-700 text-sm">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={doctor.email}
+                        onChange={handleInputChange}
+                        className="block shadow-sm mt-1 border-gray-300 focus:border-blue-500 rounded-md focus:ring-blue-500 w-full"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-gray-700 text-sm">
+                        Contact
+                      </label>
+                      <input
+                        type="text"
+                        name="contact"
+                        value={doctor.contact}
+                        onChange={handleInputChange}
+                        className="block shadow-sm mt-1 border-gray-300 focus:border-blue-500 rounded-md focus:ring-blue-500 w-full"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-gray-700 text-sm">
+                        Department
+                      </label>
+                      <select
+                        name="department"
+                        value={doctor.department}
+                        onChange={handleInputChange}
+                        className="block shadow-sm mt-1 border-gray-300 focus:border-blue-500 rounded-md focus:ring-blue-500 w-full"
+                        required
+                      >
+                        <option value="Cardiology">Cardiology</option>
+                        <option value="Neurology">Neurology</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="Orthopedics">Orthopedics</option>
+                        <option value="Dermatology">Dermatology</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-medium text-gray-700 text-sm">
+                        Experience (years)
+                      </label>
+                      <input
+                        type="number"
+                        name="experience"
+                        value={doctor.experience}
+                        onChange={handleInputChange}
+                        className="block shadow-sm mt-1 border-gray-300 focus:border-blue-500 rounded-md focus:ring-blue-500 w-full"
+                        required
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        type="submit"
+                        className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white transition"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditMode(false)}
+                        className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded text-gray-800 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
 
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <EmailIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="body1">
-                  <strong>Email:</strong> {doctor.email}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <PhoneIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="body1">
-                  <strong>Contact:</strong> {doctor.contact}
-                </Typography>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <MedicalServicesIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="body1">
-                  <strong>Department:</strong> {doctor.department}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <WorkIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="body1">
-                  <strong>Experience:</strong> {doctor.experiance} years
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      <Card elevation={3}>
-        <CardContent>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              mb: 2,
-              gap: 1,
-            }}
-          >
-            <LockResetIcon color="primary" />
-            <Typography variant="h6" component="div">
-              Change Password
-            </Typography>
-          </Box>
-
-          <Divider sx={{ my: 2 }} />
-
-          <form onSubmit={handlePasswordSubmit}>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Current Password"
-              name="currentPassword"
-              type="password"
-              value={passwordData.currentPassword}
-              onChange={handlePasswordChange}
-              error={!!validationErrors.currentPassword}
-              helperText={validationErrors.currentPassword}
-              required
-            />
-
-            <TextField
-              fullWidth
-              margin="normal"
-              label="New Password"
-              name="newPassword"
-              type="password"
-              value={passwordData.newPassword}
-              onChange={handlePasswordChange}
-              error={!!validationErrors.newPassword}
-              helperText={
-                validationErrors.newPassword ||
-                "Password must be at least 8 characters long"
-              }
-              required
-            />
-
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Confirm New Password"
-              name="confirmPassword"
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={handlePasswordChange}
-              error={!!validationErrors.confirmPassword}
-              helperText={validationErrors.confirmPassword}
-              required
-            />
-
-            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={loading}
-                startIcon={
-                  loading ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : null
-                }
+            {/* Change Password */}
+            <div className="flex-1 pt-4 md:pt-0 md:pl-6 md:border-t">
+              <h2 className="mb-4 font-semibold text-gray-800 text-xl">
+                Change Password
+              </h2>
+              <form
+                onSubmit={handlePasswordChange}
+                className="space-y-4 p-4 border border-black rounded-md"
               >
-                {loading ? "Updating..." : "Update Password"}
-              </Button>
-            </Box>
-          </form>
-        </CardContent>
-      </Card>
-    </Box>
+                <div>
+                  <label className="block font-medium text-gray-700 text-sm">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 text-sm">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
+                    required
+                    minLength="6"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 text-sm">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
+                    required
+                    minLength="6"
+                  />
+                </div>
+                {passwordError && (
+                  <div className="text-red-500 text-sm">{passwordError}</div>
+                )}
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white transition"
+                >
+                  Change Password
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
-};
+}
 
 export default DoctorProfile;

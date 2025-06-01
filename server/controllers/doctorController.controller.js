@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const bcrypt = require("bcrypt");
 
 // Fetch all doctors
 function getAllDoctors(req, res) {
@@ -173,6 +174,68 @@ function doctorRegistration(req, res) {
     }
   });
 }
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, id } = req.body;
+
+    // Validate all required fields
+    if (!currentPassword || !newPassword || !id) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password, new password, and doctor ID are required",
+      });
+    }
+
+    // Fetch doctor from database
+    const doctor = await new Promise((resolve, reject) => {
+      db.query("SELECT * FROM doctor WHERE id = ?", [id], (err, results) => {
+        if (err) return reject(err);
+        if (results.length === 0) {
+          return reject(new Error("Doctor not found"));
+        }
+        resolve(results[0]);
+      });
+    });
+
+    // Compare passwords directly (no hashing)
+    if (currentPassword !== doctor.pwd) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Update password in database (store plain text)
+    await new Promise((resolve, reject) => {
+      db.query(
+        "UPDATE doctor SET pwd = ? WHERE id = ?",
+        [newPassword, id],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+
+    // Also update in users table if needed
+    await new Promise((resolve, reject) => {
+      db.query(
+        "UPDATE users SET password = ? WHERE role = 'doctor' AND reference_id = ?",
+        [newPassword, id],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error changing password",
+    });
+  }
+};
 
 // Update doctor by ID
 function updateDoctorById(req, res) {
@@ -440,4 +503,5 @@ module.exports = {
   updateDoctorById,
   deleteDoctorById,
   getDoctorsByDepartment,
+  changePassword,
 };

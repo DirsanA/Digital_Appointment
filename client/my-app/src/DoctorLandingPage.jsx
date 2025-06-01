@@ -80,7 +80,7 @@ const DoctorLandingPage = () => {
     localStorage.removeItem("doctorId");
     localStorage.removeItem("doctorName");
     localStorage.removeItem("doctorEmail");
-    navigate("/login");
+    navigate("/");
   };
 
   const toggleMenu = () => {
@@ -91,11 +91,11 @@ const DoctorLandingPage = () => {
     switch (activeContent) {
       case "appointments":
         return <AppointmentsContent />;
+      case "doctorProfile":
+        return <DoctorProfile />;
       case "patients":
         return <PatientsContent />;
       case "dashboard":
-      case "profile":
-        return <DoctorProfile />;
       default:
         return (
           <>
@@ -222,14 +222,18 @@ const DoctorLandingPage = () => {
           >
             My Appointments
           </a>
+
           <a
             href="#"
-            className={`block px-4 py-3 rounded-lg ${
-              activeContent === "patients" ? "bg-blue-100" : "hover:bg-blue-100"
+            className={`block px-4 py-3 rounded-lg text-gray-700 ${
+              activeContent === "patients"
+                ? "bg-blue-100 text-blue-700"
+                : "hover:bg-blue-50 hover:text-blue-600"
             }`}
             onClick={(e) => {
               e.preventDefault();
               setActiveContent("patients");
+              toggleMenu();
             }}
           >
             My Patients
@@ -237,12 +241,15 @@ const DoctorLandingPage = () => {
 
           <a
             href="#"
-            className={`block px-4 py-3 rounded-lg ${
-              activeContent === "profile" ? "bg-blue-100" : "hover:bg-blue-100"
+            className={`block px-4 py-3 rounded-lg text-gray-700 ${
+              activeContent === "doctorProfile"
+                ? "bg-blue-100 text-blue-700"
+                : "hover:bg-blue-50 hover:text-blue-600"
             }`}
             onClick={(e) => {
               e.preventDefault();
-              setActiveContent("profile");
+              setActiveContent("doctorProfile");
+              toggleMenu();
             }}
           >
             My Profile
@@ -372,6 +379,20 @@ const DoctorLandingPage = () => {
                 }}
               >
                 My Patients
+              </a>
+              <a
+                href="#"
+                className={`block px-4 py-3 rounded-lg text-gray-700 ${
+                  activeContent === "doctorProfile"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-blue-50 hover:text-blue-600"
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveContent("doctorProfile");
+                }}
+              >
+                My Profile
               </a>
             </nav>
           </div>
