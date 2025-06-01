@@ -4,17 +4,120 @@ import axios from "axios";
 import bgImg from "/assets/doctorBg.png";
 import AppointmentsContent from "./AppointmentsContent";
 import PatientsContent from "./PatientsContent";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { FaBell, FaTimes } from 'react-icons/fa';
 
 const DoctorLandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeContent, setActiveContent] = useState("dashboard");
+  const [showNotifications, setShowNotifications] = useState(false);
   const [doctorData, setDoctorData] = useState({
     doctorfullname: "",
     email: "",
     department: "",
     experiance: ""
   });
+  const [newAppointments, setNewAppointments] = useState([]);
+  const [lastCheckedTime, setLastCheckedTime] = useState(new Date());
   const navigate = useNavigate();
+
+  // Get read appointments from localStorage
+  const getReadAppointments = () => {
+    const readAppointments = localStorage.getItem('readAppointments');
+    return readAppointments ? JSON.parse(readAppointments) : [];
+  };
+
+  // Save read appointments to localStorage
+  const saveReadAppointments = (appointmentIds) => {
+    localStorage.setItem('readAppointments', JSON.stringify(appointmentIds));
+  };
+
+  // Function to check for new appointments
+  const checkNewAppointments = async () => {
+    try {
+      const doctorEmail = localStorage.getItem("doctorEmail");
+      const doctorName = localStorage.getItem("doctorName");
+      
+      if (!doctorEmail && !doctorName) {
+        return;
+      }
+
+      const response = await axios.get("http://localhost:5000/appointments");
+      
+      // Get the list of read appointments
+      const readAppointments = getReadAppointments();
+      
+      // Filter appointments for the current doctor that are newly created (within last 24 hours)
+      // and haven't been marked as read
+      const currentTime = new Date();
+      const recentAppointments = response.data.filter(appointment => {
+        const isForCurrentDoctor = appointment.doctorfullname === doctorName || 
+                                 appointment.doctor_email === doctorEmail;
+        const appointmentCreatedTime = new Date(appointment.createdAt || appointment.appointment_date);
+        const isWithin24Hours = (currentTime - appointmentCreatedTime) <= 24 * 60 * 60 * 1000;
+        const isUnread = !readAppointments.includes(appointment.id);
+        return isForCurrentDoctor && isWithin24Hours && isUnread;
+      });
+
+      // If there are new appointments, update state
+      if (recentAppointments.length > 0) {
+        setNewAppointments(recentAppointments);
+      }
+    } catch (error) {
+      console.error("Error checking new appointments:", error);
+    }
+  };
+
+  // Check for new appointments when component mounts
+  useEffect(() => {
+    checkNewAppointments();
+  }, []);
+
+  // Function to mark appointment as read
+  const markAsRead = (appointmentId) => {
+    // Get current read appointments
+    const readAppointments = getReadAppointments();
+    
+    // Add new appointment ID to read list
+    const updatedReadAppointments = [...readAppointments, appointmentId];
+    
+    // Save to localStorage
+    saveReadAppointments(updatedReadAppointments);
+    
+    // Update state to remove the appointment from view
+    setNewAppointments(prev => prev.filter(apt => apt.id !== appointmentId));
+  };
+
+  // Function to mark all as read
+  const markAllAsRead = () => {
+    // Get IDs of all current notifications
+    const appointmentIds = newAppointments.map(apt => apt.id);
+    
+    // Get current read appointments
+    const readAppointments = getReadAppointments();
+    
+    // Add all new appointment IDs to read list
+    const updatedReadAppointments = [...readAppointments, ...appointmentIds];
+    
+    // Save to localStorage
+    saveReadAppointments(updatedReadAppointments);
+    
+    // Clear current notifications
+    setNewAppointments([]);
+    setShowNotifications(false);
+  };
+
+  // Toggle notifications panel
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+  };
+
+  // Poll for new appointments every 30 seconds
+  useEffect(() => {
+    const pollInterval = setInterval(checkNewAppointments, 30000);
+    return () => clearInterval(pollInterval);
+  }, [lastCheckedTime]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -155,11 +258,66 @@ const DoctorLandingPage = () => {
                 </p>
                 <p className="text-gray-500 text-xs md:text-sm">All Patients</p>
               </div>
-              <div className="bg-white shadow-md p-4 md:p-6 rounded-lg text-center">
-                <p className="font-bold text-blue-600 text-2xl md:text-3xl">
-                  1
+              <div className="bg-white shadow-md p-4 md:p-6 rounded-lg text-center relative">
+                <div className="flex items-center justify-center">
+                  <button 
+                    onClick={toggleNotifications}
+                    className="relative inline-flex items-center justify-center"
+                  >
+                    <FaBell 
+                      className={`text-2xl md:text-3xl ${newAppointments.length > 0 ? 'text-blue-600 animate-bounce' : 'text-gray-400'}`}
+                    />
+                    {newAppointments.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                        {newAppointments.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <p className="mt-2 font-bold text-blue-600 text-xl md:text-2xl">
+                  {newAppointments.length}
                 </p>
-                <p className="text-gray-500 text-xs md:text-sm">New Booking</p>
+                <p className="text-gray-500 text-xs md:text-sm">New Bookings</p>
+
+                {/* Notifications Panel */}
+                {showNotifications && newAppointments.length > 0 && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                    <div className="p-3 border-b border-gray-200 flex justify-between items-center">
+                      <h3 className="font-semibold text-gray-900">New Appointments</h3>
+                      <button 
+                        onClick={markAllAsRead}
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        Mark all as read
+                      </button>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {newAppointments.map((apt, index) => (
+                        <div 
+                          key={index} 
+                          className="p-3 border-b border-gray-100 hover:bg-gray-50 relative"
+                        >
+                          <button
+                            onClick={() => markAsRead(apt.id)}
+                            className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                          >
+                            <FaTimes size={14} />
+                          </button>
+                          <p className="font-medium text-gray-900">{apt.patient_name}</p>
+                          <p className="text-sm text-gray-600">
+                            Date: {new Date(apt.appointment_date).toLocaleDateString()}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Time: {apt.appointment_time}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Department: {apt.department}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -169,6 +327,7 @@ const DoctorLandingPage = () => {
 
   return (
     <div className="relative flex md:flex-row flex-col bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
+      <ToastContainer />
       {/* Desktop Sidebar */}
       <aside className="hidden z-10 md:flex flex-col bg-white shadow-xl p-6 w-64 min-h-screen">
         <div className="text-center">
@@ -178,6 +337,7 @@ const DoctorLandingPage = () => {
           </h2>
           <p className="text-gray-500 text-sm">{doctorData.email}</p>
         </div>
+
         <button 
           onClick={handleLogout}
           className="bg-blue-600 hover:bg-blue-700 shadow-md mt-6 py-3 rounded-lg w-full font-semibold text-white text-base"
