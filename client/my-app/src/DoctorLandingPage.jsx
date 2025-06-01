@@ -4,6 +4,7 @@ import axios from "axios";
 import bgImg from "/assets/doctorBg.png";
 import AppointmentsContent from "./AppointmentsContent";
 import PatientsContent from "./PatientsContent";
+import DoctorProfile from "./DoctorProfile";
 
 const DoctorLandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,7 +13,7 @@ const DoctorLandingPage = () => {
     doctorfullname: "",
     email: "",
     department: "",
-    experiance: ""
+    experiance: "",
   });
   const navigate = useNavigate();
 
@@ -31,26 +32,31 @@ const DoctorLandingPage = () => {
           throw new Error("Doctor ID not found");
         }
 
-        const response = await axios.get(`http://localhost:5000/admin/doctors/${doctorId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
+        const response = await axios.get(
+          `http://localhost:5000/admin/doctors/${doctorId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         if (response.data.success) {
           const doctorDetails = response.data.doctor;
           setDoctorData({
             doctorfullname: doctorDetails.doctorfullname,
             email: doctorDetails.email,
             department: doctorDetails.department,
-            experiance: doctorDetails.experiance
+            experiance: doctorDetails.experiance,
           });
-          
+
           // Store doctor's name and email in localStorage
           localStorage.setItem("doctorName", doctorDetails.doctorfullname);
           localStorage.setItem("doctorEmail", doctorDetails.email);
         } else {
-          throw new Error(response.data.message || "Failed to fetch doctor details");
+          throw new Error(
+            response.data.message || "Failed to fetch doctor details"
+          );
         }
       } catch (error) {
         console.error("Error fetching doctor details:", error);
@@ -88,6 +94,8 @@ const DoctorLandingPage = () => {
       case "patients":
         return <PatientsContent />;
       case "dashboard":
+      case "profile":
+        return <DoctorProfile />;
       default:
         return (
           <>
@@ -117,11 +125,12 @@ const DoctorLandingPage = () => {
                   <h2 className="font-semibold text-gray-800 text-xl md:text-2xl">
                     Welcome Dr. {doctorData.doctorfullname}!
                   </h2>
-                  <p className="text-gray-600 text-sm md:text-base mt-2">
+                  <p className="mt-2 text-gray-600 text-sm md:text-base">
                     {doctorData.email}
                   </p>
                   <p className="text-gray-600 text-sm md:text-base">
-                    {doctorData.department} Department • {doctorData.experiance} Years Experience
+                    {doctorData.department} Department • {doctorData.experiance}{" "}
+                    Years Experience
                   </p>
                   <div className="flex space-x-3 mt-3 md:mt-4">
                     <button
@@ -178,7 +187,7 @@ const DoctorLandingPage = () => {
           </h2>
           <p className="text-gray-500 text-sm">{doctorData.email}</p>
         </div>
-        <button 
+        <button
           onClick={handleLogout}
           className="bg-blue-600 hover:bg-blue-700 shadow-md mt-6 py-3 rounded-lg w-full font-semibold text-white text-base"
         >
@@ -224,6 +233,19 @@ const DoctorLandingPage = () => {
             }}
           >
             My Patients
+          </a>
+
+          <a
+            href="#"
+            className={`block px-4 py-3 rounded-lg ${
+              activeContent === "profile" ? "bg-blue-100" : "hover:bg-blue-100"
+            }`}
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveContent("profile");
+            }}
+          >
+            My Profile
           </a>
         </nav>
       </aside>
@@ -297,7 +319,7 @@ const DoctorLandingPage = () => {
             </div>
 
             {/* Logout button */}
-            <button 
+            <button
               onClick={handleLogout}
               className="bg-blue-600 hover:bg-blue-700 shadow-md mb-6 py-3 rounded-lg w-full font-semibold text-white"
             >
