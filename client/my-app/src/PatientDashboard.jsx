@@ -146,54 +146,20 @@ const PatientDashboard = () => {
         throw new Error("Patient ID not found");
       }
 
-      const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (response.data.success) {
-        const patientDetails = response.data.patient;
-        setPatientData({
-          full_name: patientDetails.full_name,
-          email: patientDetails.email,
-          phone: patientDetails.phone
+        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-        // Store email in localStorage
-        localStorage.setItem("userEmail", patientDetails.email);
-      } else {
-        throw new Error(response.data.message || "Failed to fetch patient details");
-      }
-    } catch (error) {
-      console.error("Error fetching patient details:", error);
-      if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-        localStorage.removeItem("patientId");
-        localStorage.removeItem("userEmail");
-        navigate("/patient-login");
-      }
-    }
-  };
-        const response = await axios.get(
-          `http://localhost:5000/patient/${patientId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
+        
         if (response.data.success) {
           setPatientData({
             full_name: response.data.patient.full_name,
             email: response.data.patient.email,
-            phone: response.data.patient.phone,
+            phone: response.data.patient.phone
           });
         } else {
-          throw new Error(
-            response.data.message || "Failed to fetch patient details"
-          );
+          throw new Error(response.data.message || "Failed to fetch patient details");
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
