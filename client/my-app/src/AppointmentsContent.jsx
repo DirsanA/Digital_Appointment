@@ -19,19 +19,20 @@ const AppointmentsContent = () => {
       setLoading(true);
       const doctorEmail = localStorage.getItem("doctorEmail");
       const doctorName = localStorage.getItem("doctorName");
-      
+
       if (!doctorEmail && !doctorName) {
         throw new Error("Doctor information not found");
       }
 
       const response = await axios.get("http://localhost:5000/appointments");
-      
+
       // Filter appointments for the current doctor
-      const doctorAppointments = response.data.filter(appointment => 
-        appointment.doctorfullname === doctorName || 
-        appointment.doctor_email === doctorEmail
+      const doctorAppointments = response.data.filter(
+        (appointment) =>
+          appointment.doctorfullname === doctorName ||
+          appointment.doctor_email === doctorEmail
       );
-      
+
       setPatients(doctorAppointments);
       setError(null);
     } catch (err) {
@@ -162,7 +163,7 @@ const AppointmentsContent = () => {
             </label>
             <select
               id="filter"
-              className="block bg-gray-50 py-2 pr-10 pl-3 border border-gray-300 focus:border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:text-sm text-base"
+              className="block bg-gray-50 py-2 pr-10 pl-3 border border-gray-300 focus:border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black sm:text-sm text-base"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             >
