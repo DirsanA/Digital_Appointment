@@ -22,6 +22,9 @@ const ProtectedRoute = ({ children }) => {
   if (path === '/Patient-Dashbord' && userRole !== 'patient') {
     return <Navigate to="/login" replace />;
   }
+    if (path === 'AdminDashboard' && userRole !== 'admin') {
+    return <Navigate to="/login" replace />;
+  }
 
   // Authorized and came from login, render component
   return children;

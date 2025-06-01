@@ -36,7 +36,7 @@ const App = () => {
         <Route path="/Appointments" element={<Appointments />} />
         <Route path="/Departments" element={<Departments />} />
         <Route path="/admin/getAllDoctors" element={<Doctors />} />
-        <Route path="AdminDashboard" element={<AdminDashboard />} />
+        {/* <Route path="AdminDashboard" element={<AdminDashboard />} /> */}
         <Route path="appointment" element={<AppointmentsContent />} />
         <Route path="/BookAppointment" element={<BookAppointment />} />
         <Route path="/AppointmentHistory" element={<AppointmentHistory />} />
@@ -47,6 +47,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <DoctorLandingPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="AdminDashboard"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
             </ProtectedRoute>
           }
         />
