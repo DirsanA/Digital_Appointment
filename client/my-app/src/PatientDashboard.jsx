@@ -24,6 +24,7 @@ const PatientDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [lastCheckedTime, setLastCheckedTime] = useState(new Date());
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Get read notifications from localStorage
@@ -136,16 +137,19 @@ const PatientDashboard = () => {
     setShowNotifications(!showNotifications);
   };
 
-  // Modify the fetchPatientDetails function to store email in localStorage
-  const fetchPatientDetails = async () => {
-    try {
-      const patientId = localStorage.getItem("patientId");
-      const token = localStorage.getItem("token");
-      
-      if (!patientId) {
-        throw new Error("Patient ID not found");
-      }
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const patientId = localStorage.getItem("patientId");
+    
+    // Only redirect to login if both token and patientId are missing
+    if (!token || !patientId) {
+      navigate("/patient-login");
+      return;
+    }
 
+    // Fetch patient details
+    const fetchPatientDetails = async () => {
+      try {
         const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -153,42 +157,79 @@ const PatientDashboard = () => {
         });
         
         if (response.data.success) {
+          const patientDetails = response.data.patient;
           setPatientData({
-            full_name: response.data.patient.full_name,
-            email: response.data.patient.email,
-            phone: response.data.patient.phone
+            full_name: patientDetails.full_name,
+            email: patientDetails.email,
+            phone: patientDetails.phone
           });
+          
+          // Store email in localStorage for notifications
+          localStorage.setItem("userEmail", patientDetails.email);
         } else {
-          throw new Error(response.data.message || "Failed to fetch patient details");
+          // Don't throw error for non-success response
+          console.warn("Non-success response:", response.data.message);
+          toast.error("Unable to fetch your details. Please try again later.");
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
+        // Only logout for actual authentication errors
         if (error.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("role");
-          localStorage.removeItem("patientId");
-          navigate("/patient-login");
+          handleLogout();
+        } else {
+          // For other errors, just show a toast but keep the user logged in
+          toast.error("Unable to fetch your details. Please try again later.");
         }
+      } finally {
+        setLoading(false);
       }
     };
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/patient-login");
-      return;
-    }
+    // Initialize dashboard with proper error handling
+    const initializeDashboard = async () => {
+      try {
+        await fetchPatientDetails();
+        await checkNewNotifications();
+      } catch (error) {
+        console.error("Error initializing dashboard:", error);
+        // Only logout for authentication errors
+        if (error.response?.status === 401) {
+          handleLogout();
+        }
+        setLoading(false);
+      }
+    };
 
-    // First fetch patient details
-    fetchPatientDetails().then(() => {
-      // Then check for notifications after we have the patient details
-      checkNewNotifications();
-    });
+    initializeDashboard();
 
     // Set up polling for notifications
     const pollInterval = setInterval(checkNewNotifications, 30000);
     return () => clearInterval(pollInterval);
-  }, [navigate]);
+  }, []); // Remove navigate from dependencies
+
+  const handleLogout = () => {
+    // Clear all patient-related data from localStorage
+    const itemsToClear = [
+      "token",
+      "role",
+      "patientId",
+      "userEmail",
+      "readNotifications"
+    ];
+    
+    itemsToClear.forEach(item => localStorage.removeItem(item));
+    
+    // Navigate to login page
+    navigate("/patient-login");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex bg-gray-100 h-screen">
@@ -267,14 +308,13 @@ const PatientDashboard = () => {
             </Link>
           </nav>
         </div>
-        <Link
-          to="/"
+        <button
+          onClick={handleLogout}
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
-          onClick={() => setSidebarOpen(false)}
         >
           <FaPowerOff size={20} />
           <span>Log out</span>
-        </Link>
+        </button>
       </aside>
 
       {/* Overlay for mobile sidebar */}

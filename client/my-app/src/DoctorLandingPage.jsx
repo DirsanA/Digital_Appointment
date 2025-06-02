@@ -20,7 +20,6 @@ const DoctorLandingPage = () => {
     experiance: "",
   });
   const [newAppointments, setNewAppointments] = useState([]);
-  const [lastCheckedTime, setLastCheckedTime] = useState(new Date());
   const navigate = useNavigate();
 
   // Get read appointments from localStorage
@@ -74,11 +73,6 @@ const DoctorLandingPage = () => {
     }
   };
 
-  // Check for new appointments when component mounts
-  useEffect(() => {
-    checkNewAppointments();
-  }, []);
-
   // Function to mark appointment as read
   const markAsRead = (appointmentId) => {
     // Get current read appointments
@@ -120,81 +114,180 @@ const DoctorLandingPage = () => {
     setShowNotifications(!showNotifications);
   };
 
-  // Poll for new appointments every 30 seconds
   useEffect(() => {
-    const pollInterval = setInterval(checkNewAppointments, 30000);
-    return () => clearInterval(pollInterval);
-  }, [lastCheckedTime]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    // Fetch doctor details
-    const fetchDoctorDetails = async () => {
+    const initializeDoctorDashboard = async () => {
       try {
+        const token = localStorage.getItem("token");
         const doctorId = localStorage.getItem("doctorId");
-        if (!doctorId) {
-          throw new Error("Doctor ID not found");
-        }
-
-        const response = await axios.get(
-          `http://localhost:5000/admin/doctors/${doctorId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (response.data.success) {
-          const doctorDetails = response.data.doctor;
-          setDoctorData({
-            doctorfullname: doctorDetails.doctorfullname,
-            email: doctorDetails.email,
-            department: doctorDetails.department,
-            experiance: doctorDetails.experiance,
-          });
-
-          // Store doctor's name and email in localStorage
-          localStorage.setItem("doctorName", doctorDetails.doctorfullname);
-          localStorage.setItem("doctorEmail", doctorDetails.email);
-        } else {
-          throw new Error(
-            response.data.message || "Failed to fetch doctor details"
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching doctor details:", error);
-        if (error.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("role");
-          localStorage.removeItem("doctorId");
-          localStorage.removeItem("doctorName");
-          localStorage.removeItem("doctorEmail");
+        const role = localStorage.getItem("role");
+        
+        // Check for authentication
+        if (!token || !doctorId || role !== "doctor") {
           navigate("/login");
+          return;
         }
+
+        // Get the last active content from localStorage or default to dashboard
+        const savedContent = localStorage.getItem("doctorActiveContent") || "dashboard";
+        setActiveContent(savedContent);
+
+        // Initialize doctor data
+        const doctorEmail = localStorage.getItem("doctorEmail");
+        const doctorName = localStorage.getItem("doctorName");
+        const department = localStorage.getItem("department");
+        const experiance = localStorage.getItem("experiance");
+
+        // If we have cached data, use it
+        if (doctorEmail && doctorName) {
+          setDoctorData({
+            doctorfullname: doctorName,
+            email: doctorEmail,
+            department: department || "",
+            experiance: experiance || "",
+          });
+        } else {
+          // Fetch doctor details if not in cache
+          const response = await axios.get(
+            `http://localhost:5000/admin/doctors/${doctorId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.data.success) {
+            const doctorDetails = response.data.doctor;
+            setDoctorData({
+              doctorfullname: doctorDetails.doctorfullname,
+              email: doctorDetails.email,
+              department: doctorDetails.department,
+              experiance: doctorDetails.experiance,
+            });
+
+            // Cache the doctor's details
+            localStorage.setItem("doctorName", doctorDetails.doctorfullname);
+            localStorage.setItem("doctorEmail", doctorDetails.email);
+            localStorage.setItem("department", doctorDetails.department);
+            localStorage.setItem("experiance", doctorDetails.experiance);
+          }
+        }
+
+        // Check for new appointments
+        await checkNewAppointments();
+      } catch (error) {
+        console.error("Error initializing dashboard:", error);
+        // For API errors, just show error but don't logout
+        toast.error("Error loading data. Redirecting to dashboard.");
+        setActiveContent("dashboard");
       }
     };
 
-    fetchDoctorDetails();
-  }, [navigate]);
+    initializeDoctorDashboard();
+
+    // Set up polling for new appointments
+    const pollInterval = setInterval(checkNewAppointments, 30000);
+    return () => clearInterval(pollInterval);
+  }, []); // Remove navigate dependency
+
+  // Save active content to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("doctorActiveContent", activeContent);
+  }, [activeContent]);
+
+  const handleContentChange = (newContent) => {
+    if (activeContent !== newContent) {
+      setActiveContent(newContent);
+      // Save the new active content
+      localStorage.setItem("doctorActiveContent", newContent);
+    }
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("doctorId");
-    localStorage.removeItem("doctorName");
-    localStorage.removeItem("doctorEmail");
-    navigate("/");
+    // Clear all doctor-related data
+    const itemsToClear = [
+      "token",
+      "role",
+      "doctorId",
+      "doctorName",
+      "doctorEmail",
+      "department",
+      "experiance",
+      "readAppointments",
+      "doctorActiveContent" // Clear the active content as well
+    ];
+    
+    itemsToClear.forEach(item => localStorage.removeItem(item));
+    navigate("/login");
   };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  // Modified navigation links to use handleContentChange
+  const renderNavLinks = () => (
+    <nav className="space-y-3 mt-8 text-gray-700">
+      <a
+        href="#"
+        className={`block px-4 py-3 rounded-lg font-medium ${
+          activeContent === "dashboard"
+            ? "bg-blue-100"
+            : "hover:bg-blue-100"
+        }`}
+        onClick={(e) => {
+          e.preventDefault();
+          handleContentChange("dashboard");
+        }}
+      >
+        Dashboard
+      </a>
+      <a
+        href="#"
+        className={`block px-4 py-3 rounded-lg ${
+          activeContent === "appointments"
+            ? "bg-blue-100"
+            : "hover:bg-blue-100"
+        }`}
+        onClick={(e) => {
+          e.preventDefault();
+          handleContentChange("appointments");
+        }}
+      >
+        My Appointments
+      </a>
+      <a
+        href="#"
+        className={`block px-4 py-3 rounded-lg text-gray-700 ${
+          activeContent === "patients"
+            ? "bg-blue-100 text-blue-700"
+            : "hover:bg-blue-50 hover:text-blue-600"
+        }`}
+        onClick={(e) => {
+          e.preventDefault();
+          handleContentChange("patients");
+          toggleMenu();
+        }}
+      >
+        My Patients
+      </a>
+      <a
+        href="#"
+        className={`block px-4 py-3 rounded-lg text-gray-700 ${
+          activeContent === "doctorProfile"
+            ? "bg-blue-100 text-blue-700"
+            : "hover:bg-blue-50 hover:text-blue-600"
+        }`}
+        onClick={(e) => {
+          e.preventDefault();
+          handleContentChange("doctorProfile");
+          toggleMenu();
+        }}
+      >
+        My Profile
+      </a>
+    </nav>
+  );
 
   const renderContent = () => {
     switch (activeContent) {
@@ -370,68 +463,7 @@ const DoctorLandingPage = () => {
         >
           Log out
         </button>
-        <nav className="space-y-3 mt-8 text-gray-700">
-          <a
-            href="#"
-            className={`block px-4 py-3 rounded-lg font-medium ${
-              activeContent === "dashboard"
-                ? "bg-blue-100"
-                : "hover:bg-blue-100"
-            }`}
-            onClick={(e) => {
-              e.preventDefault();
-              setActiveContent("dashboard");
-            }}
-          >
-            Dashboard
-          </a>
-          <a
-            href="#"
-            className={`block px-4 py-3 rounded-lg ${
-              activeContent === "appointments"
-                ? "bg-blue-100"
-                : "hover:bg-blue-100"
-            }`}
-            onClick={(e) => {
-              e.preventDefault();
-              setActiveContent("appointments");
-            }}
-          >
-            My Appointments
-          </a>
-
-          <a
-            href="#"
-            className={`block px-4 py-3 rounded-lg text-gray-700 ${
-              activeContent === "patients"
-                ? "bg-blue-100 text-blue-700"
-                : "hover:bg-blue-50 hover:text-blue-600"
-            }`}
-            onClick={(e) => {
-              e.preventDefault();
-              setActiveContent("patients");
-              toggleMenu();
-            }}
-          >
-            My Patients
-          </a>
-
-          <a
-            href="#"
-            className={`block px-4 py-3 rounded-lg text-gray-700 ${
-              activeContent === "doctorProfile"
-                ? "bg-blue-100 text-blue-700"
-                : "hover:bg-blue-50 hover:text-blue-600"
-            }`}
-            onClick={(e) => {
-              e.preventDefault();
-              setActiveContent("doctorProfile");
-              toggleMenu();
-            }}
-          >
-            My Profile
-          </a>
-        </nav>
+        {renderNavLinks()}
       </aside>
 
       {/* Mobile Header with toggle button on the right */}
