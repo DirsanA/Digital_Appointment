@@ -31,7 +31,9 @@ const AppointmentHistory = () => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/admin/getAllDepartments");
+        const response = await axios.get(
+          "http://localhost:5000/admin/getAllDepartments"
+        );
         if (response.data.success) {
           setDepartments(response.data.departments);
         }
@@ -47,11 +49,13 @@ const AppointmentHistory = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/admin/getAllDoctors");
+        const response = await axios.get(
+          "http://localhost:5000/admin/getAllDoctors"
+        );
         if (response.data.success) {
-          const doctorsData = response.data.doctors.map(doctor => ({
+          const doctorsData = response.data.doctors.map((doctor) => ({
             id: doctor.id,
-            name: doctor.doctorfullname // Use doctorfullname consistently
+            name: doctor.doctorfullname, // Use doctorfullname consistently
           }));
           console.log("Fetched doctors:", doctorsData); // For debugging
           setDoctors(doctorsData);
@@ -79,16 +83,21 @@ const AppointmentHistory = () => {
           throw new Error("Patient ID not found");
         }
 
-        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
+        const response = await axios.get(
+          `http://localhost:5000/patient/${patientId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         if (response.data.success) {
           setPatientName(response.data.patient.full_name);
         } else {
-          throw new Error(response.data.message || "Failed to fetch patient details");
+          throw new Error(
+            response.data.message || "Failed to fetch patient details"
+          );
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
@@ -114,7 +123,9 @@ const AppointmentHistory = () => {
           throw new Error("User email not found");
         }
 
-        const response = await axios.get(`http://localhost:5000/appointments?patient_email=${userEmail}`);
+        const response = await axios.get(
+          `http://localhost:5000/appointments?patient_email=${userEmail}`
+        );
         const formattedAppointments = response.data.map((appt) => ({
           id: appt.id,
           patientName: appt.patient_name,
@@ -294,7 +305,9 @@ const AppointmentHistory = () => {
       <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
         <div className="flex items-center">
           <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
-          <h1 className="font-bold text-blue-600 text-lg">{patientName || "Loading..."}</h1>
+          <h1 className="font-bold text-blue-600 text-lg">
+            {patientName || "Loading..."}
+          </h1>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -350,7 +363,7 @@ const AppointmentHistory = () => {
           </nav>
         </div>
         <Link
-          to="/logout"
+          to="/"
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
           onClick={() => setSidebarOpen(false)}
         >
