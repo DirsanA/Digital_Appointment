@@ -1,11 +1,14 @@
-import React from "react";
-import { FaClock, FaUser, FaCalendarAlt, FaSync } from "react-icons/fa";
+import React, { useState } from "react";
+import { FaClock, FaUser, FaCalendarAlt, FaSync, FaSearch, FaFilter } from "react-icons/fa";
 
 const TodayAppointments = ({
   appointments = [],
   loading = false,
   onRefresh,
 }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const formatTime = (timeString) => {
     if (!timeString) return "N/A";
     try {
@@ -18,6 +21,33 @@ const TodayAppointments = ({
       return timeString;
     }
   };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  // Filter appointments based on search term and status
+  const filteredAppointments = appointments.filter(appointment => {
+    const matchesSearch = (
+      (appointment.patient_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (appointment.doctor_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (appointment.department?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+    );
+
+    const matchesStatus = statusFilter === "all" || appointment.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -51,30 +81,6 @@ const TodayAppointments = ({
     );
   }
 
-  if (appointments.length === 0) {
-    return (
-      <div className="bg-white shadow-md mt-6 rounded-lg overflow-hidden">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="flex items-center font-semibold text-gray-800 text-xl">
-              <FaCalendarAlt className="mr-2 text-blue-600" />
-              Today's Appointments
-            </h2>
-            <button
-              onClick={onRefresh}
-              className="flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded text-blue-600 text-sm"
-            >
-              <FaSync className="mr-1" /> Refresh
-            </button>
-          </div>
-          <div className="py-8 text-gray-500 text-center">
-            No appointments scheduled for today
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-white shadow-md mt-6 rounded-lg overflow-hidden">
       <div className="p-6">
@@ -91,94 +97,145 @@ const TodayAppointments = ({
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="divide-y divide-gray-200 min-w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Patient
-                </th>
-                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Doctor
-                </th>
-                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Time
-                </th>
-                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Department
-                </th>
-                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {appointments.map((appointment) => (
-                <tr
-                  key={`${appointment.id}-${appointment.appointment_time}`}
-                  className="hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-10 h-10">
-                        <FaUser className="text-blue-600" />
-                      </div>
-                      <div className="ml-4">
-                        <div className="font-medium text-gray-900 text-sm">
-                          {appointment.patient_name || "N/A"}
+        {/* Search and Filter Section */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by patient, doctor, or department..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+              />
+              <FaSearch className="absolute left-3 top-3 text-gray-400" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <FaFilter className="text-gray-400" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="accepted">Accepted</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        {filteredAppointments.length === 0 ? (
+          <div className="py-8 text-gray-500 text-center">
+            {searchTerm || statusFilter !== "all"
+              ? "No appointments match your search criteria"
+              : "No appointments scheduled for today"}
+          </div>
+        ) : (
+          <div className="relative overflow-x-auto">
+            <div className="max-h-[600px] overflow-y-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                      Patient
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                      Doctor
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                      Department
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredAppointments.map((appointment) => (
+                    <tr
+                      key={`${appointment.id}-${appointment.appointment_time}`}
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-10 h-10">
+                            <FaUser className="text-blue-600" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="font-medium text-gray-900 text-sm">
+                              {appointment.patient_name || "N/A"}
+                            </div>
+                            <div className="text-gray-500 text-sm">
+                              ID: {appointment.patient_id || "N/A"}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-gray-900 text-sm">
+                          {appointment.doctor_name || "N/A"}
                         </div>
                         <div className="text-gray-500 text-sm">
-                          ID: {appointment.patient_id || "N/A"}
+                          {appointment.doctor_specialty || ""}
                         </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-gray-900 text-sm">
-                      {appointment.doctor_name || "N/A"}
-                    </div>
-                    <div className="text-gray-500 text-sm">
-                      {appointment.doctor_specialty || ""}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FaClock className="mr-2 text-gray-400" />
-                      <span className="font-medium text-gray-900 text-sm">
-                        {formatTime(appointment.appointment_time)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {appointment.department && (
-                      <span className="inline-flex bg-purple-100 px-2 py-1 rounded-full font-semibold text-purple-800 text-xs leading-5">
-                        {appointment.department}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        appointment.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : appointment.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : appointment.status === "cancelled"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {appointment.status
-                        ? appointment.status.charAt(0).toUpperCase() +
-                          appointment.status.slice(1).toLowerCase()
-                        : "Scheduled"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <FaCalendarAlt className="mr-2 text-gray-400" />
+                          <span className="font-medium text-gray-900 text-sm">
+                            {formatDate(appointment.appointment_date)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <FaClock className="mr-2 text-gray-400" />
+                          <span className="font-medium text-gray-900 text-sm">
+                            {formatTime(appointment.appointment_time)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {appointment.department && (
+                          <span className="inline-flex bg-purple-100 px-2 py-1 rounded-full font-semibold text-purple-800 text-xs leading-5">
+                            {appointment.department}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            appointment.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : appointment.status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : appointment.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {appointment.status
+                            ? appointment.status.charAt(0).toUpperCase() +
+                              appointment.status.slice(1).toLowerCase()
+                            : "Scheduled"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

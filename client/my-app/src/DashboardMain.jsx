@@ -95,11 +95,12 @@ const DashboardMain = () => {
         stats: statsJson.data,
         statusData,
         departmentData,
-        appointments: Array.isArray(appointmentsJson) ? appointmentsJson : [],
+        appointments: appointmentsJson.success ? appointmentsJson.data : [],
         loading: false,
         error: null,
       });
     } catch (error) {
+      console.error("Dashboard data fetch error:", error);
       setDashboardData((prev) => ({
         ...prev,
         loading: false,

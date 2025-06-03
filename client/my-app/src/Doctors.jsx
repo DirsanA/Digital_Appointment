@@ -302,12 +302,10 @@ const DoctorTable = ({
 }) => {
   return (
     <div className="bg-white shadow-md p-4 rounded-lg">
-      <div className="overflow-x-auto">
-        {doctors.length === 0 ? (
-          <p className="py-4 text-center">No doctors found</p>
-        ) : (
+      <div className="relative">
+        <div className="max-h-[600px] overflow-y-auto">
           <table className="border border-gray-300 w-full border-collapse">
-            <thead className="bg-gray-200">
+            <thead className="bg-gray-200 sticky top-0 z-10">
               <tr>
                 <th className="p-2 border">Photo</th>
                 <th className="p-2 border">Doctor Name</th>
@@ -321,151 +319,152 @@ const DoctorTable = ({
             </thead>
 
             <tbody>
-              {doctors.map((doctor) => (
-                <tr key={doctor.id} className="hover:bg-gray-100">
-                  <td className="p-2 border text-center">
-                    {doctor.photo ? (
-                      <img
-                        src={doctor.photo}
-                        alt="Doctor"
-                        className="mx-auto rounded-full w-12 h-12 object-cover"
-                      />
-                    ) : (
-                      <div className="flex justify-center items-center bg-gray-300 mx-auto rounded-full w-12 h-12 text-white">
-                        N/A
-                      </div>
-                    )}
-                  </td>
-
-                  {/* ✅ doctorfullname fix */}
-                  <td className="p-2 border">
-                    {editingId === doctor.id ? (
-                      <input
-                        name="doctorfullname"
-                        value={editFormData.doctorfullname}
-                        onChange={handleEditChange}
-                        className="px-2 py-1 border rounded w-full"
-                      />
-                    ) : (
-                      doctor.doctorfullname
-                    )}
-                  </td>
-
-                  <td className="p-2 border">••••••</td>
-
-                  {/* ✅ email fix */}
-                  <td className="p-2 border">
-                    {editingId === doctor.id ? (
-                      <input
-                        name="email"
-                        value={editFormData.email}
-                        onChange={handleEditChange}
-                        className="px-2 py-1 border rounded w-full"
-                      />
-                    ) : (
-                      doctor.email
-                    )}
-                  </td>
-
-                  <td className="p-2 border">
-                    {editingId === doctor.id ? (
-                      <input
-                        name="department"
-                        value={editFormData.department}
-                        onChange={handleEditChange}
-                        className="px-2 py-1 border rounded w-full"
-                      />
-                    ) : (
-                      doctor.department
-                    )}
-                  </td>
-
-                  <td className="p-2 border">
-                    {editingId === doctor.id ? (
-                      <input
-                        name="contact"
-                        value={editFormData.contact}
-                        onChange={handleEditChange}
-                        className="px-2 py-1 border rounded w-full"
-                      />
-                    ) : (
-                      doctor.contact
-                    )}
-                  </td>
-
-                  <td className="p-2 border">
-                    {editingId === doctor.id ? (
-                      <input
-                        name="experiance"
-                        value={editFormData.experiance}
-                        onChange={handleEditChange}
-                        className="px-2 py-1 border rounded w-full"
-                      />
-                    ) : (
-                      doctor.experiance
-                    )}
-                  </td>
-
-                  <td className="p-2 border text-center">
-                    {editingId === doctor.id ? (
-                      <div className="flex justify-center space-x-2">
-                        <button
-                          onClick={() => handleSaveEdit(doctor.id)}
-                          className="text-green-500 hover:text-green-700"
-                        >
-                          <FaCheck />
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <FaClose />
-                        </button>
-                      </div>
-                    ) : (
-                      <Menu
-                        as="div"
-                        className="inline-block relative text-left"
-                      >
-                        <Menu.Button className="text-gray-700 hover:text-gray-900">
-                          <FaEllipsisV />
-                        </Menu.Button>
-                        <Menu.Items className="right-0 z-10 absolute bg-white shadow-md mt-2 border border-gray-200 rounded-md w-28">
-                          <div className="p-1">
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  onClick={() => handleEdit(doctor)}
-                                  className={`flex items-center w-full px-2 py-1 text-sm ${
-                                    active ? "bg-gray-100" : ""
-                                  }`}
-                                >
-                                  <FaEdit className="mr-2" /> Edit
-                                </button>
-                              )}
-                            </Menu.Item>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  onClick={() => handleDelete(doctor.id)}
-                                  className={`flex items-center w-full px-2 py-1 text-sm text-red-500 ${
-                                    active ? "bg-red-50" : ""
-                                  }`}
-                                >
-                                  <FaTrash className="mr-2" /> Delete
-                                </button>
-                              )}
-                            </Menu.Item>
-                          </div>
-                        </Menu.Items>
-                      </Menu>
-                    )}
-                  </td>
+              {doctors.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-4 text-center">No doctors found</td>
                 </tr>
-              ))}
+              ) : (
+                doctors.map((doctor) => (
+                  <tr key={doctor.id} className="hover:bg-gray-100">
+                    <td className="p-2 border text-center">
+                      {doctor.photo ? (
+                        <img
+                          src={doctor.photo}
+                          alt="Doctor"
+                          className="mx-auto rounded-full w-12 h-12 object-cover"
+                        />
+                      ) : (
+                        <div className="flex justify-center items-center bg-gray-300 mx-auto rounded-full w-12 h-12 text-white">
+                          N/A
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="p-2 border">
+                      {editingId === doctor.id ? (
+                        <input
+                          name="doctorfullname"
+                          value={editFormData.doctorfullname}
+                          onChange={handleEditChange}
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        doctor.doctorfullname
+                      )}
+                    </td>
+
+                    <td className="p-2 border">••••••</td>
+
+                    <td className="p-2 border">
+                      {editingId === doctor.id ? (
+                        <input
+                          name="email"
+                          value={editFormData.email}
+                          onChange={handleEditChange}
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        doctor.email
+                      )}
+                    </td>
+
+                    <td className="p-2 border">
+                      {editingId === doctor.id ? (
+                        <input
+                          name="department"
+                          value={editFormData.department}
+                          onChange={handleEditChange}
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        doctor.department
+                      )}
+                    </td>
+
+                    <td className="p-2 border">
+                      {editingId === doctor.id ? (
+                        <input
+                          name="contact"
+                          value={editFormData.contact}
+                          onChange={handleEditChange}
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        doctor.contact
+                      )}
+                    </td>
+
+                    <td className="p-2 border">
+                      {editingId === doctor.id ? (
+                        <input
+                          name="experiance"
+                          value={editFormData.experiance}
+                          onChange={handleEditChange}
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        doctor.experiance
+                      )}
+                    </td>
+
+                    <td className="p-2 border text-center">
+                      {editingId === doctor.id ? (
+                        <div className="flex justify-center space-x-2">
+                          <button
+                            onClick={() => handleSaveEdit(doctor.id)}
+                            className="text-green-500 hover:text-green-700"
+                          >
+                            <FaCheck />
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <FaClose />
+                          </button>
+                        </div>
+                      ) : (
+                        <Menu as="div" className="inline-block relative text-left">
+                          <Menu.Button className="text-gray-700 hover:text-gray-900">
+                            <FaEllipsisV />
+                          </Menu.Button>
+                          <Menu.Items className="right-0 z-10 absolute bg-white shadow-md mt-2 border border-gray-200 rounded-md w-28">
+                            <div className="p-1">
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => handleEdit(doctor)}
+                                    className={`flex items-center w-full px-2 py-1 text-sm ${
+                                      active ? "bg-gray-100" : ""
+                                    }`}
+                                  >
+                                    <FaEdit className="mr-2" /> Edit
+                                  </button>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={() => handleDelete(doctor.id)}
+                                    className={`flex items-center w-full px-2 py-1 text-sm text-red-500 ${
+                                      active ? "bg-red-50" : ""
+                                    }`}
+                                  >
+                                    <FaTrash className="mr-2" /> Delete
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            </div>
+                          </Menu.Items>
+                        </Menu>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-        )}
+        </div>
       </div>
     </div>
   );

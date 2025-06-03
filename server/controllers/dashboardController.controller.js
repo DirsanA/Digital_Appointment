@@ -105,27 +105,49 @@ const getGraphData = async (req, res) => {
 
 const getTodayAppointments = async (req, res) => {
   try {
+    // Get today's appointments with doctor information
     const [appointments] = await db.promise().query(`
       SELECT 
-        a.id,
-        p.full_name as patient_name,
+        a.*,
         d.doctorfullname as doctor_name,
-        a.department,
-        a.appointment_time,
-        a.status
-      FROM appointments a
-      JOIN patient p ON a.id = p.id
-      JOIN doctor d ON a.doctor_id = d.id
-      WHERE DATE(a.appointment_date) = CURDATE()
-      ORDER BY a.appointment_time ASC
+        d.department as doctor_department,
+        DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as formatted_date
+      FROM 
+        appointments a
+        LEFT JOIN doctor d ON a.doctor_id = d.id
+      WHERE 
+        DATE(a.appointment_date) = CURDATE()
+      ORDER BY 
+        a.appointment_time ASC
     `);
 
-    res.json(appointments);
+    // Log for debugging
+    console.log('Today\'s appointments query executed');
+    console.log('Current date:', new Date().toISOString().split('T')[0]);
+    console.log('Number of appointments found:', appointments.length);
+
+    // Format the response
+    const formattedAppointments = appointments.map(apt => ({
+      id: apt.id,
+      patient_name: apt.patient_name,
+      doctor_name: apt.doctor_name || 'Not Assigned',
+      appointment_date: apt.formatted_date,
+      appointment_time: apt.appointment_time,
+      department: apt.doctor_department || apt.department || 'General',
+      status: apt.status || 'scheduled',
+      patient_id: apt.patient_id
+    }));
+
+    res.json({
+      success: true,
+      data: formattedAppointments
+    });
   } catch (error) {
     console.error("Error fetching today's appointments:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch today's appointments",
+      error: error.message
     });
   }
 };

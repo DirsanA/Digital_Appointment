@@ -12,6 +12,10 @@ import {
   FaBars,
   FaTimes,
   FaSearch,
+  FaPhone,
+  FaEnvelope,
+  FaClock,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 const Appointments = () => {
@@ -21,6 +25,7 @@ const Appointments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -81,6 +86,14 @@ const Appointments = () => {
         {statusText[status] || status}
       </span>
     );
+  };
+
+  const handleViewDetails = (appointment) => {
+    setSelectedAppointment(appointment);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedAppointment(null);
   };
 
   return (
@@ -168,203 +181,288 @@ const Appointments = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
-        <div className="mx-auto max-w-6xl">
-          {/* Header */}
-          <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6">
-            <div>
-              <h1 className="font-bold text-gray-900 text-2xl md:text-3xl">
-                Patient Appointments
-              </h1>
-              <p className="mt-1 text-gray-500 text-sm">
-                Manage and track all patient appointments
-              </p>
-            </div>
-
-            <div className="flex sm:flex-row flex-col gap-3 w-full md:w-auto">
-              <div className="bg-white shadow-sm px-4 py-3 border border-gray-200 rounded-lg w-full md:w-48">
-                <span className="text-gray-500 text-xs">
-                  Total Appointments
-                </span>
-                <p className="font-semibold text-gray-800 text-lg">
-                  {loading ? (
-                    <span className="block bg-gray-200 rounded w-12 h-6 animate-pulse"></span>
-                  ) : (
-                    appointments.length
-                  )}
+      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-hidden">
+        <div className="mx-auto max-w-6xl flex flex-col h-full">
+          {/* Fixed Header Section */}
+          <div className="flex-none">
+            {/* Header */}
+            <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <h1 className="font-bold text-gray-900 text-2xl md:text-3xl">
+                  Patient Appointments
+                </h1>
+                <p className="mt-1 text-gray-500 text-sm">
+                  Manage and track all patient appointments
                 </p>
               </div>
-            </div>
-          </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-100 mb-4 p-4 border-red-500 border-l-4 text-red-700">
-              <p>{error}</p>
-            </div>
-          )}
-
-          {/* Filters */}
-          <div className="bg-white shadow-sm mb-6 p-4 border border-gray-200 rounded-xl">
-            <div className="flex md:flex-row flex-col gap-4">
-              <div className="flex-1">
-                <label htmlFor="search" className="sr-only">
-                  Search
-                </label>
-                <div className="relative">
-                  <div className="left-0 absolute inset-y-0 flex items-center pl-3 pointer-events-none">
-                    <FaSearch className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    id="search"
-                    className="block bg-gray-50 py-2 pr-3 pl-10 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full text-black sm:text-sm"
-                    placeholder="Search patients..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+              <div className="flex sm:flex-row flex-col gap-3 w-full md:w-auto">
+                <div className="bg-white shadow-sm px-4 py-3 border border-gray-200 rounded-lg w-full md:w-48">
+                  <span className="text-gray-500 text-xs">
+                    Total Appointments
+                  </span>
+                  <p className="font-semibold text-gray-800 text-lg">
+                    {loading ? (
+                      <span className="block bg-gray-200 rounded w-12 h-6 animate-pulse"></span>
+                    ) : (
+                      appointments.length
+                    )}
+                  </p>
                 </div>
               </div>
-              <div className="w-full md:w-48">
-                <label htmlFor="filter" className="sr-only text-black-500">
-                  Filter by status
-                </label>
-                <select
-                  id="filter"
-                  className="block bg-gray-50 py-2 pr-10 pl-3 border border-gray-300 focus:border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black sm:text-sm text-base"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="completed">Completed</option>
-                </select>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
+                {error}
               </div>
+            )}
+
+            {/* Search and Filter Section */}
+            <div className="bg-white rounded-lg shadow-sm mb-6">
+              <div className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search by patient name, email, or phone..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value)}
+                      className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="accepted">Accepted</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Table Header */}
+            <div className="bg-white rounded-t-lg shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Patient Info
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Appointment Details
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Doctor Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+              </table>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
-            {loading ? (
-              <div className="p-6">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex space-x-4 mb-4 animate-pulse">
-                    <div className="flex-1 space-y-4 py-1">
-                      <div className="bg-gray-200 rounded w-3/4 h-4"></div>
-                      <div className="space-y-2">
-                        <div className="bg-gray-200 rounded h-4"></div>
-                        <div className="bg-gray-200 rounded w-5/6 h-4"></div>
+          {/* Scrollable Table Body */}
+          <div className="flex-1 overflow-y-auto bg-white rounded-b-lg shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading ? (
+                  [...Array(5)].map((_, index) => (
+                    <tr key={index}>
+                      <td colSpan="5" className="px-6 py-4">
+                        <div className="animate-pulse flex space-x-4">
+                          <div className="flex-1 space-y-4 py-1">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="space-y-2">
+                              <div className="h-4 bg-gray-200 rounded"></div>
+                              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : filteredAppointments.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                      No appointments found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAppointments.map((appointment) => (
+                    <tr key={appointment.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {appointment.patient_name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {appointment.patient_email}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {appointment.patient_phone}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {dayjs(appointment.appointment_date).format("MMM D, YYYY")}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {appointment.appointment_time}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {appointment.doctorfullname}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {getStatusBadge(appointment.status)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        <button
+                          className="text-blue-600 hover:text-blue-900"
+                          onClick={() => handleViewDetails(appointment)}
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Appointment Details Modal */}
+          {selectedAppointment && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Appointment Details</h2>
+                    <button
+                      onClick={handleCloseDetails}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <FaTimes size={24} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Patient Information */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FaUserCircle className="mr-2 text-blue-600" />
+                        Patient Information
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Name</p>
+                          <p className="text-base font-medium">{selectedAppointment.patient_name}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Email</p>
+                          <p className="text-base font-medium flex items-center">
+                            <FaEnvelope className="mr-2 text-gray-400" />
+                            {selectedAppointment.patient_email}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Phone</p>
+                          <p className="text-base font-medium flex items-center">
+                            <FaPhone className="mr-2 text-gray-400" />
+                            {selectedAppointment.patient_phone}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Gender</p>
+                          <p className="text-base font-medium">
+                            {selectedAppointment.patient_gender === 'M' ? 'Male' : 
+                             selectedAppointment.patient_gender === 'F' ? 'Female' : 
+                             'Not specified'}
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Appointment Information */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FaCalendarCheck className="mr-2 text-blue-600" />
+                        Appointment Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Date</p>
+                          <p className="text-base font-medium flex items-center">
+                            <FaCalendarAlt className="mr-2 text-gray-400" />
+                            {dayjs(selectedAppointment.appointment_date).format("MMM D, YYYY")}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Time</p>
+                          <p className="text-base font-medium flex items-center">
+                            <FaClock className="mr-2 text-gray-400" />
+                            {selectedAppointment.appointment_time}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Doctor</p>
+                          <p className="text-base font-medium flex items-center">
+                            <FaUserMd className="mr-2 text-gray-400" />
+                            {selectedAppointment.doctor_name}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Department</p>
+                          <p className="text-base font-medium">{selectedAppointment.department}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Status</p>
+                          <div className="mt-1">
+                            {getStatusBadge(selectedAppointment.status)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Notes or Reason */}
+                    {selectedAppointment.notes && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Notes</h3>
+                        <p className="text-gray-700">{selectedAppointment.notes}</p>
+                      </div>
+                    )}
                   </div>
-                ))}
+
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={handleCloseDetails}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
               </div>
-            ) : filteredAppointments.length === 0 ? (
-              <div className="p-8 text-center">
-                <svg
-                  className="mx-auto w-12 h-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <h3 className="mt-2 font-medium text-gray-900 text-sm">
-                  No appointments
-                </h3>
-                <p className="mt-1 text-gray-500 text-sm">
-                  {searchTerm || filter !== "all"
-                    ? "No appointments match your search criteria."
-                    : "No appointments have been scheduled yet."}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="divide-y divide-gray-200 min-w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                        Patient
-                      </th>
-                      <th className="hidden sm:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                        Department
-                      </th>
-                      <th className="hidden md:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                        Date & Time
-                      </th>
-                      <th className="hidden lg:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                        Contact
-                      </th>
-                      <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredAppointments.map((appointment) => (
-                      <tr
-                        key={appointment.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-10 h-10">
-                              <span className="font-medium text-blue-600">
-                                {appointment.patient_name
-                                  .charAt(0)
-                                  .toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="ml-4">
-                              <div className="font-medium text-gray-900 text-sm">
-                                {appointment.patient_name}
-                              </div>
-                              <div className="sm:hidden text-gray-500 text-sm">
-                                {appointment.department}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
-                          <div className="text-gray-900 text-sm">
-                            {appointment.department}
-                          </div>
-                        </td>
-                        <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                          <div className="text-gray-900 text-sm">
-                            {dayjs(appointment.appointment_date).format(
-                              "MMM D, YYYY"
-                            )}
-                          </div>
-                          <div className="text-gray-500 text-sm">
-                            {appointment.appointment_time}
-                          </div>
-                        </td>
-                        <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                          <div className="text-gray-900 text-sm">
-                            {appointment.patient_email}
-                          </div>
-                          <div className="text-gray-500 text-sm">
-                            {appointment.patient_phone}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(appointment.status)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
