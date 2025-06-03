@@ -22,6 +22,38 @@ const DoctorLandingPage = () => {
   const [newAppointments, setNewAppointments] = useState([]);
   const navigate = useNavigate();
 
+  // Function to verify token and doctor authentication
+  const verifyAuth = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const doctorId = localStorage.getItem("doctorId");
+
+      if (!token || !doctorId) {
+        throw new Error("Not authenticated");
+      }
+
+      // Verify token with backend
+      const response = await axios.get(
+        `http://localhost:5000/admin/doctors/${doctorId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.data.success) {
+        throw new Error("Invalid authentication");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Auth error:", error);
+      handleLogout();
+      return false;
+    }
+  };
+
   // Function to check for new appointments
   const checkNewAppointments = async () => {
     try {
@@ -34,53 +66,76 @@ const DoctorLandingPage = () => {
 
       const response = await axios.get("http://localhost:5000/appointments");
 
-      // Filter appointments for the current doctor that are newly created (within last 24 hours)
+      // Filter appointments for the current doctor
       const currentTime = new Date();
       const recentAppointments = response.data.filter((appointment) => {
         const isForCurrentDoctor =
           appointment.doctorfullname === doctorName ||
           appointment.doctor_email === doctorEmail;
-        const appointmentCreatedTime = new Date(
-          appointment.createdAt || appointment.appointment_date
-        );
-        const isWithin24Hours =
-          currentTime - appointmentCreatedTime <= 24 * 60 * 60 * 1000;
-        const isNew = !appointment.status || appointment.status === 'new';
-        return isForCurrentDoctor && isWithin24Hours && isNew;
+
+        // Only show pending appointments
+        const isPending = appointment.status === "pending";
+
+        // Check if appointment is from today
+        const appointmentDate = new Date(appointment.appointment_date);
+        const isToday = appointmentDate.toDateString() === currentTime.toDateString();
+
+        return isForCurrentDoctor && isPending && isToday;
       });
 
       setNewAppointments(recentAppointments);
+
     } catch (error) {
       console.error("Error checking new appointments:", error);
+      if (error.response?.status === 401) {
+        handleLogout();
+      }
     }
   };
 
   // Function to mark notification as read
   const markAsRead = async (appointmentId) => {
     try {
-      // Update appointment status to mark it as seen
+      // Update appointment status in database
       await axios.patch(
         `http://localhost:5000/appointments/${appointmentId}`,
-        { status: 'seen' }
+        { 
+          status: 'seen',
+          seen_at: new Date().toISOString()
+        }
       );
 
-      // Remove from notifications view
+      // Remove from current notifications
       setNewAppointments((prev) =>
         prev.filter((apt) => apt.id !== appointmentId)
       );
+
+      // Close panel if no more notifications
+      if (newAppointments.length <= 1) {
+        setShowNotifications(false);
+      }
+
+      toast.success("Appointment marked as seen");
     } catch (error) {
       console.error("Error marking as read:", error);
+      toast.error("Failed to update status");
+      if (error.response?.status === 401) {
+        handleLogout();
+      }
     }
   };
 
   // Function to mark all as read
   const markAllAsRead = async () => {
     try {
-      // Update all current notifications to seen status
+      // Update all appointments status in database
       const updatePromises = newAppointments.map(apt =>
         axios.patch(
           `http://localhost:5000/appointments/${apt.id}`,
-          { status: 'seen' }
+          { 
+            status: 'seen',
+            seen_at: new Date().toISOString()
+          }
         )
       );
       
@@ -89,24 +144,36 @@ const DoctorLandingPage = () => {
       // Clear notifications
       setNewAppointments([]);
       setShowNotifications(false);
+
+      toast.success("All appointments marked as seen");
     } catch (error) {
       console.error("Error marking all as read:", error);
+      toast.error("Failed to update status");
+      if (error.response?.status === 401) {
+        handleLogout();
+      }
     }
+  };
+
+  const handleLogout = () => {
+    const authItems = ["token", "role", "doctorId", "doctorName", "doctorEmail", "department"];
+    authItems.forEach(item => localStorage.removeItem(item));
+    navigate("/login");
   };
 
   useEffect(() => {
     const initializeDoctorDashboard = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const doctorId = localStorage.getItem("doctorId");
-        
-        // Check for authentication
-        if (!token || !doctorId) {
-          navigate("/login");
+        // First verify authentication
+        const isAuthenticated = await verifyAuth();
+        if (!isAuthenticated) {
           return;
         }
 
-        // Fetch doctor details using existing endpoint
+        const token = localStorage.getItem("token");
+        const doctorId = localStorage.getItem("doctorId");
+
+        // Fetch doctor details
         const response = await axios.get(
           `http://localhost:5000/admin/doctors/${doctorId}`,
           {
@@ -125,21 +192,24 @@ const DoctorLandingPage = () => {
             experiance: doctorDetails.experiance,
           });
 
-          // Store minimal data in localStorage for other components
+          // Store minimal data for API calls
           localStorage.setItem("doctorName", doctorDetails.doctorfullname);
           localStorage.setItem("doctorEmail", doctorDetails.email);
-        }
+          localStorage.setItem("department", doctorDetails.department);
 
-        // Check for new appointments
-        await checkNewAppointments();
+          // Check for new appointments
+          await checkNewAppointments();
+        } else {
+          throw new Error(response.data.message || "Failed to fetch doctor details");
+        }
       } catch (error) {
         console.error("Error initializing dashboard:", error);
-        if (error.response && error.response.status === 404) {
-          toast.error("Doctor information not found. Please login again.");
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          toast.error("Session expired. Please login again.");
+          handleLogout();
         } else {
           toast.error("Error loading data. Please try again.");
         }
-        navigate("/login");
       }
     };
 
@@ -152,13 +222,6 @@ const DoctorLandingPage = () => {
 
   const handleContentChange = (newContent) => {
     setActiveContent(newContent);
-  };
-
-  const handleLogout = () => {
-    // Clear only auth-related items from localStorage
-    const authItems = ["token", "role", "doctorId", "doctorName", "doctorEmail"];
-    authItems.forEach(item => localStorage.removeItem(item));
-    navigate("/login");
   };
 
   const toggleNotifications = () => {
@@ -333,37 +396,37 @@ const DoctorLandingPage = () => {
                       </h3>
                       <button
                         onClick={markAllAsRead}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        className="text-blue-600 hover:text-blue-800 text-sm hover:bg-blue-50 px-2 py-1 rounded"
                       >
                         Mark all as read
                       </button>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
-                      {newAppointments.map((apt, index) => (
+                      {newAppointments.map((apt) => (
                         <div
-                          key={index}
+                          key={apt.id}
                           className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
                         >
                           <button
                             onClick={() => markAsRead(apt.id)}
-                            className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
+                            className="top-2 right-2 absolute text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded"
                           >
                             <FaTimes size={14} />
                           </button>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-gray-900 pr-8">
                             {apt.patient_name}
                           </p>
                           <p className="text-gray-600 text-sm">
-                            Date:{" "}
-                            {new Date(
-                              apt.appointment_date
-                            ).toLocaleDateString()}
+                            Date: {new Date(apt.appointment_date).toLocaleDateString()}
                           </p>
                           <p className="text-gray-600 text-sm">
                             Time: {apt.appointment_time}
                           </p>
                           <p className="text-gray-600 text-sm">
                             Department: {apt.department}
+                          </p>
+                          <p className="text-gray-600 text-sm">
+                            Phone: {apt.patient_phone}
                           </p>
                         </div>
                       ))}
