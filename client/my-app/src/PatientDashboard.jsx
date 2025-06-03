@@ -139,7 +139,7 @@ const PatientDashboard = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const patientId = localStorage.getItem("patientId");
+      const patientId = localStorage.getItem("patientId");
     
     // Only redirect to login if both token and patientId are missing
     if (!token || !patientId) {
@@ -150,40 +150,40 @@ const PatientDashboard = () => {
     // Fetch patient details
     const fetchPatientDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
-        if (response.data.success) {
+      const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.data.success) {
           const patientDetails = response.data.patient;
-          setPatientData({
+        setPatientData({
             full_name: patientDetails.full_name,
             email: patientDetails.email,
             phone: patientDetails.phone
-          });
+        });
           
-          // Store email in localStorage for notifications
+        // Store email in localStorage for notifications
           localStorage.setItem("userEmail", patientDetails.email);
-        } else {
+      } else {
           // Don't throw error for non-success response
           console.warn("Non-success response:", response.data.message);
           toast.error("Unable to fetch your details. Please try again later.");
-        }
-      } catch (error) {
-        console.error("Error fetching patient details:", error);
+      }
+    } catch (error) {
+      console.error("Error fetching patient details:", error);
         // Only logout for actual authentication errors
-        if (error.response?.status === 401) {
-          handleLogout();
+      if (error.response?.status === 401) {
+        handleLogout();
         } else {
           // For other errors, just show a toast but keep the user logged in
           toast.error("Unable to fetch your details. Please try again later.");
-        }
-      } finally {
-        setLoading(false);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
     // Initialize dashboard with proper error handling
     const initializeDashboard = async () => {
@@ -194,7 +194,7 @@ const PatientDashboard = () => {
         console.error("Error initializing dashboard:", error);
         // Only logout for authentication errors
         if (error.response?.status === 401) {
-          handleLogout();
+      handleLogout();
         }
         setLoading(false);
       }
