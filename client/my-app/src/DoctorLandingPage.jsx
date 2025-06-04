@@ -20,7 +20,19 @@ const DoctorLandingPage = () => {
     experiance: "",
   });
   const [newAppointments, setNewAppointments] = useState([]);
+  const [lastCheckedTime, setLastCheckedTime] = useState(new Date());
   const navigate = useNavigate();
+
+  // Get read appointments from localStorage
+  const getReadAppointments = () => {
+    const readAppointments = localStorage.getItem('readAppointments');
+    return readAppointments ? JSON.parse(readAppointments) : [];
+  };
+
+  // Save read appointments to localStorage
+  const saveReadAppointments = (appointmentIds) => {
+    localStorage.setItem('readAppointments', JSON.stringify(appointmentIds));
+  };
 
   // Function to verify token and doctor authentication
   const verifyAuth = async () => {
@@ -66,25 +78,34 @@ const DoctorLandingPage = () => {
 
       const response = await axios.get("http://localhost:5000/appointments");
 
-      // Filter appointments for the current doctor
+      // Get the list of read appointments
+      const readAppointments = getReadAppointments();
+
+      // Filter appointments for the current doctor that are newly created
       const currentTime = new Date();
       const recentAppointments = response.data.filter((appointment) => {
         const isForCurrentDoctor =
           appointment.doctorfullname === doctorName ||
           appointment.doctor_email === doctorEmail;
-
-        // Only show pending appointments
-        const isPending = appointment.status === "pending";
-
-        // Check if appointment is from today
-        const appointmentDate = new Date(appointment.appointment_date);
-        const isToday = appointmentDate.toDateString() === currentTime.toDateString();
-
-        return isForCurrentDoctor && isPending && isToday;
+        const appointmentCreatedTime = new Date(
+          appointment.createdAt || appointment.appointment_date
+        );
+        const isWithin24Hours =
+          currentTime - appointmentCreatedTime <= 24 * 60 * 60 * 1000;
+        const isUnread = !readAppointments.includes(appointment.id);
+        
+        return isForCurrentDoctor && isWithin24Hours && isUnread;
       });
 
-      setNewAppointments(recentAppointments);
-
+      if (recentAppointments.length > 0) {
+        setNewAppointments(recentAppointments);
+        // Show toast for new appointments
+        recentAppointments.forEach(appointment => {
+          if (!readAppointments.includes(appointment.id)) {
+            toast.info(`New appointment request from ${appointment.patient_name} for ${new Date(appointment.appointment_date).toLocaleDateString()}`);
+          }
+        });
+      }
     } catch (error) {
       console.error("Error checking new appointments:", error);
       if (error.response?.status === 401) {
@@ -93,66 +114,45 @@ const DoctorLandingPage = () => {
     }
   };
 
-  // Function to mark notification as read
-  const markAsRead = async (appointmentId) => {
-    try {
-      // Update appointment status in database
-      await axios.patch(
-        `http://localhost:5000/appointments/${appointmentId}`,
-        { 
-          status: 'seen',
-          seen_at: new Date().toISOString()
-        }
-      );
+  // Function to mark appointment as read
+  const markAsRead = (appointmentId) => {
+    // Get current read appointments
+    const readAppointments = getReadAppointments();
 
-      // Remove from current notifications
-      setNewAppointments((prev) =>
-        prev.filter((apt) => apt.id !== appointmentId)
-      );
+    // Add new appointment ID to read list
+    const updatedReadAppointments = [...readAppointments, appointmentId];
 
-      // Close panel if no more notifications
-      if (newAppointments.length <= 1) {
-        setShowNotifications(false);
-      }
+    // Save to localStorage
+    saveReadAppointments(updatedReadAppointments);
 
-      toast.success("Appointment marked as seen");
-    } catch (error) {
-      console.error("Error marking as read:", error);
-      toast.error("Failed to update status");
-      if (error.response?.status === 401) {
-        handleLogout();
-      }
+    // Update state to remove the appointment from view
+    setNewAppointments((prev) =>
+      prev.filter((apt) => apt.id !== appointmentId)
+    );
+
+    // Close panel if no more notifications
+    if (newAppointments.length <= 1) {
+      setShowNotifications(false);
     }
   };
 
   // Function to mark all as read
-  const markAllAsRead = async () => {
-    try {
-      // Update all appointments status in database
-      const updatePromises = newAppointments.map(apt =>
-        axios.patch(
-          `http://localhost:5000/appointments/${apt.id}`,
-          { 
-            status: 'seen',
-            seen_at: new Date().toISOString()
-          }
-        )
-      );
-      
-      await Promise.all(updatePromises);
+  const markAllAsRead = () => {
+    // Get IDs of all current notifications
+    const appointmentIds = newAppointments.map((apt) => apt.id);
 
-      // Clear notifications
-      setNewAppointments([]);
-      setShowNotifications(false);
+    // Get current read appointments
+    const readAppointments = getReadAppointments();
 
-      toast.success("All appointments marked as seen");
-    } catch (error) {
-      console.error("Error marking all as read:", error);
-      toast.error("Failed to update status");
-      if (error.response?.status === 401) {
-        handleLogout();
-      }
-    }
+    // Add all new appointment IDs to read list
+    const updatedReadAppointments = [...readAppointments, ...appointmentIds];
+
+    // Save to localStorage
+    saveReadAppointments(updatedReadAppointments);
+
+    // Clear notifications
+    setNewAppointments([]);
+    setShowNotifications(false);
   };
 
   const handleLogout = () => {
@@ -224,7 +224,11 @@ const DoctorLandingPage = () => {
     setActiveContent(newContent);
   };
 
-  const toggleNotifications = () => {
+  const toggleNotifications = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setShowNotifications(!showNotifications);
   };
 
@@ -396,7 +400,7 @@ const DoctorLandingPage = () => {
                       </h3>
                       <button
                         onClick={markAllAsRead}
-                        className="text-blue-600 hover:text-blue-800 text-sm hover:bg-blue-50 px-2 py-1 rounded"
+                        className="text-blue-600 hover:text-blue-800 text-sm"
                       >
                         Mark all as read
                       </button>
@@ -409,11 +413,11 @@ const DoctorLandingPage = () => {
                         >
                           <button
                             onClick={() => markAsRead(apt.id)}
-                            className="top-2 right-2 absolute text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded"
+                            className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
                           >
                             <FaTimes size={14} />
                           </button>
-                          <p className="font-medium text-gray-900 pr-8">
+                          <p className="font-medium text-gray-900">
                             {apt.patient_name}
                           </p>
                           <p className="text-gray-600 text-sm">
@@ -427,6 +431,9 @@ const DoctorLandingPage = () => {
                           </p>
                           <p className="text-gray-600 text-sm">
                             Phone: {apt.patient_phone}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(apt.createdAt || apt.appointment_date).toLocaleString()}
                           </p>
                         </div>
                       ))}
