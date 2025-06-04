@@ -236,6 +236,7 @@ const PatientsContent = () => {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Roll No.</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Patient Name</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
@@ -246,6 +247,9 @@ const PatientsContent = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {patient.appointments.map((apt, aptIndex) => (
                             <tr key={aptIndex} className="hover:bg-gray-50">
+                              <td className="px-4 py-2 text-sm text-gray-900">
+                                P{String(aptIndex + 1).padStart(3, '0')}
+                              </td>
                               <td className="px-4 py-2 text-sm text-gray-900">{apt.patientName}</td>
                               <td className="px-4 py-2 text-sm text-gray-900">
                                 {new Date(apt.date).toLocaleDateString()}

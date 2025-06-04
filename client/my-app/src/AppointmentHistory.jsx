@@ -428,7 +428,8 @@ const AppointmentHistory = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
-                      <th className="p-3 rounded-l-lg text-left">Patient</th>
+                      <th className="p-3 rounded-l-lg text-left">Roll No.</th>
+                      <th className="p-3 text-left">Patient</th>
                       <th className="p-3 text-left">Department</th>
                       <th className="p-3 text-left">Doctor</th>
                       <th className="p-3 text-left">Date</th>
@@ -438,11 +439,14 @@ const AppointmentHistory = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {appointments.map((appointment) => (
+                    {appointments.map((appointment, index) => (
                       <tr
                         key={appointment.id}
                         className="hover:bg-blue-50 border-gray-200 border-b transition-colors"
                       >
+                        <td className="p-3 text-gray-700">
+                          A{String(index + 1).padStart(3, '0')}
+                        </td>
                         <td className="p-3 text-gray-700">
                           {appointment.patientName}
                         </td>

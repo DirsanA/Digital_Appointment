@@ -307,40 +307,47 @@ const DoctorTable = ({
           <table className="border border-gray-300 w-full border-collapse">
             <thead className="bg-gray-200 sticky top-0 z-10">
               <tr>
-                <th className="p-2 border">Photo</th>
-                <th className="p-2 border">Doctor Name</th>
-                <th className="p-2 border">Password</th>
-                <th className="p-2 border">Email</th>
-                <th className="p-2 border">Department</th>
-                <th className="p-2 border">Contact</th>
-                <th className="p-2 border">Experience</th>
-                <th className="p-2 border">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Roll No.
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Doctor Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Password
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Experience
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
 
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {doctors.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="p-4 text-center">No doctors found</td>
                 </tr>
               ) : (
-                doctors.map((doctor) => (
-                  <tr key={doctor.id} className="hover:bg-gray-100">
-                    <td className="p-2 border text-center">
-                      {doctor.photo ? (
-                        <img
-                          src={doctor.photo}
-                          alt="Doctor"
-                          className="mx-auto rounded-full w-12 h-12 object-cover"
-                        />
-                      ) : (
-                        <div className="flex justify-center items-center bg-gray-300 mx-auto rounded-full w-12 h-12 text-white">
-                          N/A
-                        </div>
-                      )}
+                doctors.map((doctor, index) => (
+                  <tr key={doctor.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        D{String(index + 1).padStart(3, '0')}
+                      </div>
                     </td>
-
-                    <td className="p-2 border">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
                           name="doctorfullname"
@@ -352,10 +359,8 @@ const DoctorTable = ({
                         doctor.doctorfullname
                       )}
                     </td>
-
-                    <td className="p-2 border">••••••</td>
-
-                    <td className="p-2 border">
+                    <td className="px-6 py-4 whitespace-nowrap">••••••</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
                           name="email"
@@ -367,8 +372,7 @@ const DoctorTable = ({
                         doctor.email
                       )}
                     </td>
-
-                    <td className="p-2 border">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
                           name="department"
@@ -380,8 +384,7 @@ const DoctorTable = ({
                         doctor.department
                       )}
                     </td>
-
-                    <td className="p-2 border">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
                           name="contact"
@@ -393,8 +396,7 @@ const DoctorTable = ({
                         doctor.contact
                       )}
                     </td>
-
-                    <td className="p-2 border">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
                           name="experiance"
@@ -406,8 +408,7 @@ const DoctorTable = ({
                         doctor.experiance
                       )}
                     </td>
-
-                    <td className="p-2 border text-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       {editingId === doctor.id ? (
                         <div className="flex justify-center space-x-2">
                           <button

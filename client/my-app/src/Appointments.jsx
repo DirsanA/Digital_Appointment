@@ -181,27 +181,27 @@ const Appointments = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-hidden">
-        <div className="mx-auto max-w-6xl flex flex-col h-full">
+      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-4 md:p-6 overflow-hidden min-h-screen">
+        <div className="mx-auto max-w-6xl flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-2rem)]">
           {/* Fixed Header Section */}
-          <div className="flex-none">
+          <div className="flex-none space-y-3 md:space-y-4">
             {/* Header */}
-            <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-3 md:gap-4">
               <div>
-                <h1 className="font-bold text-gray-900 text-2xl md:text-3xl">
+                <h1 className="font-bold text-gray-900 text-xl md:text-2xl lg:text-3xl">
                   Patient Appointments
                 </h1>
-                <p className="mt-1 text-gray-500 text-sm">
+                <p className="mt-1 text-gray-500 text-xs md:text-sm">
                   Manage and track all patient appointments
                 </p>
               </div>
 
-              <div className="flex sm:flex-row flex-col gap-3 w-full md:w-auto">
-                <div className="bg-white shadow-sm px-4 py-3 border border-gray-200 rounded-lg w-full md:w-48">
+              <div className="flex sm:flex-row flex-col gap-2 md:gap-3 w-full md:w-auto">
+                <div className="bg-white shadow-sm px-3 md:px-4 py-2 md:py-3 border border-gray-200 rounded-lg w-full md:w-48">
                   <span className="text-gray-500 text-xs">
                     Total Appointments
                   </span>
-                  <p className="font-semibold text-gray-800 text-lg">
+                  <p className="font-semibold text-gray-800 text-base md:text-lg">
                     {loading ? (
                       <span className="block bg-gray-200 rounded w-12 h-6 animate-pulse"></span>
                     ) : (
@@ -214,15 +214,15 @@ const Appointments = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
+              <div className="bg-red-50 text-red-600 p-3 md:p-4 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             {/* Search and Filter Section */}
-            <div className="bg-white rounded-lg shadow-sm mb-6">
-              <div className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-3 md:p-4">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                   <div className="flex-1">
                     <div className="relative">
                       <input
@@ -230,16 +230,16 @@ const Appointments = () => {
                         placeholder="Search by patient name, email, or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                       />
                       <FaSearch className="absolute left-3 top-3 text-gray-400" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center">
                     <select
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      className="w-full md:w-auto border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -251,102 +251,102 @@ const Appointments = () => {
                 </div>
               </div>
             </div>
-
-            {/* Table Header */}
-            <div className="bg-white rounded-t-lg shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Patient Info
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Appointment Details
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Doctor Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-              </table>
-            </div>
           </div>
 
-          {/* Scrollable Table Body */}
-          <div className="flex-1 overflow-y-auto bg-white rounded-b-lg shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200">
-              <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
-                  [...Array(5)].map((_, index) => (
-                    <tr key={index}>
-                      <td colSpan="5" className="px-6 py-4">
-                        <div className="animate-pulse flex space-x-4">
-                          <div className="flex-1 space-y-4 py-1">
-                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                            <div className="space-y-2">
-                              <div className="h-4 bg-gray-200 rounded"></div>
-                              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+          {/* Table Section */}
+          <div className="flex-1 bg-white shadow-md p-2 md:p-4 rounded-lg overflow-hidden mt-3 md:mt-4">
+            <div className="relative h-full">
+              <div className="overflow-auto h-full pb-16 md:pb-0">
+                <table className="border border-gray-300 w-full border-collapse">
+                  <thead className="bg-gray-200 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Roll No.
+                      </th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Patient Name
+                      </th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Appointment Details
+                      </th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Doctor Name
+                      </th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Status
+                      </th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {loading ? (
+                      [...Array(5)].map((_, index) => (
+                        <tr key={index}>
+                          <td colSpan="6" className="px-3 md:px-6 py-3 md:py-4">
+                            <div className="animate-pulse flex space-x-4">
+                              <div className="flex-1 space-y-4 py-1">
+                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div className="space-y-2">
+                                  <div className="h-4 bg-gray-200 rounded"></div>
+                                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : filteredAppointments.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No appointments found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAppointments.map((appointment) => (
-                    <tr key={appointment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {appointment.patient_name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {appointment.patient_email}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {appointment.patient_phone}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {dayjs(appointment.appointment_date).format("MMM D, YYYY")}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {appointment.appointment_time}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {appointment.doctorfullname}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {getStatusBadge(appointment.status)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        <button
-                          className="text-blue-600 hover:text-blue-900"
-                          onClick={() => handleViewDetails(appointment)}
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                          </td>
+                        </tr>
+                      ))
+                    ) : filteredAppointments.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="px-3 md:px-6 py-3 md:py-4 text-center text-gray-500">
+                          No appointments found
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredAppointments.map((appointment, index) => (
+                        <tr key={appointment.id} className="hover:bg-gray-50">
+                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                            <div className="text-xs md:text-sm text-gray-900">
+                              P{String(index + 1).padStart(3, '0')}
+                            </div>
+                          </td>
+                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                            <div className="text-xs md:text-sm font-medium text-gray-900">
+                              {appointment.patient_name}
+                            </div>
+                          </td>
+                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                            <div className="text-xs md:text-sm text-gray-900">
+                              {dayjs(appointment.appointment_date).format("MMM D, YYYY")}
+                            </div>
+                            <div className="text-xs md:text-sm text-gray-500">
+                              {appointment.appointment_time}
+                            </div>
+                          </td>
+                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                            <div className="text-xs md:text-sm text-gray-900">
+                              {appointment.doctorfullname}
+                            </div>
+                          </td>
+                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                            {getStatusBadge(appointment.status)}
+                          </td>
+                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
+                            <button
+                              onClick={() => handleViewDetails(appointment)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              View Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           {/* Appointment Details Modal */}

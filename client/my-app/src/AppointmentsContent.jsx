@@ -236,6 +236,9 @@ const AppointmentsContent = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Roll No.
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Patient
                     </th>
                     <th className="hidden sm:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
@@ -256,11 +259,16 @@ const AppointmentsContent = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPatients.map((patient) => (
+                  {filteredPatients.map((patient, index) => (
                     <tr
                       key={patient.id}
                       className="hover:bg-gray-50 transition-colors"
                     >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          P{String(index + 1).padStart(3, '0')}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-10 h-10">
