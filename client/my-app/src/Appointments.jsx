@@ -230,7 +230,7 @@ const Appointments = () => {
                         placeholder="Search by patient name, email, or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                       />
                       <FaSearch className="absolute left-3 top-3 text-gray-400" />
                     </div>
@@ -239,7 +239,7 @@ const Appointments = () => {
                     <select
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -374,25 +374,25 @@ const Appointments = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Name</p>
-                          <p className="text-base font-medium">{selectedAppointment.patient_name}</p>
+                          <p className="text-base font-medium text-gray-500">{selectedAppointment.patient_name}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Email</p>
-                          <p className="text-base font-medium flex items-center">
+                          <p className="text-base font-medium flex items-center text-gray-500">
                             <FaEnvelope className="mr-2 text-gray-400" />
                             {selectedAppointment.patient_email}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Phone</p>
-                          <p className="text-base font-medium flex items-center">
+                          <p className="text-base font-medium flex items-center text-gray-500">
                             <FaPhone className="mr-2 text-gray-400" />
                             {selectedAppointment.patient_phone}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Gender</p>
-                          <p className="text-base font-medium">
+                          <p className="text-base font-medium text-gray-500">
                             {selectedAppointment.patient_gender === 'M' ? 'Male' : 
                              selectedAppointment.patient_gender === 'F' ? 'Female' : 
                              'Not specified'}
@@ -410,28 +410,28 @@ const Appointments = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Date</p>
-                          <p className="text-base font-medium flex items-center">
+                          <p className="text-base font-medium flex items-center text-gray-500">
                             <FaCalendarAlt className="mr-2 text-gray-400" />
                             {dayjs(selectedAppointment.appointment_date).format("MMM D, YYYY")}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Time</p>
-                          <p className="text-base font-medium flex items-center">
+                          <p className="text-base font-medium flex items-center text-gray-500">
                             <FaClock className="mr-2 text-gray-400" />
                             {selectedAppointment.appointment_time}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Doctor</p>
-                          <p className="text-base font-medium flex items-center">
+                          <p className="text-base font-medium flex items-center text-gray-500">
                             <FaUserMd className="mr-2 text-gray-400" />
                             {selectedAppointment.doctor_name}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Department</p>
-                          <p className="text-base font-medium">{selectedAppointment.department}</p>
+                          <p className="text-base font-medium text-gray-500">{selectedAppointment.department}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Status</p>
