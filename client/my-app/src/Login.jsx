@@ -18,8 +18,11 @@ const Login = () => {
           localStorage.setItem("token", token);
           localStorage.setItem("role", role);
           localStorage.setItem("userEmail", email);
-          localStorage.setItem("loginTimestamp", new Date().getTime().toString());
-          
+          localStorage.setItem(
+            "loginTimestamp",
+            new Date().getTime().toString()
+          );
+
           // Store IDs based on role
           if (role === "patient" && patientId) {
             localStorage.setItem("patientId", patientId);
@@ -108,3 +111,4 @@ const Login = () => {
 };
 
 export default Login;
+// login
