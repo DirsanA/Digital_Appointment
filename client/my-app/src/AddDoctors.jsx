@@ -10,6 +10,7 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
+  FaCamera,
 } from "react-icons/fa";
 
 const AddDoctors = () => {
@@ -24,6 +25,8 @@ const AddDoctors = () => {
     contact: "",
     department: "",
     experiance: "",
+    photo: null,
+    photoPreview: "",
   });
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
@@ -40,6 +43,29 @@ const AddDoctors = () => {
     }
     fetchStats();
   }, [id]);
+
+  const fetchDoctorData = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/doctor/${id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch doctor data");
+      }
+      const data = await response.json();
+      setFormData({
+        doctor_name: data.doctorfullname || "",
+        email_id: data.email || "",
+        password: "", // Don't pre-fill password for security
+        contact: data.contact || "",
+        department: data.department || "",
+        experiance: data.experiance || "",
+        photo: null,
+        photoPreview: data.photo_url || "",
+      });
+    } catch (error) {
+      console.error("Error fetching doctor data:", error);
+      alert("Error loading doctor data");
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -69,10 +95,18 @@ const AddDoctors = () => {
   };
 
   const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
-      photo: e.target.files[0],
-    });
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({
+          ...formData,
+          photo: file,
+          photoPreview: reader.result,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -85,14 +119,19 @@ const AddDoctors = () => {
         throw new Error("Doctor name, email, and department are required");
       }
 
-      const requestData = {
-        doctorfullname: formData.doctor_name,
-        email: formData.email_id,
-        pwd: formData.password || "",
-        contact: formData.contact || "",
-        department: formData.department,
-        experiance: formData.experiance,
-      };
+      // For file uploads, we need to use FormData
+      const formDataToSend = new FormData();
+      formDataToSend.append("doctorfullname", formData.doctor_name);
+      formDataToSend.append("email", formData.email_id);
+      if (formData.password) {
+        formDataToSend.append("pwd", formData.password);
+      }
+      formDataToSend.append("contact", formData.contact);
+      formDataToSend.append("department", formData.department);
+      formDataToSend.append("experiance", formData.experiance);
+      if (formData.photo) {
+        formDataToSend.append("photo", formData.photo);
+      }
 
       const url = isEditMode
         ? `http://localhost:5000/doctor/${id}`
@@ -102,10 +141,9 @@ const AddDoctors = () => {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
+        body: formDataToSend,
+        // Don't set Content-Type header when using FormData
+        // The browser will set it automatically with the correct boundary
       });
 
       if (!response.ok) {
@@ -226,6 +264,40 @@ const AddDoctors = () => {
               className="space-y-4"
               encType="multipart/form-data"
             >
+              {/* Photo Upload */}
+              <div className="flex flex-col items-center">
+                <div className="relative mb-4">
+                  {formData.photoPreview ? (
+                    <img
+                      src={formData.photoPreview}
+                      alt="Doctor Preview"
+                      className="shadow-md border-4 border-white rounded-full w-32 h-32 object-cover"
+                    />
+                  ) : (
+                    <div className="flex justify-center items-center bg-gray-200 shadow-md border-4 border-white rounded-full w-32 h-32">
+                      <FaUserCircle className="text-gray-400 text-6xl" />
+                    </div>
+                  )}
+                  <label
+                    htmlFor="photo-upload"
+                    className="right-0 bottom-0 absolute bg-blue-500 hover:bg-blue-600 p-2 rounded-full text-white transition-all cursor-pointer"
+                  >
+                    <FaCamera />
+                    <input
+                      id="photo-upload"
+                      type="file"
+                      name="photo"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <p className="mb-4 text-gray-500 text-sm">
+                  Click on camera icon to upload photo
+                </p>
+              </div>
+
               <div>
                 <label className="block mb-1 font-medium text-gray-700 text-sm">
                   Doctor Name:
@@ -298,7 +370,7 @@ const AddDoctors = () => {
               </div>
               <div>
                 <label className="block mb-1 font-medium text-gray-700 text-sm">
-                  Experiance (years):
+                  Experience (years):
                 </label>
                 <input
                   type="number"
@@ -334,4 +406,3 @@ const AddDoctors = () => {
 };
 
 export default AddDoctors;
-// comments

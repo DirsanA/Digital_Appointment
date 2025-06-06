@@ -6,7 +6,7 @@ import AppointmentsContent from "./AppointmentsContent";
 import PatientsContent from "./PatientsContent";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaBell, FaTimes } from "react-icons/fa";
+import { FaBell, FaTimes, FaUserCircle } from "react-icons/fa";
 import DoctorProfile from "./DoctorProfile";
 
 const DoctorLandingPage = () => {
@@ -18,23 +18,21 @@ const DoctorLandingPage = () => {
     email: "",
     department: "",
     experiance: "",
+    photo_url: "",
   });
   const [newAppointments, setNewAppointments] = useState([]);
   const [lastCheckedTime, setLastCheckedTime] = useState(new Date());
   const navigate = useNavigate();
 
-  // Get read appointments from localStorage
   const getReadAppointments = () => {
-    const readAppointments = localStorage.getItem('readAppointments');
+    const readAppointments = localStorage.getItem("readAppointments");
     return readAppointments ? JSON.parse(readAppointments) : [];
   };
 
-  // Save read appointments to localStorage
   const saveReadAppointments = (appointmentIds) => {
-    localStorage.setItem('readAppointments', JSON.stringify(appointmentIds));
+    localStorage.setItem("readAppointments", JSON.stringify(appointmentIds));
   };
 
-  // Function to verify token and doctor authentication
   const verifyAuth = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -44,7 +42,6 @@ const DoctorLandingPage = () => {
         throw new Error("Not authenticated");
       }
 
-      // Verify token with backend
       const response = await axios.get(
         `http://localhost:5000/admin/doctors/${doctorId}`,
         {
@@ -66,7 +63,6 @@ const DoctorLandingPage = () => {
     }
   };
 
-  // Function to check for new appointments
   const checkNewAppointments = async () => {
     try {
       const doctorEmail = localStorage.getItem("doctorEmail");
@@ -77,11 +73,8 @@ const DoctorLandingPage = () => {
       }
 
       const response = await axios.get("http://localhost:5000/appointments");
-
-      // Get the list of read appointments
       const readAppointments = getReadAppointments();
 
-      // Filter appointments for the current doctor that are newly created
       const currentTime = new Date();
       const recentAppointments = response.data.filter((appointment) => {
         const isForCurrentDoctor =
@@ -93,16 +86,21 @@ const DoctorLandingPage = () => {
         const isWithin24Hours =
           currentTime - appointmentCreatedTime <= 24 * 60 * 60 * 1000;
         const isUnread = !readAppointments.includes(appointment.id);
-        
+
         return isForCurrentDoctor && isWithin24Hours && isUnread;
       });
 
       if (recentAppointments.length > 0) {
         setNewAppointments(recentAppointments);
-        // Show toast for new appointments
-        recentAppointments.forEach(appointment => {
+        recentAppointments.forEach((appointment) => {
           if (!readAppointments.includes(appointment.id)) {
-            toast.info(`New appointment request from ${appointment.patient_name} for ${new Date(appointment.appointment_date).toLocaleDateString()}`);
+            toast.info(
+              `New appointment request from ${
+                appointment.patient_name
+              } for ${new Date(
+                appointment.appointment_date
+              ).toLocaleDateString()}`
+            );
           }
         });
       }
@@ -114,57 +112,43 @@ const DoctorLandingPage = () => {
     }
   };
 
-  // Function to mark appointment as read
   const markAsRead = (appointmentId) => {
-    // Get current read appointments
     const readAppointments = getReadAppointments();
-
-    // Add new appointment ID to read list
     const updatedReadAppointments = [...readAppointments, appointmentId];
-
-    // Save to localStorage
     saveReadAppointments(updatedReadAppointments);
-
-    // Update state to remove the appointment from view
     setNewAppointments((prev) =>
       prev.filter((apt) => apt.id !== appointmentId)
     );
-
-    // Close panel if no more notifications
     if (newAppointments.length <= 1) {
       setShowNotifications(false);
     }
   };
 
-  // Function to mark all as read
   const markAllAsRead = () => {
-    // Get IDs of all current notifications
     const appointmentIds = newAppointments.map((apt) => apt.id);
-
-    // Get current read appointments
     const readAppointments = getReadAppointments();
-
-    // Add all new appointment IDs to read list
     const updatedReadAppointments = [...readAppointments, ...appointmentIds];
-
-    // Save to localStorage
     saveReadAppointments(updatedReadAppointments);
-
-    // Clear notifications
     setNewAppointments([]);
     setShowNotifications(false);
   };
 
   const handleLogout = () => {
-    const authItems = ["token", "role", "doctorId", "doctorName", "doctorEmail", "department"];
-    authItems.forEach(item => localStorage.removeItem(item));
+    const authItems = [
+      "token",
+      "role",
+      "doctorId",
+      "doctorName",
+      "doctorEmail",
+      "department",
+    ];
+    authItems.forEach((item) => localStorage.removeItem(item));
     navigate("/login");
   };
 
   useEffect(() => {
     const initializeDoctorDashboard = async () => {
       try {
-        // First verify authentication
         const isAuthenticated = await verifyAuth();
         if (!isAuthenticated) {
           return;
@@ -173,7 +157,6 @@ const DoctorLandingPage = () => {
         const token = localStorage.getItem("token");
         const doctorId = localStorage.getItem("doctorId");
 
-        // Fetch doctor details
         const response = await axios.get(
           `http://localhost:5000/admin/doctors/${doctorId}`,
           {
@@ -190,17 +173,18 @@ const DoctorLandingPage = () => {
             email: doctorDetails.email,
             department: doctorDetails.department,
             experiance: doctorDetails.experiance,
+            photo_url: doctorDetails.photo_url || "",
           });
 
-          // Store minimal data for API calls
           localStorage.setItem("doctorName", doctorDetails.doctorfullname);
           localStorage.setItem("doctorEmail", doctorDetails.email);
           localStorage.setItem("department", doctorDetails.department);
 
-          // Check for new appointments
           await checkNewAppointments();
         } else {
-          throw new Error(response.data.message || "Failed to fetch doctor details");
+          throw new Error(
+            response.data.message || "Failed to fetch doctor details"
+          );
         }
       } catch (error) {
         console.error("Error initializing dashboard:", error);
@@ -214,8 +198,6 @@ const DoctorLandingPage = () => {
     };
 
     initializeDoctorDashboard();
-
-    // Set up polling for new appointments
     const pollInterval = setInterval(checkNewAppointments, 30000);
     return () => clearInterval(pollInterval);
   }, [navigate]);
@@ -236,15 +218,12 @@ const DoctorLandingPage = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Modified navigation links to use handleContentChange
   const renderNavLinks = () => (
     <nav className="space-y-3 mt-8 text-gray-700">
       <a
         href="#"
         className={`block px-4 py-3 rounded-lg font-medium ${
-          activeContent === "dashboard"
-            ? "bg-blue-100"
-            : "hover:bg-blue-100"
+          activeContent === "dashboard" ? "bg-blue-100" : "hover:bg-blue-100"
         }`}
         onClick={(e) => {
           e.preventDefault();
@@ -256,9 +235,7 @@ const DoctorLandingPage = () => {
       <a
         href="#"
         className={`block px-4 py-3 rounded-lg ${
-          activeContent === "appointments"
-            ? "bg-blue-100"
-            : "hover:bg-blue-100"
+          activeContent === "appointments" ? "bg-blue-100" : "hover:bg-blue-100"
         }`}
         onClick={(e) => {
           e.preventDefault();
@@ -305,14 +282,13 @@ const DoctorLandingPage = () => {
       case "appointments":
         return <AppointmentsContent />;
       case "doctorProfile":
-        return <DoctorProfile />;
+        return <DoctorProfile doctorData={doctorData} />;
       case "patients":
         return <PatientsContent />;
       case "dashboard":
       default:
         return (
           <>
-            {/* Welcome Card with Background Image */}
             <div className="relative shadow-xl p-6 rounded-lg min-h-[200px] overflow-hidden">
               <div
                 className="z-0 absolute inset-0 bg-cover bg-center"
@@ -321,7 +297,7 @@ const DoctorLandingPage = () => {
               <div className="z-0 absolute inset-0 bg-gradient-to-r from-10% from-white via-30% via-white/70 to-90% to-transparent"></div>
               <div className="z-10 relative flex md:flex-row flex-col items-center">
                 <div className="flex-1">
-                  <h2 className="font-semibold text-gray-800 text-xl md:text-2xl mb-2">
+                  <h2 className="mb-2 font-semibold text-gray-800 text-xl md:text-2xl">
                     Welcome Dr. {doctorData.doctorfullname}!
                   </h2>
                   <p className="text-gray-600 text-sm md:text-base">
@@ -331,7 +307,7 @@ const DoctorLandingPage = () => {
                     {doctorData.department} Department • {doctorData.experiance}{" "}
                     Years Experience
                   </p>
-                  <p className="text-gray-500 text-sm md:text-base mt-2">
+                  <p className="mt-2 text-gray-500 text-sm md:text-base">
                     Today's Date: {new Date().toLocaleDateString()}
                   </p>
                   <div className="flex space-x-3 mt-4">
@@ -352,7 +328,6 @@ const DoctorLandingPage = () => {
               </div>
             </div>
 
-            {/* Status Cards */}
             <div className="gap-4 md:gap-6 grid grid-cols-1 sm:grid-cols-3 mt-6 md:mt-8">
               <div className="bg-white shadow-md p-4 md:p-6 rounded-lg text-center">
                 <p className="font-bold text-blue-600 text-2xl md:text-3xl">
@@ -391,7 +366,6 @@ const DoctorLandingPage = () => {
                 </p>
                 <p className="text-gray-500 text-xs md:text-sm">New Bookings</p>
 
-                {/* Notifications Panel */}
                 {showNotifications && newAppointments.length > 0 && (
                   <div className="top-full left-1/2 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-80 -translate-x-1/2 transform">
                     <div className="flex justify-between items-center p-3 border-gray-200 border-b">
@@ -421,7 +395,10 @@ const DoctorLandingPage = () => {
                             {apt.patient_name}
                           </p>
                           <p className="text-gray-600 text-sm">
-                            Date: {new Date(apt.appointment_date).toLocaleDateString()}
+                            Date:{" "}
+                            {new Date(
+                              apt.appointment_date
+                            ).toLocaleDateString()}
                           </p>
                           <p className="text-gray-600 text-sm">
                             Time: {apt.appointment_time}
@@ -432,8 +409,10 @@ const DoctorLandingPage = () => {
                           <p className="text-gray-600 text-sm">
                             Phone: {apt.patient_phone}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(apt.createdAt || apt.appointment_date).toLocaleString()}
+                          <p className="mt-1 text-gray-500 text-xs">
+                            {new Date(
+                              apt.createdAt || apt.appointment_date
+                            ).toLocaleString()}
                           </p>
                         </div>
                       ))}
@@ -448,12 +427,22 @@ const DoctorLandingPage = () => {
   };
 
   return (
-    <div className="relative flex md:flex-row flex-col min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+    <div className="relative flex md:flex-row flex-col bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
       <ToastContainer />
-      {/* Desktop Sidebar - Made fixed */}
-      <aside className="hidden z-20 md:flex flex-col fixed left-0 top-0 bg-white shadow-xl p-6 w-64 h-screen overflow-y-auto">
+      {/* Desktop Sidebar */}
+      <aside className="hidden top-0 left-0 z-20 fixed md:flex flex-col bg-white shadow-xl p-6 w-64 h-screen overflow-y-auto">
         <div className="text-center">
-          <div className="bg-gray-300 mx-auto rounded-full w-20 h-20"></div>
+          {doctorData.photo_url ? (
+            <img
+              src={doctorData.photo_url}
+              alt={`Dr. ${doctorData.doctorfullname}`}
+              className="mx-auto border-2 border-blue-200 rounded-full w-20 h-20 object-cover"
+            />
+          ) : (
+            <div className="flex justify-center items-center bg-gray-200 mx-auto rounded-full w-20 h-20">
+              <FaUserCircle className="text-gray-400 text-4xl" />
+            </div>
+          )}
           <h2 className="mt-2 font-semibold text-gray-700 text-lg">
             Dr. {doctorData.doctorfullname}
           </h2>
@@ -469,11 +458,24 @@ const DoctorLandingPage = () => {
         {renderNavLinks()}
       </aside>
 
-      {/* Mobile Header - Made sticky */}
+      {/* Mobile Header */}
       <header className="md:hidden top-0 z-30 sticky flex justify-between items-center bg-white shadow-md p-4">
-        <h1 className="font-bold text-gray-800 text-xl">
-          {activeContent.charAt(0).toUpperCase() + activeContent.slice(1)}
-        </h1>
+        <div className="flex items-center">
+          {doctorData.photo_url ? (
+            <img
+              src={doctorData.photo_url}
+              alt={`Dr. ${doctorData.doctorfullname}`}
+              className="mr-3 rounded-full w-10 h-10 object-cover"
+            />
+          ) : (
+            <div className="flex justify-center items-center bg-gray-200 mr-3 rounded-full w-10 h-10">
+              <FaUserCircle className="text-gray-400 text-xl" />
+            </div>
+          )}
+          <h1 className="font-bold text-gray-800 text-xl">
+            {activeContent.charAt(0).toUpperCase() + activeContent.slice(1)}
+          </h1>
+        </div>
         <button
           onClick={toggleMenu}
           className="focus:outline-none text-gray-700"
@@ -495,7 +497,7 @@ const DoctorLandingPage = () => {
         </button>
       </header>
 
-      {/* Mobile Menu - Overlay */}
+      {/* Mobile Menu */}
       <div
         className={`md:hidden fixed inset-0 z-40 transition-all duration-300 ease-in-out ${
           isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
@@ -507,10 +509,19 @@ const DoctorLandingPage = () => {
         ></div>
         <div className="top-0 right-0 absolute bg-white shadow-lg w-4/5 h-full overflow-y-auto">
           <div className="flex flex-col p-4 h-full">
-            {/* Header with close button */}
             <div className="flex justify-between items-center mb-6">
               <div className="flex-1 text-center">
-                <div className="bg-gray-300 mx-auto rounded-full w-16 h-16"></div>
+                {doctorData.photo_url ? (
+                  <img
+                    src={doctorData.photo_url}
+                    alt={`Dr. ${doctorData.doctorfullname}`}
+                    className="mx-auto border-2 border-blue-200 rounded-full w-16 h-16 object-cover"
+                  />
+                ) : (
+                  <div className="flex justify-center items-center bg-gray-200 mx-auto rounded-full w-16 h-16">
+                    <FaUserCircle className="text-gray-400 text-3xl" />
+                  </div>
+                )}
                 <h2 className="mt-2 font-semibold text-gray-700">
                   Dr. {doctorData.doctorfullname}
                 </h2>
@@ -537,7 +548,6 @@ const DoctorLandingPage = () => {
               </button>
             </div>
 
-            {/* Logout button */}
             <button
               onClick={handleLogout}
               className="bg-blue-600 hover:bg-blue-700 shadow-md mb-6 py-3 rounded-lg w-full font-semibold text-white"
@@ -545,7 +555,6 @@ const DoctorLandingPage = () => {
               Log out
             </button>
 
-            {/* Navigation Links - Fixed visibility */}
             <nav className="flex-1 space-y-2">
               <a
                 href="#"
@@ -602,6 +611,7 @@ const DoctorLandingPage = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   setActiveContent("doctorProfile");
+                  toggleMenu();
                 }}
               >
                 My Profile
@@ -611,13 +621,16 @@ const DoctorLandingPage = () => {
         </div>
       </div>
 
-      {/* Main Content - Adjusted margin for fixed sidebar */}
-      <main className={`flex-1 ${isMenuOpen ? "z-20" : "z-10"} md:ml-64 min-h-screen`}>
+      {/* Main Content */}
+      <main
+        className={`flex-1 ${
+          isMenuOpen ? "z-20" : "z-10"
+        } md:ml-64 min-h-screen`}
+      >
         <div className="p-4 md:p-8">
           {activeContent === "dashboard" ? (
             <>
-              {/* Dashboard Header - Made sticky */}
-              <div className="sticky top-0 z-20 bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
+              <div className="top-0 z-20 sticky bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
                 <div className="flex md:flex-row flex-col justify-between items-start md:items-center space-y-3 md:space-y-0">
                   <h1 className="font-bold text-gray-800 text-2xl md:text-3xl">
                     Dashboard
@@ -633,16 +646,11 @@ const DoctorLandingPage = () => {
                 </div>
               </div>
 
-              {/* Rest of dashboard content */}
-              <div className="mt-6">
-                {renderContent()}
-              </div>
+              <div className="mt-6">{renderContent()}</div>
             </>
           ) : (
-            // Render other content components with sticky headers
             <div className="relative">
-              {/* Sticky header for AppointmentsContent and PatientsContent */}
-              <div className="sticky top-0 z-20 bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
+              <div className="top-0 z-20 sticky bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
                 {renderContent()}
               </div>
             </div>
