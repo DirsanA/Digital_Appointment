@@ -66,65 +66,162 @@ function getDoctorById(req, res) {
 }
 
 async function doctorRegistration(req, res) {
-  try {
-    const { doctorfullname, email, contact, pwd, department, experiance } =
-      req.body;
-    let photo_url = null;
+  const { doctorfullname, email, contact, pwd, department, experiance } =
+    req.body;
+  let photo_url = null;
+  let cloudinaryResult = null;
 
-    // Handle file upload if exists
-    if (req.file) {
-      // Using req.file since we'll use upload.single()
-      // Upload to Cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "doctor-photos",
-        width: 500,
-        height: 500,
-        crop: "fill",
-      });
-      photo_url = result.secure_url;
-    }
-
-    // Validate required fields
-    if (
-      !doctorfullname ||
-      !email ||
-      !pwd ||
-      !contact ||
-      !department ||
-      !experiance
-    ) {
-      // Delete uploaded file if validation fails
-      if (photo_url) {
-        await cloudinary.uploader.destroy(result.public_id);
-      }
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    // Insert into database
-    const [result] = await db.promise().query(
-      `INSERT INTO doctor 
-      (doctorfullname, email, contact, pwd, department, experiance, photo_url) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [doctorfullname, email, contact, pwd, department, experiance, photo_url]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: "Doctor registered successfully",
-      doctorId: result.insertId,
-      photo_url: photo_url || null,
-    });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({
+  // Validate required fields
+  if (
+    !doctorfullname ||
+    !email ||
+    !pwd ||
+    !contact ||
+    !department ||
+    !experiance
+  ) {
+    return res.status(400).json({
       success: false,
-      message: "Registration failed",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      message: "All fields are required",
     });
   }
+
+  // Start transaction
+  db.beginTransaction(async (err) => {
+    if (err) {
+      console.error("Transaction error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Database error",
+        error: err.message,
+      });
+    }
+
+    try {
+      // Check if email exists in either doctor or users table
+      const [doctorResults, userResults] = await Promise.all([
+        new Promise((resolve, reject) => {
+          db.query(
+            "SELECT * FROM doctor WHERE email = ?",
+            [email],
+            (err, results) => {
+              if (err) return reject(err);
+              resolve(results);
+            }
+          );
+        }),
+        new Promise((resolve, reject) => {
+          db.query(
+            "SELECT * FROM users WHERE email = ?",
+            [email],
+            (err, results) => {
+              if (err) return reject(err);
+              resolve(results);
+            }
+          );
+        }),
+      ]);
+
+      if (doctorResults.length > 0 || userResults.length > 0) {
+        await new Promise((resolve) => db.rollback(() => resolve()));
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists",
+        });
+      }
+
+      // Handle file upload if exists
+      if (req.file) {
+        try {
+          cloudinaryResult = await cloudinary.uploader.upload(req.file.path, {
+            folder: "doctor-photos",
+            width: 500,
+            height: 500,
+            crop: "fill",
+          });
+          photo_url = cloudinaryResult.secure_url;
+        } catch (uploadError) {
+          await new Promise((resolve) => db.rollback(() => resolve()));
+          console.error("Cloudinary upload error:", uploadError);
+          return res.status(500).json({
+            success: false,
+            message: "Failed to upload photo",
+            error: uploadError.message,
+          });
+        }
+      }
+
+      // Insert into doctor table
+      const doctorInsert = await new Promise((resolve, reject) => {
+        db.query(
+          `INSERT INTO doctor 
+          (doctorfullname, email, contact, pwd, department, experiance, photo_url)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            doctorfullname,
+            email,
+            contact,
+            pwd,
+            department,
+            experiance,
+            photo_url,
+          ],
+          (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+          }
+        );
+      });
+
+      // Insert into users table for authentication
+      await new Promise((resolve, reject) => {
+        db.query(
+          `INSERT INTO users 
+          (email, password, role, reference_id)
+          VALUES (?, ?, 'doctor', ?)`,
+          [email, pwd, doctorInsert.insertId],
+          (err) => {
+            if (err) return reject(err);
+            resolve();
+          }
+        );
+      });
+
+      // Commit transaction
+      await new Promise((resolve, reject) => {
+        db.commit((err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Doctor registered successfully",
+        doctorId: doctorInsert.insertId,
+        photo_url: photo_url || null,
+      });
+    } catch (error) {
+      // Rollback on error and clean up uploaded photo if exists
+      await new Promise((resolve) => db.rollback(() => resolve()));
+
+      if (cloudinaryResult) {
+        try {
+          await cloudinary.uploader.destroy(cloudinaryResult.public_id);
+        } catch (cleanupError) {
+          console.error("Failed to cleanup uploaded photo:", cleanupError);
+        }
+      }
+
+      console.error("Registration error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Registration failed",
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
+      });
+    }
+  });
 }
 
 const changePassword = async (req, res) => {
