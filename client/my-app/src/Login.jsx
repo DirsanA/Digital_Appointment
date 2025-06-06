@@ -18,16 +18,17 @@ const Login = () => {
           localStorage.setItem("token", token);
           localStorage.setItem("role", role);
           localStorage.setItem("userEmail", email);
-          localStorage.setItem("loginTimestamp", new Date().getTime().toString());
-          
-          // Store IDs based on role
+          localStorage.setItem(
+            "loginTimestamp",
+            new Date().getTime().toString()
+          );
+
           if (role === "patient" && patientId) {
             localStorage.setItem("patientId", patientId);
           } else if (role === "doctor" && doctorId) {
             localStorage.setItem("doctorId", doctorId);
           }
 
-          // Redirect based on role
           if (role === "admin") {
             navigate("/AdminDashboard");
           } else if (role === "doctor") {
@@ -35,7 +36,6 @@ const Login = () => {
           } else if (role === "patient") {
             navigate("/Patient-Dashbord");
           } else {
-            // fallback if role is unknown
             navigate("/dashboard");
           }
         }
@@ -102,6 +102,30 @@ const Login = () => {
             Register here
           </a>
         </p>
+
+        {/* Cool Back Home Button */}
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 shadow-md hover:shadow-xl px-4 py-2 rounded-full text-white hover:scale-105 transition duration-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 12l2-2m0 0l7-7 7 7m-7-7v18"
+              />
+            </svg>
+            Back to Home
+          </button>
+        </div>
       </div>
     </div>
   );

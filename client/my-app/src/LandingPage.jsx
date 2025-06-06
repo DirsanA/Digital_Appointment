@@ -1,12 +1,13 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from "framer-motion";
 import AboutUs from "./About";
 import Services from "./Service";
 import OurDoctors from "./OurDoctors";
 import ContactPage from "./ContactPage";
 
-const LandingPage = () => { //this is comment
+const LandingPage = () => {
+  //this is comment
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -15,7 +16,7 @@ const LandingPage = () => { //this is comment
   const servicesRef = useRef(null);
   const doctorsRef = useRef(null);
   // const appointmentRef = useRef(null);
-  const contactRef = useRef(null)
+  const contactRef = useRef(null);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -51,7 +52,7 @@ const LandingPage = () => { //this is comment
       >
         <div className="flex items-center">
           <h1 className="font-bold text-lg sm:text-xl tracking-wide">
-            <span className="text-white ">D²</span>
+            <span className="text-white">D²</span>
             <span className="hidden sm:inline"> | Hospital Appointment</span>
           </h1>
         </div>
@@ -82,13 +83,12 @@ const LandingPage = () => { //this is comment
           >
             Contact Us
           </button>
-      
+
           <div className="flex space-x-3 sm:space-x-5 ml-4">
             <button
               className="hover:bg-white px-3 sm:px-4 py-1 sm:py-2 border border-white rounded-md hover:text-black text-xs sm:text-sm transition"
               onClick={() => navigate("/patient-login")}
             >
-
               LOGIN
             </button>
             <button
@@ -207,7 +207,7 @@ const LandingPage = () => { //this is comment
           </p>
           <button
             className="bg-blue-500 hover:bg-blue-600 shadow-lg mt-6 px-8 py-3 rounded-full font-semibold text-lg transition"
-            onClick={() => scrollToSection(appointmentRef)}
+            onClick={() => navigate("/login")}
           >
             Make Appointment
           </button>
@@ -231,22 +231,22 @@ const LandingPage = () => { //this is comment
       </div>
 
       {/* Footer  */}
-      <motion.footer 
+      <motion.footer
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
-        className="bg-blue-900 text-white py-8"
+        className="bg-blue-900 py-8 text-white"
       >
-        <div className="container mx-auto px-4 text-center">
+        <div className="mx-auto px-4 text-center container">
           <div className="flex justify-center space-x-6 mb-4">
-            {['🏥', '💉', '🩺', '❤️'].map((emoji, i) => (
+            {["🏥", "💉", "🩺", "❤️"].map((emoji, i) => (
               <motion.span
                 key={i}
                 animate={{ y: [0, -5, 0] }}
-                transition={{ 
+                transition={{
                   repeat: Infinity,
                   delay: i * 0.2,
-                  duration: 2
+                  duration: 2,
                 }}
                 className="text-2xl"
               >
@@ -255,9 +255,10 @@ const LandingPage = () => { //this is comment
             ))}
           </div>
           <p className="text-blue-300">
-            © {new Date().getFullYear()} D² Hospital Appointment. All rights reserved.
+            © {new Date().getFullYear()} D² Hospital Appointment. All rights
+            reserved.
           </p>
-          <p className="text-sm text-blue-400 mt-2">
+          <p className="mt-2 text-blue-400 text-sm">
             Committed to your health and wellbeing
           </p>
         </div>

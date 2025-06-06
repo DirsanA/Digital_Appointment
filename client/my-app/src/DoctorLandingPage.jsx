@@ -25,13 +25,13 @@ const DoctorLandingPage = () => {
 
   // Get read appointments from localStorage
   const getReadAppointments = () => {
-    const readAppointments = localStorage.getItem('readAppointments');
+    const readAppointments = localStorage.getItem("readAppointments");
     return readAppointments ? JSON.parse(readAppointments) : [];
   };
 
   // Save read appointments to localStorage
   const saveReadAppointments = (appointmentIds) => {
-    localStorage.setItem('readAppointments', JSON.stringify(appointmentIds));
+    localStorage.setItem("readAppointments", JSON.stringify(appointmentIds));
   };
 
   // Function to verify token and doctor authentication
@@ -93,16 +93,22 @@ const DoctorLandingPage = () => {
         const isWithin24Hours =
           currentTime - appointmentCreatedTime <= 24 * 60 * 60 * 1000;
         const isUnread = !readAppointments.includes(appointment.id);
-        
+
         return isForCurrentDoctor && isWithin24Hours && isUnread;
       });
 
       if (recentAppointments.length > 0) {
         setNewAppointments(recentAppointments);
         // Show toast for new appointments
-        recentAppointments.forEach(appointment => {
+        recentAppointments.forEach((appointment) => {
           if (!readAppointments.includes(appointment.id)) {
-            toast.info(`New appointment request from ${appointment.patient_name} for ${new Date(appointment.appointment_date).toLocaleDateString()}`);
+            toast.info(
+              `New appointment request from ${
+                appointment.patient_name
+              } for ${new Date(
+                appointment.appointment_date
+              ).toLocaleDateString()}`
+            );
           }
         });
       }
@@ -156,9 +162,16 @@ const DoctorLandingPage = () => {
   };
 
   const handleLogout = () => {
-    const authItems = ["token", "role", "doctorId", "doctorName", "doctorEmail", "department"];
-    authItems.forEach(item => localStorage.removeItem(item));
-    navigate("/login");
+    const authItems = [
+      "token",
+      "role",
+      "doctorId",
+      "doctorName",
+      "doctorEmail",
+      "department",
+    ];
+    authItems.forEach((item) => localStorage.removeItem(item));
+    navigate("/");
   };
 
   useEffect(() => {
@@ -200,7 +213,9 @@ const DoctorLandingPage = () => {
           // Check for new appointments
           await checkNewAppointments();
         } else {
-          throw new Error(response.data.message || "Failed to fetch doctor details");
+          throw new Error(
+            response.data.message || "Failed to fetch doctor details"
+          );
         }
       } catch (error) {
         console.error("Error initializing dashboard:", error);
@@ -242,9 +257,7 @@ const DoctorLandingPage = () => {
       <a
         href="#"
         className={`block px-4 py-3 rounded-lg font-medium ${
-          activeContent === "dashboard"
-            ? "bg-blue-100"
-            : "hover:bg-blue-100"
+          activeContent === "dashboard" ? "bg-blue-100" : "hover:bg-blue-100"
         }`}
         onClick={(e) => {
           e.preventDefault();
@@ -256,9 +269,7 @@ const DoctorLandingPage = () => {
       <a
         href="#"
         className={`block px-4 py-3 rounded-lg ${
-          activeContent === "appointments"
-            ? "bg-blue-100"
-            : "hover:bg-blue-100"
+          activeContent === "appointments" ? "bg-blue-100" : "hover:bg-blue-100"
         }`}
         onClick={(e) => {
           e.preventDefault();
@@ -321,7 +332,7 @@ const DoctorLandingPage = () => {
               <div className="z-0 absolute inset-0 bg-gradient-to-r from-10% from-white via-30% via-white/70 to-90% to-transparent"></div>
               <div className="z-10 relative flex md:flex-row flex-col items-center">
                 <div className="flex-1">
-                  <h2 className="font-semibold text-gray-800 text-xl md:text-2xl mb-2">
+                  <h2 className="mb-2 font-semibold text-gray-800 text-xl md:text-2xl">
                     Welcome Dr. {doctorData.doctorfullname}!
                   </h2>
                   <p className="text-gray-600 text-sm md:text-base">
@@ -331,7 +342,7 @@ const DoctorLandingPage = () => {
                     {doctorData.department} Department • {doctorData.experiance}{" "}
                     Years Experience
                   </p>
-                  <p className="text-gray-500 text-sm md:text-base mt-2">
+                  <p className="mt-2 text-gray-500 text-sm md:text-base">
                     Today's Date: {new Date().toLocaleDateString()}
                   </p>
                   <div className="flex space-x-3 mt-4">
@@ -395,52 +406,66 @@ const DoctorLandingPage = () => {
                 {showNotifications && newAppointments.length > 0 && (
                   <>
                     {/* Overlay to prevent background scroll */}
-                    <div 
-                      className="fixed inset-0 bg-transparent z-40"
+                    <div
+                      className="z-40 fixed inset-0 bg-transparent"
                       onClick={() => setShowNotifications(false)}
                     />
-                    <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                    <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-80">
                       {/* Fixed Header */}
-                      <div className="p-2 border-b border-gray-200 flex justify-between items-center">
+                      <div className="flex justify-between items-center p-2 border-gray-200 border-b">
                         <h3 className="font-semibold text-gray-900 text-sm">
                           New Appointments
                         </h3>
                         <button
                           onClick={markAllAsRead}
-                          className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
+                          className="hover:bg-blue-50 px-2 py-1 rounded text-blue-600 hover:text-blue-800 text-xs"
                         >
                           Mark all as read
                         </button>
                       </div>
 
                       {/* Scrollable Cards Section - Height set for 2 cards */}
-                      <div className="overflow-y-auto" style={{ height: '160px' }}>
+                      <div
+                        className="overflow-y-auto"
+                        style={{ height: "160px" }}
+                      >
                         {newAppointments.map((apt) => (
                           <div
                             key={apt.id}
-                            className="p-2 border-b border-gray-100 hover:bg-gray-50 relative"
-                            style={{ height: '80px' }}
+                            className="relative hover:bg-gray-50 p-2 border-gray-100 border-b"
+                            style={{ height: "80px" }}
                           >
                             <button
                               onClick={() => markAsRead(apt.id)}
-                              className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 p-1"
+                              className="top-1 right-1 absolute p-1 text-gray-400 hover:text-gray-600"
                             >
                               <FaTimes size={12} />
                             </button>
                             <div className="pr-6">
                               <div className="flex justify-between items-start">
-                                <p className="font-medium text-gray-900 text-sm truncate max-w-[150px]">
+                                <p className="max-w-[150px] font-medium text-gray-900 text-sm truncate">
                                   {apt.patient_name}
                                 </p>
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                <span className="bg-blue-100 px-2 py-0.5 rounded-full text-blue-800 text-xs">
                                   New
                                 </span>
                               </div>
-                              <div className="grid grid-cols-2 gap-x-2 text-xs text-gray-600 mt-1">
-                                <span className="truncate">Date: {new Date(apt.appointment_date).toLocaleDateString()}</span>
-                                <span className="truncate">Time: {apt.appointment_time}</span>
-                                <span className="truncate">Dept: {apt.department}</span>
-                                <span className="truncate">Ph: {apt.patient_phone}</span>
+                              <div className="gap-x-2 grid grid-cols-2 mt-1 text-gray-600 text-xs">
+                                <span className="truncate">
+                                  Date:{" "}
+                                  {new Date(
+                                    apt.appointment_date
+                                  ).toLocaleDateString()}
+                                </span>
+                                <span className="truncate">
+                                  Time: {apt.appointment_time}
+                                </span>
+                                <span className="truncate">
+                                  Dept: {apt.department}
+                                </span>
+                                <span className="truncate">
+                                  Ph: {apt.patient_phone}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -448,10 +473,10 @@ const DoctorLandingPage = () => {
                       </div>
 
                       {/* Fixed Footer */}
-                      <div className="p-1.5 border-t border-gray-200">
-                        <button 
+                      <div className="p-1.5 border-gray-200 border-t">
+                        <button
                           onClick={() => setShowNotifications(false)}
-                          className="w-full text-center text-xs text-gray-600 hover:text-gray-800 py-1 hover:bg-gray-50 rounded"
+                          className="hover:bg-gray-50 py-1 rounded w-full text-gray-600 hover:text-gray-800 text-xs text-center"
                         >
                           Close
                         </button>
@@ -467,10 +492,10 @@ const DoctorLandingPage = () => {
   };
 
   return (
-    <div className="relative flex md:flex-row flex-col min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+    <div className="relative flex md:flex-row flex-col bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
       <ToastContainer />
       {/* Desktop Sidebar - Made fixed */}
-      <aside className="hidden z-20 md:flex flex-col fixed left-0 top-0 bg-white shadow-xl p-6 w-64 h-screen overflow-y-auto">
+      <aside className="hidden top-0 left-0 z-20 fixed md:flex flex-col bg-white shadow-xl p-6 w-64 h-screen overflow-y-auto">
         <div className="text-center">
           <div className="bg-gray-300 mx-auto rounded-full w-20 h-20"></div>
           <h2 className="mt-2 font-semibold text-gray-700 text-lg">
@@ -631,12 +656,16 @@ const DoctorLandingPage = () => {
       </div>
 
       {/* Main Content - Adjusted margin for fixed sidebar */}
-      <main className={`flex-1 ${isMenuOpen ? "z-20" : "z-10"} md:ml-64 min-h-screen`}>
+      <main
+        className={`flex-1 ${
+          isMenuOpen ? "z-20" : "z-10"
+        } md:ml-64 min-h-screen`}
+      >
         <div className="p-4 md:p-8">
           {activeContent === "dashboard" ? (
             <>
               {/* Dashboard Header - Made sticky */}
-              <div className="sticky top-0 z-20 bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
+              <div className="top-0 z-20 sticky bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
                 <div className="flex md:flex-row flex-col justify-between items-start md:items-center space-y-3 md:space-y-0">
                   <h1 className="font-bold text-gray-800 text-2xl md:text-3xl">
                     Dashboard
@@ -653,15 +682,13 @@ const DoctorLandingPage = () => {
               </div>
 
               {/* Rest of dashboard content */}
-              <div className="mt-6">
-                {renderContent()}
-              </div>
+              <div className="mt-6">{renderContent()}</div>
             </>
           ) : (
             // Render other content components with sticky headers
             <div className="relative">
               {/* Sticky header for AppointmentsContent and PatientsContent */}
-              <div className="sticky top-0 z-20 bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
+              <div className="top-0 z-20 sticky bg-gradient-to-br from-blue-50 to-gray-100 pb-4">
                 {renderContent()}
               </div>
             </div>

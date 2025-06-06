@@ -181,8 +181,8 @@ const Appointments = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-4 md:p-6 overflow-hidden min-h-screen">
-        <div className="mx-auto max-w-6xl flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-2rem)]">
+      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-4 md:p-6 min-h-screen overflow-hidden">
+        <div className="flex flex-col mx-auto max-w-6xl h-[calc(100vh-5rem)] md:h-[calc(100vh-2rem)]">
           {/* Fixed Header Section */}
           <div className="flex-none space-y-3 md:space-y-4">
             {/* Header */}
@@ -214,15 +214,15 @@ const Appointments = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 md:p-4 rounded-lg text-sm">
+              <div className="bg-red-50 p-3 md:p-4 rounded-lg text-red-600 text-sm">
                 {error}
               </div>
             )}
 
             {/* Search and Filter Section */}
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="bg-white shadow-sm rounded-lg">
               <div className="p-3 md:p-4">
-                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                <div className="flex md:flex-row flex-col gap-3 md:gap-4">
                   <div className="flex-1">
                     <div className="relative">
                       <input
@@ -230,16 +230,16 @@ const Appointments = () => {
                         placeholder="Search by patient name, email, or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        className="py-2 pr-4 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black text-sm"
                       />
-                      <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                      <FaSearch className="top-3 left-3 absolute text-gray-400" />
                     </div>
                   </div>
                   <div className="flex items-center">
                     <select
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      className="w-full md:w-auto border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto text-black text-sm"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -254,28 +254,28 @@ const Appointments = () => {
           </div>
 
           {/* Table Section */}
-          <div className="flex-1 bg-white shadow-md p-2 md:p-4 rounded-lg overflow-hidden mt-3 md:mt-4">
+          <div className="flex-1 bg-white shadow-md mt-3 md:mt-4 p-2 md:p-4 rounded-lg overflow-hidden">
             <div className="relative h-full">
-              <div className="overflow-auto h-full pb-16 md:pb-0">
+              <div className="pb-16 md:pb-0 h-full overflow-auto">
                 <table className="border border-gray-300 w-full border-collapse">
-                  <thead className="bg-gray-200 sticky top-0 z-10">
+                  <thead className="top-0 z-10 sticky bg-gray-200">
                     <tr>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Roll No.
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Patient Name
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Appointment Details
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Doctor Name
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -285,12 +285,12 @@ const Appointments = () => {
                       [...Array(5)].map((_, index) => (
                         <tr key={index}>
                           <td colSpan="6" className="px-3 md:px-6 py-3 md:py-4">
-                            <div className="animate-pulse flex space-x-4">
+                            <div className="flex space-x-4 animate-pulse">
                               <div className="flex-1 space-y-4 py-1">
-                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div className="bg-gray-200 rounded w-3/4 h-4"></div>
                                 <div className="space-y-2">
-                                  <div className="h-4 bg-gray-200 rounded"></div>
-                                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                                  <div className="bg-gray-200 rounded h-4"></div>
+                                  <div className="bg-gray-200 rounded w-5/6 h-4"></div>
                                 </div>
                               </div>
                             </div>
@@ -299,7 +299,10 @@ const Appointments = () => {
                       ))
                     ) : filteredAppointments.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="px-3 md:px-6 py-3 md:py-4 text-center text-gray-500">
+                        <td
+                          colSpan="6"
+                          className="px-3 md:px-6 py-3 md:py-4 text-gray-500 text-center"
+                        >
                           No appointments found
                         </td>
                       </tr>
@@ -307,32 +310,34 @@ const Appointments = () => {
                       filteredAppointments.map((appointment, index) => (
                         <tr key={appointment.id} className="hover:bg-gray-50">
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm text-gray-900">
-                              P{String(index + 1).padStart(3, '0')}
+                            <div className="text-gray-900 text-xs md:text-sm">
+                              P{String(index + 1).padStart(3, "0")}
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm font-medium text-gray-900">
+                            <div className="font-medium text-gray-900 text-xs md:text-sm">
                               {appointment.patient_name}
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm text-gray-900">
-                              {dayjs(appointment.appointment_date).format("MMM D, YYYY")}
+                            <div className="text-gray-900 text-xs md:text-sm">
+                              {dayjs(appointment.appointment_date).format(
+                                "MMM D, YYYY"
+                              )}
                             </div>
-                            <div className="text-xs md:text-sm text-gray-500">
+                            <div className="text-gray-500 text-xs md:text-sm">
                               {appointment.appointment_time}
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm text-gray-900">             
+                            <div className="text-gray-900 text-xs md:text-sm">
                               Dr.{appointment.doctorfullname}
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
                             {getStatusBadge(appointment.status)}
                           </td>
-                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
+                          <td className="px-3 md:px-6 py-3 md:py-4 text-gray-500 text-xs md:text-sm whitespace-nowrap">
                             <button
                               onClick={() => handleViewDetails(appointment)}
                               className="text-blue-600 hover:text-blue-900"
@@ -351,11 +356,13 @@ const Appointments = () => {
 
           {/* Appointment Details Modal */}
           {selectedAppointment && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 p-4">
+              <div className="bg-white shadow-xl rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Appointment Details</h2>
+                    <h2 className="font-bold text-gray-900 text-2xl">
+                      Appointment Details
+                    </h2>
                     <button
                       onClick={handleCloseDetails}
                       className="text-gray-500 hover:text-gray-700"
@@ -367,35 +374,39 @@ const Appointments = () => {
                   <div className="space-y-6">
                     {/* Patient Information */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
                         <FaUserCircle className="mr-2 text-blue-600" />
                         Patient Information
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                         <div>
-                          <p className="text-sm text-gray-500">Name</p>
-                          <p className="text-base font-medium text-gray-500">{selectedAppointment.patient_name}</p>
+                          <p className="text-gray-500 text-sm">Name</p>
+                          <p className="font-medium text-gray-500 text-base">
+                            {selectedAppointment.patient_name}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Email</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Email</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaEnvelope className="mr-2 text-gray-400" />
                             {selectedAppointment.patient_email}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Phone</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Phone</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaPhone className="mr-2 text-gray-400" />
                             +251{selectedAppointment.patient_phone}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Gender</p>
-                          <p className="text-base font-medium text-gray-500">
-                            {selectedAppointment.patient_gender === 'male' ? 'Male' : 
-                             selectedAppointment.patient_gender === 'female' ? 'Female' : 
-                             'Not specified'}
+                          <p className="text-gray-500 text-sm">Gender</p>
+                          <p className="font-medium text-gray-500 text-base">
+                            {selectedAppointment.patient_gender === "Male"
+                              ? "Male"
+                              : selectedAppointment.patient_gender === "Female"
+                              ? "Female"
+                              : "Not specified"}
                           </p>
                         </div>
                       </div>
@@ -403,52 +414,54 @@ const Appointments = () => {
 
                     {/* Appointment Information */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
                         <FaCalendarCheck className="mr-2 text-blue-600" />
                         Appointment Details
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                         <div>
-                          <p className="text-sm text-gray-500">Date</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Date</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaCalendarAlt className="mr-2 text-gray-400" />
-                            {dayjs(selectedAppointment.appointment_date).format("MMM D, YYYY")}
+                            {dayjs(selectedAppointment.appointment_date).format(
+                              "MMM D, YYYY"
+                            )}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Time</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Time</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaClock className="mr-2 text-gray-400" />
                             {selectedAppointment.appointment_time}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Doctor</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Doctor</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaUserMd className="mr-2 text-gray-400" />
                             Dr.{selectedAppointment.doctorfullname}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Department</p>
-                          <p className="text-base font-medium text-gray-500">{selectedAppointment.department}</p>
+                          <p className="text-gray-500 text-sm">Department</p>
+                          <p className="font-medium text-gray-500 text-base">
+                            {selectedAppointment.department}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Status</p>
+                          <p className="text-gray-500 text-sm">Status</p>
                           <div className="mt-1">
                             {getStatusBadge(selectedAppointment.status)}
                           </div>
                         </div>
                       </div>
                     </div>
-
-                
                   </div>
 
-                  <div className="mt-6 flex justify-end">
+                  <div className="flex justify-end mt-6">
                     <button
                       onClick={handleCloseDetails}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                      className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-gray-700"
                     >
                       Close
                     </button>
