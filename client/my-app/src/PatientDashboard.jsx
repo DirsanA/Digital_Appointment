@@ -308,13 +308,21 @@ const PatientDashboard = () => {
             </Link>
           </nav>
         </div>
-        <button
+           <Link
+              to="/"
+              className="flex items-center space-x-2 text-red-700 hover:text-red-500"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FaHistory size={20} />
+              <span>log out</span>
+            </Link>
+        {/* <button
           onClick={handleLogout}
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
         >
           <FaPowerOff size={20} />
           <span>Log out</span>
-        </button>
+        </button> */}
       </aside>
 
       {/* Overlay for mobile sidebar */}

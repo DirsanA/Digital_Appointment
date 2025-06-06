@@ -30,11 +30,12 @@ const Doctors = () => {
   const [doctorName, setDoctorName] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({
-    doctor_name: "",
-    email_id: "",
+    doctorfullname: "",
+    email: "",
     department: "",
     contact: "",
     experiance: "",
+    pwd: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -49,14 +50,21 @@ const Doctors = () => {
         if (!response.ok) throw new Error("Failed to fetch doctor data");
 
         const data = await response.json();
-        // Handle both array and object response formats
-        const doctorsData = Array.isArray(data) ? data : data.doctors || [];
+        // Handle different response structures
+        let doctorsData = [];
+        if (Array.isArray(data)) {
+          doctorsData = data;
+        } else if (data.doctors && Array.isArray(data.doctors)) {
+          doctorsData = data.doctors;
+        } else if (data.data && Array.isArray(data.data)) {
+          doctorsData = data.data;
+        }
 
         setDoctors(doctorsData);
         setFilteredDoctors(doctorsData);
         setStats((prev) => ({ ...prev, totalDoctors: doctorsData.length }));
       } catch (err) {
-        setError("Failed to fetch doctors data");
+        setError(err.message || "Failed to fetch doctors data");
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -68,10 +76,20 @@ const Doctors = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (!doctorName.trim()) {
+      setFilteredDoctors(doctors);
+      return;
+    }
+    
     const filtered = doctors.filter((d) =>
-      d.doctor_name.toLowerCase().includes(doctorName.toLowerCase())
+      d.doctorfullname.toLowerCase().includes(doctorName.toLowerCase().trim())
     );
     setFilteredDoctors(filtered);
+  };
+
+  const handleClearSearch = () => {
+    setDoctorName("");
+    setFilteredDoctors(doctors);
   };
 
   const handleDelete = async (id) => {
@@ -88,9 +106,10 @@ const Doctors = () => {
 
         const updated = filteredDoctors.filter((d) => d.id !== id);
         setFilteredDoctors(updated);
+        setDoctors(updated);
         setStats((prev) => ({ ...prev, totalDoctors: prev.totalDoctors - 1 }));
       } catch (err) {
-        setError("Failed to delete doctor");
+        setError(err.message || "Failed to delete doctor");
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -101,11 +120,12 @@ const Doctors = () => {
   const handleEdit = (doctor) => {
     setEditingId(doctor.id);
     setEditFormData({
-      doctor_name: doctor.doctorfullname,
-      email_id: doctor.email,
+      doctorfullname: doctor.doctorfullname,
+      email: doctor.email,
       department: doctor.department,
       contact: doctor.contact,
       experiance: doctor.experiance,
+      pwd: doctor.pwd || ''
     });
   };
 
@@ -117,11 +137,12 @@ const Doctors = () => {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditFormData({
-      doctor_name: "",
-      email_id: "",
+      doctorfullname: "",
+      email: "",
       department: "",
       contact: "",
       experiance: "",
+      pwd: ""
     });
   };
 
@@ -148,13 +169,15 @@ const Doctors = () => {
         d.id === id ? { ...d, ...editFormData } : d
       );
       setFilteredDoctors(updatedDoctors);
+      setDoctors(updatedDoctors);
       setEditingId(null);
       setEditFormData({
-        doctor_name: "",
-        email_id: "",
+        doctorfullname: "",
+        email: "",
         department: "",
         contact: "",
         experiance: "",
+        pwd: ""
       });
     } catch (err) {
       setError(err.message);
@@ -166,6 +189,7 @@ const Doctors = () => {
 
   return (
     <div className="flex bg-gray-100 h-screen overflow-hidden text-black">
+      {/* Mobile sidebar toggle */}
       <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-end bg-white shadow-md p-4">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -175,6 +199,7 @@ const Doctors = () => {
         </button>
       </div>
 
+      {/* Sidebar */}
       <aside
         className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "translate-x-full"
@@ -225,6 +250,7 @@ const Doctors = () => {
         </Link>
       </aside>
 
+      {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
         <div
           className="md:hidden z-10 fixed inset-0 bg-black bg-opacity-50"
@@ -232,8 +258,10 @@ const Doctors = () => {
         />
       )}
 
+      {/* Main content */}
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-6xl">
+          {/* Search form */}
           <form
             onSubmit={handleSearch}
             className="flex bg-white shadow-md mb-6 p-4 rounded-lg"
@@ -247,23 +275,36 @@ const Doctors = () => {
             />
             <button
               type="submit"
-              className="flex items-center bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-r-lg text-white"
+              className="flex items-center bg-blue-500 hover:bg-blue-600 px-4 py-2 text-white"
             >
               <FaSearch className="mr-2" /> Search
             </button>
+            {doctorName && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="flex items-center bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded-r-lg text-white"
+              >
+                <FaTimes className="mr-2" /> Clear
+              </button>
+            )}
           </form>
 
+          {/* Error message */}
           {error && (
             <div className="bg-red-100 mb-4 px-4 py-3 border border-red-400 rounded text-red-700">
               {error}
             </div>
           )}
+
+          {/* Loading indicator */}
           {isLoading && (
             <div className="py-4 text-center">
               <div className="inline-block border-t-2 border-b-2 border-blue-500 rounded-full w-8 h-8 animate-spin"></div>
             </div>
           )}
 
+          {/* Doctors table */}
           <DoctorTable
             doctors={filteredDoctors}
             editingId={editingId}
@@ -279,16 +320,6 @@ const Doctors = () => {
     </div>
   );
 };
-
-const StatCard = ({ icon, label, value }) => (
-  <div className="flex items-center bg-white shadow-md p-6 rounded-lg">
-    {icon}
-    <div className="ml-4">
-      <p className="text-gray-500 text-sm">{label}</p>
-      <p className="font-bold text-2xl">{value}</p>
-    </div>
-  </div>
-);
 
 const DoctorTable = ({
   doctors = [],
@@ -356,10 +387,22 @@ const DoctorTable = ({
                           className="px-2 py-1 border rounded w-full"
                         />
                       ) : (
-                        doctor.doctorfullname
+                        <div>Dr. {doctor.doctorfullname}</div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">••••••</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingId === doctor.id ? (
+                        <input
+                          type="password"
+                          name="pwd"
+                          value={editFormData.pwd}
+                          onChange={handleEditChange}
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        '••••••••'
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input

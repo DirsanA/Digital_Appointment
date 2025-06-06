@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 
 function DoctorProfile() {
   const [doctor, setDoctor] = useState({
@@ -15,6 +18,8 @@ function DoctorProfile() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+   const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordd, setShowPasswordd] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -349,39 +354,66 @@ function DoctorProfile() {
                   <label className="block font-medium text-gray-700 text-sm">
                     Current Password
                   </label>
+                  <div className="relative">
                   <input
-                    type="password"
+                     type={showPassword ? "text" : "password"}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
                     required
                   />
+                   <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                              >
+                                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                              </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block font-medium text-gray-700 text-sm">
                     New Password
                   </label>
+                  <div className="relative">
                   <input
-                    type="password"
+                     type={showPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
                     required
                     minLength="6"
                   />
+                   <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                              >
+                                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                              </button>
+                              </div>
                 </div>
                 <div>
                   <label className="block font-medium text-gray-700 text-sm">
                     Confirm New Password
                   </label>
+                   <div className="relative">
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
                     required
                     minLength="6"
                   />
+                     <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                              >
+                                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                              </button>
+                              </div>
                 </div>
                 {passwordError && (
                   <div className="text-red-500 text-sm">{passwordError}</div>
