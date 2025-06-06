@@ -393,52 +393,71 @@ const DoctorLandingPage = () => {
 
                 {/* Notifications Panel */}
                 {showNotifications && newAppointments.length > 0 && (
-                  <div className="top-full left-1/2 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-80 -translate-x-1/2 transform">
-                    <div className="flex justify-between items-center p-3 border-gray-200 border-b">
-                      <h3 className="font-semibold text-gray-900">
-                        New Appointments
-                      </h3>
-                      <button
-                        onClick={markAllAsRead}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        Mark all as read
-                      </button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {newAppointments.map((apt) => (
-                        <div
-                          key={apt.id}
-                          className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
+                  <>
+                    {/* Overlay to prevent background scroll */}
+                    <div 
+                      className="fixed inset-0 bg-transparent z-40"
+                      onClick={() => setShowNotifications(false)}
+                    />
+                    <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                      {/* Fixed Header */}
+                      <div className="p-2 border-b border-gray-200 flex justify-between items-center">
+                        <h3 className="font-semibold text-gray-900 text-sm">
+                          New Appointments
+                        </h3>
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
                         >
-                          <button
-                            onClick={() => markAsRead(apt.id)}
-                            className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
+                          Mark all as read
+                        </button>
+                      </div>
+
+                      {/* Scrollable Cards Section - Height set for 2 cards */}
+                      <div className="overflow-y-auto" style={{ height: '160px' }}>
+                        {newAppointments.map((apt) => (
+                          <div
+                            key={apt.id}
+                            className="p-2 border-b border-gray-100 hover:bg-gray-50 relative"
+                            style={{ height: '80px' }}
                           >
-                            <FaTimes size={14} />
-                          </button>
-                          <p className="font-medium text-gray-900">
-                            {apt.patient_name}
-                          </p>
-                          <p className="text-gray-600 text-sm">
-                            Date: {new Date(apt.appointment_date).toLocaleDateString()}
-                          </p>
-                          <p className="text-gray-600 text-sm">
-                            Time: {apt.appointment_time}
-                          </p>
-                          <p className="text-gray-600 text-sm">
-                            Department: {apt.department}
-                          </p>
-                          <p className="text-gray-600 text-sm">
-                            Phone: {apt.patient_phone}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(apt.createdAt || apt.appointment_date).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
+                            <button
+                              onClick={() => markAsRead(apt.id)}
+                              className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 p-1"
+                            >
+                              <FaTimes size={12} />
+                            </button>
+                            <div className="pr-6">
+                              <div className="flex justify-between items-start">
+                                <p className="font-medium text-gray-900 text-sm truncate max-w-[150px]">
+                                  {apt.patient_name}
+                                </p>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                  New
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-x-2 text-xs text-gray-600 mt-1">
+                                <span className="truncate">Date: {new Date(apt.appointment_date).toLocaleDateString()}</span>
+                                <span className="truncate">Time: {apt.appointment_time}</span>
+                                <span className="truncate">Dept: {apt.department}</span>
+                                <span className="truncate">Ph: {apt.patient_phone}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Fixed Footer */}
+                      <div className="p-1.5 border-t border-gray-200">
+                        <button 
+                          onClick={() => setShowNotifications(false)}
+                          className="w-full text-center text-xs text-gray-600 hover:text-gray-800 py-1 hover:bg-gray-50 rounded"
+                        >
+                          Close
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

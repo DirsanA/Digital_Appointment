@@ -392,52 +392,83 @@ const PatientDashboard = () => {
 
             {/* Notifications Panel */}
             {showNotifications && notifications.length > 0 && (
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
-                <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-                  <h3 className="font-semibold text-gray-900">Recent Doctor's Responses</h3>
-                  <button 
-                    onClick={markAllAsRead}
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Mark all as read
-                  </button>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {notifications.map((notif, index) => (
-                    <div 
-                      key={index} 
-                      className="p-3 border-b border-gray-100 hover:bg-gray-50 relative"
+              <>
+                {/* Overlay to prevent background scroll */}
+                <div 
+                  className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                  onClick={() => setShowNotifications(false)}
+                />
+                <div className="fixed md:absolute top-[calc(100%+1rem)] right-4 w-[90vw] md:w-96 bg-white rounded-lg shadow-xl z-50 flex flex-col" style={{ maxHeight: '320px' }}>
+                  {/* Arrow pointer */}
+                  <div className="absolute -top-2 right-6 w-4 h-4 bg-white transform rotate-45" />
+                  
+                  {/* Fixed Header */}
+                  <div className="relative p-2 border-b border-gray-200 flex justify-between items-center bg-white rounded-t-lg">
+                    <h3 className="font-semibold text-gray-900 text-sm">Recent Doctor's Responses</h3>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAllAsRead();
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 whitespace-nowrap"
                     >
-                      <button
-                        onClick={() => markAsRead(notif.id)}
-                        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                      Mark all as read
+                    </button>
+                  </div>
+
+                  {/* Scrollable Notification Cards */}
+                  <div className="overflow-y-auto flex-1" style={{ maxHeight: '240px' }}>
+                    {notifications.map((notif, index) => (
+                      <div 
+                        key={index} 
+                        className="p-2 border-b border-gray-100 hover:bg-gray-50 relative"
                       >
-                        <FaTimes size={14} />
-                      </button>
-                      <p className="font-medium text-gray-900">
-                        Dr. {notif.doctorfullname}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Status: <span className={`font-medium ${
-                          notif.status === "accepted" ? "text-green-600" :
-                          notif.status === "cancelled" ? "text-red-600" :
-                          notif.status === "completed" ? "text-blue-600" :
-                          "text-yellow-600"
-                        }`}>{notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}</span>
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Date: {new Date(notif.appointment_date).toLocaleDateString()}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Time: {notif.appointment_time}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(notif.appointment_date).toLocaleString()}
-                      </p>
-                    </div>
-                  ))}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notif.id);
+                          }}
+                          className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 p-1"
+                        >
+                          <FaTimes size={12} />
+                        </button>
+                        <div className="pr-6">
+                          <div className="flex justify-between items-start mb-1">
+                            <p className="font-medium text-gray-900 text-sm">
+                              Dr. {notif.doctorfullname}
+                            </p>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              notif.status === "accepted" ? "bg-green-100 text-green-800" :
+                              notif.status === "cancelled" ? "bg-red-100 text-red-800" :
+                              notif.status === "completed" ? "bg-blue-100 text-blue-800" :
+                              "bg-yellow-100 text-yellow-800"
+                            }`}>
+                              {notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>{new Date(notif.appointment_date).toLocaleDateString()}</span>
+                            <span>{notif.appointment_time}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Fixed Footer */}
+                  <div className="p-1.5 bg-white border-t border-gray-200 rounded-b-lg">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowNotifications(false);
+                      }}
+                      className="w-full text-center text-xs text-gray-600 hover:text-gray-800 py-1 hover:bg-gray-50 rounded"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
