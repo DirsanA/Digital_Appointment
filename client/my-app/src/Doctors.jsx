@@ -15,6 +15,7 @@ import {
   FaCheck,
   FaEllipsisV,
   FaTimes as FaClose,
+  FaCamera,
 } from "react-icons/fa";
 import { Menu } from "@headlessui/react";
 
@@ -35,7 +36,7 @@ const Doctors = () => {
     department: "",
     contact: "",
     experiance: "",
-    pwd: ""
+    pwd: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -50,19 +51,21 @@ const Doctors = () => {
         if (!response.ok) throw new Error("Failed to fetch doctor data");
 
         const data = await response.json();
-        // Handle different response structures
-        let doctorsData = [];
-        if (Array.isArray(data)) {
-          doctorsData = data;
-        } else if (data.doctors && Array.isArray(data.doctors)) {
-          doctorsData = data.doctors;
-        } else if (data.data && Array.isArray(data.data)) {
-          doctorsData = data.data;
-        }
+        const doctorsData = Array.isArray(data) ? data : data.doctors || [];
 
-        setDoctors(doctorsData);
-        setFilteredDoctors(doctorsData);
-        setStats((prev) => ({ ...prev, totalDoctors: doctorsData.length }));
+        // Format doctor IDs and ensure photo_url exists
+        const formattedDoctors = doctorsData.map((doctor, index) => ({
+          ...doctor,
+          doctor_id: `D${String(index + 1).padStart(3, "0")}`,
+          photo_url: doctor.photo_url || null,
+        }));
+
+        setDoctors(formattedDoctors);
+        setFilteredDoctors(formattedDoctors);
+        setStats((prev) => ({
+          ...prev,
+          totalDoctors: formattedDoctors.length,
+        }));
       } catch (err) {
         setError(err.message || "Failed to fetch doctors data");
         console.error(err);
@@ -80,9 +83,9 @@ const Doctors = () => {
       setFilteredDoctors(doctors);
       return;
     }
-    
+
     const filtered = doctors.filter((d) =>
-      d.doctorfullname.toLowerCase().includes(doctorName.toLowerCase().trim())
+      d.doctorfullname.toLowerCase().includes(doctorName.toLowerCase())
     );
     setFilteredDoctors(filtered);
   };
@@ -125,7 +128,7 @@ const Doctors = () => {
       department: doctor.department,
       contact: doctor.contact,
       experiance: doctor.experiance,
-      pwd: doctor.pwd || ''
+      pwd: doctor.pwd || "",
     });
   };
 
@@ -136,14 +139,6 @@ const Doctors = () => {
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditFormData({
-      doctorfullname: "",
-      email: "",
-      department: "",
-      contact: "",
-      experiance: "",
-      pwd: ""
-    });
   };
 
   const handleSaveEdit = async (id) => {
@@ -156,7 +151,13 @@ const Doctors = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(editFormData),
+          body: JSON.stringify({
+            doctorfullname: editFormData.doctor_name,
+            email: editFormData.email_id,
+            department: editFormData.department,
+            contact: editFormData.contact,
+            experiance: editFormData.experiance,
+          }),
         }
       );
 
@@ -166,19 +167,21 @@ const Doctors = () => {
       }
 
       const updatedDoctors = filteredDoctors.map((d) =>
-        d.id === id ? { ...d, ...editFormData } : d
+        d.id === id
+          ? {
+              ...d,
+              doctorfullname: editFormData.doctor_name,
+              email: editFormData.email_id,
+              department: editFormData.department,
+              contact: editFormData.contact,
+              experiance: editFormData.experiance,
+            }
+          : d
       );
+
       setFilteredDoctors(updatedDoctors);
       setDoctors(updatedDoctors);
       setEditingId(null);
-      setEditFormData({
-        doctorfullname: "",
-        email: "",
-        department: "",
-        contact: "",
-        experiance: "",
-        pwd: ""
-      });
     } catch (err) {
       setError(err.message);
       console.error(err);
@@ -189,7 +192,7 @@ const Doctors = () => {
 
   return (
     <div className="flex bg-gray-100 h-screen overflow-hidden text-black">
-      {/* Mobile sidebar toggle */}
+      {/* Mobile Header */}
       <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-end bg-white shadow-md p-4">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -250,7 +253,7 @@ const Doctors = () => {
         </Link>
       </aside>
 
-      {/* Overlay for mobile sidebar */}
+      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
           className="md:hidden z-10 fixed inset-0 bg-black bg-opacity-50"
@@ -258,7 +261,7 @@ const Doctors = () => {
         />
       )}
 
-      {/* Main content */}
+      {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-6xl">
           {/* Search form */}
@@ -270,7 +273,7 @@ const Doctors = () => {
               type="text"
               value={doctorName}
               onChange={(e) => setDoctorName(e.target.value)}
-              placeholder="Doctor's name"
+              placeholder="Search by doctor name"
               className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500"
             />
             <button
@@ -336,30 +339,30 @@ const DoctorTable = ({
       <div className="relative">
         <div className="max-h-[600px] overflow-y-auto">
           <table className="border border-gray-300 w-full border-collapse">
-            <thead className="bg-gray-200 sticky top-0 z-10">
+            <thead className="top-0 z-10 sticky bg-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Roll No.
+                <th className="px-4 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                  Photo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Doctor Name
+                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                  ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Password
+                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                  Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                   Department
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                   Experience
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -368,46 +371,50 @@ const DoctorTable = ({
             <tbody className="bg-white divide-y divide-gray-200">
               {doctors.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="p-4 text-center">No doctors found</td>
+                  <td colSpan="8" className="p-4 text-center">
+                    No doctors found
+                  </td>
                 </tr>
               ) : (
-                doctors.map((doctor, index) => (
+                doctors.map((doctor) => (
                   <tr key={doctor.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex justify-center">
+                        {doctor.photo_url ? (
+                          <img
+                            src={doctor.photo_url}
+                            alt={doctor.doctorfullname}
+                            className="rounded-full w-10 h-10 object-cover"
+                          />
+                        ) : (
+                          <div className="flex justify-center items-center bg-gray-200 rounded-full w-10 h-10">
+                            <FaUserCircle className="text-gray-400 text-xl" />
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        D{String(index + 1).padStart(3, '0')}
+                      <div className="text-gray-900 text-sm">
+                        {doctor.doctor_id}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
-                          name="doctorfullname"
-                          value={editFormData.doctorfullname}
+                          name="doctor_name"
+                          value={editFormData.doctor_name}
                           onChange={handleEditChange}
                           className="px-2 py-1 border rounded w-full"
                         />
                       ) : (
-                        <div>Dr. {doctor.doctorfullname}</div>
+                        doctor.doctorfullname
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
-                          type="password"
-                          name="pwd"
-                          value={editFormData.pwd}
-                          onChange={handleEditChange}
-                          className="px-2 py-1 border rounded w-full"
-                        />
-                      ) : (
-                        '••••••••'
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingId === doctor.id ? (
-                        <input
-                          name="email"
-                          value={editFormData.email}
+                          name="email_id"
+                          value={editFormData.email_id}
                           onChange={handleEditChange}
                           className="px-2 py-1 border rounded w-full"
                         />
@@ -417,12 +424,17 @@ const DoctorTable = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
-                        <input
+                        <select
                           name="department"
                           value={editFormData.department}
                           onChange={handleEditChange}
                           className="px-2 py-1 border rounded w-full"
-                        />
+                        >
+                          <option value="Cardiology">Cardiology</option>
+                          <option value="Neurology">Neurology</option>
+                          <option value="Pediatrics">Pediatrics</option>
+                          <option value="Orthopedics">Orthopedics</option>
+                        </select>
                       ) : (
                         doctor.department
                       )}
@@ -442,33 +454,39 @@ const DoctorTable = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <input
+                          type="number"
                           name="experiance"
                           value={editFormData.experiance}
                           onChange={handleEditChange}
                           className="px-2 py-1 border rounded w-full"
                         />
                       ) : (
-                        doctor.experiance
+                        `${doctor.experiance} years`
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
                       {editingId === doctor.id ? (
                         <div className="flex justify-center space-x-2">
                           <button
                             onClick={() => handleSaveEdit(doctor.id)}
                             className="text-green-500 hover:text-green-700"
+                            title="Save"
                           >
                             <FaCheck />
                           </button>
                           <button
                             onClick={handleCancelEdit}
                             className="text-red-500 hover:text-red-700"
+                            title="Cancel"
                           >
                             <FaClose />
                           </button>
                         </div>
                       ) : (
-                        <Menu as="div" className="inline-block relative text-left">
+                        <Menu
+                          as="div"
+                          className="inline-block relative text-left"
+                        >
                           <Menu.Button className="text-gray-700 hover:text-gray-900">
                             <FaEllipsisV />
                           </Menu.Button>

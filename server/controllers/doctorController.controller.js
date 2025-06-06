@@ -1,26 +1,37 @@
-const db = require("../config/db");
-const bcrypt = require("bcrypt");
+const db = require("../config/db"); // Make sure you have this import
+
+const { cloudinary } = require("../config/cloudinaryConfig");
 
 // Fetch all doctors
-function getAllDoctors(req, res) {
-  const query = "SELECT * FROM doctor";
-
-  db.query(query, function (err, results) {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch doctors",
-        error: err.message,
-      });
-    }
+async function getAllDoctors(req, res) {
+  try {
+    const [results] = await db.promise().query(`
+      SELECT 
+        id, 
+        doctorfullname, 
+        email, 
+        contact, 
+        department, 
+        experiance,
+        photo_url,
+        CONCAT('D', LPAD(id, 3, '0')) as doctor_id
+      FROM doctor
+      ORDER BY doctorfullname
+    `);
 
     res.status(200).json({
       success: true,
       message: "Doctors fetched successfully",
       doctors: results,
     });
-  });
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch doctors",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
 }
 
 // Fetch single doctor by ID
@@ -54,9 +65,11 @@ function getDoctorById(req, res) {
   });
 }
 
-function doctorRegistration(req, res) {
+async function doctorRegistration(req, res) {
   const { doctorfullname, email, contact, pwd, department, experiance } =
     req.body;
+  let photo_url = null;
+  let cloudinaryResult = null;
 
   // Validate required fields
   if (
@@ -117,17 +130,42 @@ function doctorRegistration(req, res) {
         });
       }
 
-      // Insert into doctor table
-      const doctorQuery = `
-        INSERT INTO doctor 
-        (doctorfullname, email, contact, pwd, department, experiance)
-        VALUES (?, ?, ?, ?, ?, ?);
-      `;
+      // Handle file upload if exists
+      if (req.file) {
+        try {
+          cloudinaryResult = await cloudinary.uploader.upload(req.file.path, {
+            folder: "doctor-photos",
+            width: 500,
+            height: 500,
+            crop: "fill",
+          });
+          photo_url = cloudinaryResult.secure_url;
+        } catch (uploadError) {
+          await new Promise((resolve) => db.rollback(() => resolve()));
+          console.error("Cloudinary upload error:", uploadError);
+          return res.status(500).json({
+            success: false,
+            message: "Failed to upload photo",
+            error: uploadError.message,
+          });
+        }
+      }
 
+      // Insert into doctor table
       const doctorInsert = await new Promise((resolve, reject) => {
         db.query(
-          doctorQuery,
-          [doctorfullname, email, contact, pwd, department, experiance],
+          `INSERT INTO doctor 
+          (doctorfullname, email, contact, pwd, department, experiance, photo_url)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            doctorfullname,
+            email,
+            contact,
+            pwd,
+            department,
+            experiance,
+            photo_url,
+          ],
           (err, result) => {
             if (err) return reject(err);
             resolve(result);
@@ -136,17 +174,17 @@ function doctorRegistration(req, res) {
       });
 
       // Insert into users table for authentication
-      const userQuery = `
-        INSERT INTO users 
-        (email, password, role, reference_id)
-        VALUES (?, ?, 'doctor', ?);
-      `;
-
       await new Promise((resolve, reject) => {
-        db.query(userQuery, [email, pwd, doctorInsert.insertId], (err) => {
-          if (err) return reject(err);
-          resolve();
-        });
+        db.query(
+          `INSERT INTO users 
+          (email, password, role, reference_id)
+          VALUES (?, ?, 'doctor', ?)`,
+          [email, pwd, doctorInsert.insertId],
+          (err) => {
+            if (err) return reject(err);
+            resolve();
+          }
+        );
       });
 
       // Commit transaction
@@ -161,15 +199,26 @@ function doctorRegistration(req, res) {
         success: true,
         message: "Doctor registered successfully",
         doctorId: doctorInsert.insertId,
+        photo_url: photo_url || null,
       });
     } catch (error) {
-      // Rollback on error
+      // Rollback on error and clean up uploaded photo if exists
       await new Promise((resolve) => db.rollback(() => resolve()));
-      console.error("Database error:", error);
+
+      if (cloudinaryResult) {
+        try {
+          await cloudinary.uploader.destroy(cloudinaryResult.public_id);
+        } catch (cleanupError) {
+          console.error("Failed to cleanup uploaded photo:", cleanupError);
+        }
+      }
+
+      console.error("Registration error:", error);
       res.status(500).json({
         success: false,
         message: "Registration failed",
-        error: error.message,
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       });
     }
   });
@@ -238,7 +287,7 @@ const changePassword = async (req, res) => {
 };
 
 // Update doctor by ID
-function updateDoctorById(req, res) {
+async function updateDoctorById(req, res) {
   const id = req.params.id;
   const { doctorfullname, email, contact, pwd, department, experiance } =
     req.body;
@@ -260,6 +309,19 @@ function updateDoctorById(req, res) {
           resolve(results[0]);
         });
       });
+
+      // Handle photo upload if provided
+      let photo_url = existingDoctor.photo_url;
+      if (req.file) {
+        // Delete old photo from Cloudinary if exists
+        if (photo_url) {
+          const publicId = photo_url.split("/").pop().split(".")[0];
+          await cloudinary.uploader.destroy(`doctor-photos/${publicId}`);
+        }
+        // Upload new photo
+        const result = await cloudinary.uploader.upload(req.file.path);
+        photo_url = result.secure_url;
+      }
 
       // Build fields to update
       const fieldsToUpdate = [];
@@ -293,6 +355,12 @@ function updateDoctorById(req, res) {
       if (experiance && experiance !== existingDoctor.experiance) {
         fieldsToUpdate.push("experiance = ?");
         values.push(experiance);
+      }
+
+      // Add photo_url to update if it was changed
+      if (req.file) {
+        fieldsToUpdate.push("photo_url = ?");
+        values.push(photo_url);
       }
 
       // If nothing to update
@@ -359,9 +427,11 @@ function updateDoctorById(req, res) {
         });
       });
 
-      res
-        .status(200)
-        .json({ success: true, message: "Doctor updated successfully" });
+      res.status(200).json({
+        success: true,
+        message: "Doctor updated successfully",
+        photo_url: photo_url || existingDoctor.photo_url,
+      });
     } catch (error) {
       // Rollback on error
       await new Promise((resolve) => db.rollback(() => resolve()));

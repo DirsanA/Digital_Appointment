@@ -15,7 +15,10 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/login", { email, password });
+      const res = await axios.post("http://localhost:5000/login", {
+        email,
+        password,
+      });
       const { token, role, patientId, doctorId } = res.data;
 
       if (token && role) {
@@ -30,12 +33,13 @@ const Login = () => {
           localStorage.setItem("doctorId", doctorId);
         }
 
-        const redirectPath = {
-          admin: "/AdminDashboard",
-          doctor: "/doctor-landingPage",
-          patient: "/Patient-Dashbord"
-        }[role] || "/dashboard";
-        
+        const redirectPath =
+          {
+            admin: "/AdminDashboard",
+            doctor: "/doctor-landingPage",
+            patient: "/Patient-Dashbord",
+          }[role] || "/dashboard";
+
         navigate(redirectPath);
       }
     } catch (err) {
@@ -47,37 +51,37 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-blue-50 flex items-center justify-center p-4">
+    <div className="flex justify-center items-center bg-gradient-to-br from-indigo-100 via-purple-100 to-blue-50 p-4 min-h-screen">
       {/* Back to Home Button */}
       <button
         onClick={() => navigate("/")}
-        className="absolute top-6 left-6 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors"
+        className="top-6 left-6 absolute flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors"
       >
         <FaArrowLeft className="text-lg" />
         <span className="font-medium">Back to Home</span>
       </button>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
           {/* Decorative Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center">
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="flex justify-center items-center bg-white/20 mx-auto mb-4 rounded-full w-20 h-20">
               <FaUser className="text-white text-3xl" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-            <p className="text-indigo-100 mt-1">Sign in to your account</p>
+            <h1 className="font-bold text-white text-2xl">Welcome Back</h1>
+            <p className="mt-1 text-indigo-100">Sign in to your account</p>
           </div>
 
           {/* Login Form */}
           <div className="p-8">
             <form onSubmit={Handler} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
                   Email Address
                 </label>
                 <div className="relative">
@@ -86,14 +90,14 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-black"
+                    className="px-4 py-3 border border-gray-300 focus:border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-500 w-full text-black transition-all"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 font-medium text-gray-700 text-sm">
                   Password
                 </label>
                 <div className="relative">
@@ -102,21 +106,25 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all pr-12 text-black"
+                    className="px-4 py-3 pr-12 border border-gray-300 focus:border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-500 w-full text-black transition-all"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600 transition-colors"
+                    className="top-1/2 right-3 absolute text-gray-500 hover:text-indigo-600 transition-colors -translate-y-1/2 transform"
                   >
-                    {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                    {showPassword ? (
+                      <FaEyeSlash size={18} />
+                    ) : (
+                      <FaEye size={18} />
+                    )}
                   </button>
                 </div>
                 <div className="flex justify-end mt-2">
                   <button
                     type="button"
-                    className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                    className="text-indigo-600 hover:text-indigo-800 text-sm hover:underline"
                   >
                     Forgot password?
                   </button>
@@ -127,14 +135,30 @@ const Login = () => {
                 type="submit"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md hover:shadow-lg px-4 py-3 rounded-lg w-full font-medium text-white transition-all"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <span className="flex justify-center items-center">
+                    <svg
+                      className="mr-3 -ml-1 w-5 h-5 text-white animate-spin"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Signing in...
                   </span>
@@ -147,10 +171,10 @@ const Login = () => {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="border-gray-300 border-t w-full"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
+                  <span className="bg-white px-2 text-gray-500">
                     Don't have an account?
                   </span>
                 </div>
@@ -158,7 +182,7 @@ const Login = () => {
 
               <button
                 onClick={() => navigate("/patient-register")}
-                className="mt-6 w-full border border-gray-300 rounded-lg py-2 px-4 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium"
+                className="bg-white hover:bg-gray-50 mt-6 px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-lg w-full font-medium text-gray-700 transition-colors"
               >
                 Create new account
               </button>
@@ -167,7 +191,7 @@ const Login = () => {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-gray-500 text-sm text-center">
           <p>© {new Date().getFullYear()} Your Company. All rights reserved.</p>
         </div>
       </motion.div>

@@ -1,40 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const doctorController = require("../controllers/doctorController.controller");
-
-// Error handling wrapper
-const asyncHandler = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
-};
+const { upload } = require("../config/cloudinaryConfig");
 
 // Doctor routes
-router.get(
-  "/admin/getAllDoctors",
-  asyncHandler(doctorController.getAllDoctors)
-);
-router.get("/admin/doctors/:id", asyncHandler(doctorController.getDoctorById));
+router.get("/admin/getAllDoctors", doctorController.getAllDoctors);
+router.get("/admin/doctors/:id", doctorController.getDoctorById);
 router.post(
   "/admin/doctors",
-  asyncHandler(doctorController.doctorRegistration)
+  upload.single("photo"), // Cloudinary upload middleware
+  doctorController.doctorRegistration
 );
 router.put(
   "/admin/doctors/:id",
-  asyncHandler(doctorController.updateDoctorById)
+  upload.single("photo"),
+  doctorController.updateDoctorById
 );
-router.delete(
-  "/admin/doctors/:id",
-  asyncHandler(doctorController.deleteDoctorById)
-);
-
-// Updated password change route without auth middleware
-router.post(
-  "/doctor/change-password",
-  asyncHandler(doctorController.changePassword)
-);
-
-router.get(
-  "/getDoctorsByDepartment",
-  asyncHandler(doctorController.getDoctorsByDepartment)
-);
+router.delete("/admin/doctors/:id", doctorController.deleteDoctorById);
+router.post("/doctor/change-password", doctorController.changePassword);
+router.get("/getDoctorsByDepartment", doctorController.getDoctorsByDepartment);
 
 module.exports = router;
