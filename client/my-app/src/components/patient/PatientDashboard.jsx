@@ -237,7 +237,7 @@ const PatientDashboard = () => {
     itemsToClear.forEach((item) => localStorage.removeItem(item));
 
     // Navigate to login page
-    navigate("/patient-login");
+    navigate("/");
   };
 
   if (loading) {
