@@ -410,7 +410,9 @@ const DoctorTable = ({
                           className="px-2 py-1 border rounded w-full"
                         />
                       ) : (
-                        doctor.doctorfullname
+                        <div>
+                          Dr.{doctor.doctorfullname}
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
