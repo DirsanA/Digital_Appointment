@@ -10,10 +10,10 @@ import {
 } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 // Import your local images (adjust paths as needed)
-import drAbreham from "./assets/doc9.jpg";
-import drSarah from "./assets/doc2.jpg";
-import drMichael from "./assets/doc4.jpg";
-import drEmily from "./assets/doc8.jpg";
+import drAbreham from "/assets/doc2.jpg";
+import drSarah from "/assets/doc2.jpg";
+import drMichael from "/assets/doc4.jpg";
+import drEmily from "/assets/doc8.jpg";
 
 const OurDoctors = () => {
   const [showTableView, setShowTableView] = useState(false);

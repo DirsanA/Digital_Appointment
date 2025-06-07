@@ -10,9 +10,9 @@ import {
   FaTimes,
   FaBell,
 } from "react-icons/fa";
-import bgImage from "./assets/b4.jpg";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import bgImage from "/assets/b4.jpg";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PatientDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,13 +29,13 @@ const PatientDashboard = () => {
 
   // Get read notifications from localStorage
   const getReadNotifications = () => {
-    const readNotifications = localStorage.getItem('readNotifications');
+    const readNotifications = localStorage.getItem("readNotifications");
     return readNotifications ? JSON.parse(readNotifications) : [];
   };
 
   // Save read notifications to localStorage
   const saveReadNotifications = (notificationIds) => {
-    localStorage.setItem('readNotifications', JSON.stringify(notificationIds));
+    localStorage.setItem("readNotifications", JSON.stringify(notificationIds));
   };
 
   // Function to check for new appointment status changes
@@ -43,33 +43,36 @@ const PatientDashboard = () => {
     try {
       const userEmail = localStorage.getItem("userEmail") || patientData.email;
       console.log("Checking notifications for email:", userEmail);
-      
+
       if (!userEmail) {
         console.log("No user email found");
         return;
       }
 
-      const response = await axios.get(`http://localhost:5000/appointments?patient_email=${userEmail}`);
+      const response = await axios.get(
+        `http://localhost:5000/appointments?patient_email=${userEmail}`
+      );
       console.log("Appointments response:", response.data);
-      
+
       // Get the list of read notifications
       const readNotifications = getReadNotifications();
       console.log("Read notifications:", readNotifications);
-      
+
       // Get current date for comparison
       const currentDate = new Date();
-      
+
       // Filter appointments that have status changes and haven't been read
       const statusChanges = response.data
-        .filter(appointment => {
+        .filter((appointment) => {
           // Consider any non-pending status as a status change
           const isStatusChange = appointment.status !== "pending";
           const isUnread = !readNotifications.includes(appointment.id);
-          
+
           // Check if the appointment is from today
           const appointmentDate = new Date(appointment.appointment_date);
-          const isToday = appointmentDate.toDateString() === currentDate.toDateString();
-          
+          const isToday =
+            appointmentDate.toDateString() === currentDate.toDateString();
+
           console.log("Checking appointment:", {
             id: appointment.id,
             status: appointment.status,
@@ -77,13 +80,15 @@ const PatientDashboard = () => {
             isUnread,
             isToday,
             doctor: appointment.doctorfullname,
-            date: appointmentDate
+            date: appointmentDate,
           });
-          
+
           return isStatusChange && isUnread;
         })
         // Sort by appointment date, most recent first
-        .sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date))
+        .sort(
+          (a, b) => new Date(b.appointment_date) - new Date(a.appointment_date)
+        )
         // Take only the 5 most recent notifications
         .slice(0, 5);
 
@@ -92,15 +97,22 @@ const PatientDashboard = () => {
       if (statusChanges.length > 0) {
         setNotifications(statusChanges);
         // Show toast for new notifications
-        statusChanges.forEach(change => {
+        statusChanges.forEach((change) => {
           if (!readNotifications.includes(change.id)) {
-            const statusMessage = 
-              change.status === "accepted" ? "accepted your appointment" :
-              change.status === "cancelled" ? "cancelled your appointment" :
-              change.status === "completed" ? "marked your appointment as completed" :
-              `updated your appointment status to ${change.status}`;
+            const statusMessage =
+              change.status === "accepted"
+                ? "accepted your appointment"
+                : change.status === "cancelled"
+                ? "cancelled your appointment"
+                : change.status === "completed"
+                ? "marked your appointment as completed"
+                : `updated your appointment status to ${change.status}`;
 
-            toast.info(`Dr. ${change.doctorfullname} has ${statusMessage} for ${new Date(change.appointment_date).toLocaleDateString()}`);
+            toast.info(
+              `Dr. ${change.doctorfullname} has ${statusMessage} for ${new Date(
+                change.appointment_date
+              ).toLocaleDateString()}`
+            );
           }
         });
       }
@@ -114,13 +126,15 @@ const PatientDashboard = () => {
     const readNotifications = getReadNotifications();
     const updatedReadNotifications = [...readNotifications, notificationId];
     saveReadNotifications(updatedReadNotifications);
-    setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+    setNotifications((prev) =>
+      prev.filter((notif) => notif.id !== notificationId)
+    );
     setShowNotifications(notifications.length <= 1); // Close panel if no more notifications
   };
 
   // Function to mark all as read
   const markAllAsRead = () => {
-    const notificationIds = notifications.map(notif => notif.id);
+    const notificationIds = notifications.map((notif) => notif.id);
     const readNotifications = getReadNotifications();
     const updatedReadNotifications = [...readNotifications, ...notificationIds];
     saveReadNotifications(updatedReadNotifications);
@@ -139,8 +153,8 @@ const PatientDashboard = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-      const patientId = localStorage.getItem("patientId");
-    
+    const patientId = localStorage.getItem("patientId");
+
     // Only redirect to login if both token and patientId are missing
     if (!token || !patientId) {
       navigate("/patient-login");
@@ -150,40 +164,43 @@ const PatientDashboard = () => {
     // Fetch patient details
     const fetchPatientDetails = async () => {
       try {
-      const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (response.data.success) {
+        const response = await axios.get(
+          `http://localhost:5000/patient/${patientId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
           const patientDetails = response.data.patient;
-        setPatientData({
+          setPatientData({
             full_name: patientDetails.full_name,
             email: patientDetails.email,
-            phone: patientDetails.phone
-        });
-          
-        // Store email in localStorage for notifications
+            phone: patientDetails.phone,
+          });
+
+          // Store email in localStorage for notifications
           localStorage.setItem("userEmail", patientDetails.email);
-      } else {
+        } else {
           // Don't throw error for non-success response
           console.warn("Non-success response:", response.data.message);
           toast.error("Unable to fetch your details. Please try again later.");
-      }
-    } catch (error) {
-      console.error("Error fetching patient details:", error);
+        }
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
         // Only logout for actual authentication errors
-      if (error.response?.status === 401) {
-        handleLogout();
+        if (error.response?.status === 401) {
+          handleLogout();
         } else {
           // For other errors, just show a toast but keep the user logged in
           toast.error("Unable to fetch your details. Please try again later.");
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
     // Initialize dashboard with proper error handling
     const initializeDashboard = async () => {
@@ -194,7 +211,7 @@ const PatientDashboard = () => {
         console.error("Error initializing dashboard:", error);
         // Only logout for authentication errors
         if (error.response?.status === 401) {
-      handleLogout();
+          handleLogout();
         }
         setLoading(false);
       }
@@ -214,11 +231,11 @@ const PatientDashboard = () => {
       "role",
       "patientId",
       "userEmail",
-      "readNotifications"
+      "readNotifications",
     ];
-    
-    itemsToClear.forEach(item => localStorage.removeItem(item));
-    
+
+    itemsToClear.forEach((item) => localStorage.removeItem(item));
+
     // Navigate to login page
     navigate("/patient-login");
   };
@@ -226,7 +243,7 @@ const PatientDashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
       </div>
     );
   }
@@ -238,17 +255,26 @@ const PatientDashboard = () => {
       <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
         <div className="flex items-center">
           <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
-          <h1 className="font-bold text-blue-600 text-lg">{patientData.full_name}</h1>
+          <h1 className="font-bold text-blue-600 text-lg">
+            {patientData.full_name}
+          </h1>
         </div>
         <div className="flex items-center space-x-4">
           {/* Notification Bell for Mobile */}
           <div className="relative">
-            <button onClick={toggleNotifications} className="focus:outline-none">
-              <FaBell 
-                className={`text-xl ${notifications.length > 0 ? 'text-blue-600 animate-bounce' : 'text-gray-400'}`}
+            <button
+              onClick={toggleNotifications}
+              className="focus:outline-none"
+            >
+              <FaBell
+                className={`text-xl ${
+                  notifications.length > 0
+                    ? "text-blue-600 animate-bounce"
+                    : "text-gray-400"
+                }`}
               />
               {notifications.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="-top-2 -right-2 absolute flex justify-center items-center bg-red-500 rounded-full w-5 h-5 text-white text-xs">
                   {notifications.length}
                 </span>
               )}
@@ -308,14 +334,14 @@ const PatientDashboard = () => {
             </Link>
           </nav>
         </div>
-           <Link
-              to="/"
-              className="flex items-center space-x-2 text-red-700 hover:text-red-500"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaHistory size={20} />
-              <span>log out</span>
-            </Link>
+        <Link
+          to="/"
+          className="flex items-center space-x-2 text-red-700 hover:text-red-500"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <FaHistory size={20} />
+          <span>log out</span>
+        </Link>
         {/* <button
           onClick={handleLogout}
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
@@ -370,15 +396,15 @@ const PatientDashboard = () => {
           <div className="relative">
             <Link
               to="/AppointmentHistory"
-              className="flex flex-col justify-center items-center bg-gradient-to-r from-green-300 to-green-500 shadow-md p-6 rounded-lg text-white hover:scale-105 transition transform w-full"
+              className="flex flex-col justify-center items-center bg-gradient-to-r from-green-300 to-green-500 shadow-md p-6 rounded-lg w-full text-white hover:scale-105 transition transform"
               onClick={() => setSidebarOpen(false)}
             >
               <div className="relative flex items-center space-x-4">
                 <FaHistory size={40} />
                 <div className="relative">
-                  <FaBell 
-                    size={40} 
-                    className={notifications.length > 0 ? 'animate-bounce' : ''} 
+                  <FaBell
+                    size={40}
+                    className={notifications.length > 0 ? "animate-bounce" : ""}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -386,7 +412,7 @@ const PatientDashboard = () => {
                     }}
                   />
                   {notifications.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                    <span className="-top-2 -right-2 absolute flex justify-center items-center bg-red-500 border-2 border-white rounded-full w-6 h-6 text-white text-xs">
                       {notifications.length}
                     </span>
                   )}
@@ -402,41 +428,49 @@ const PatientDashboard = () => {
             {showNotifications && notifications.length > 0 && (
               <>
                 {/* Overlay to prevent background scroll */}
-                <div 
-                  className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                <div
+                  className="z-40 fixed inset-0 bg-black bg-opacity-50"
                   onClick={() => setShowNotifications(false)}
                 />
-                <div className="fixed md:absolute top-[calc(100%+1rem)] right-4 w-[90vw] md:w-96 bg-white rounded-lg shadow-xl z-50 flex flex-col" style={{ maxHeight: '320px' }}>
+                <div
+                  className="top-[calc(100%+1rem)] right-4 z-50 fixed md:absolute flex flex-col bg-white shadow-xl rounded-lg w-[90vw] md:w-96"
+                  style={{ maxHeight: "320px" }}
+                >
                   {/* Arrow pointer */}
-                  <div className="absolute -top-2 right-6 w-4 h-4 bg-white transform rotate-45" />
-                  
+                  <div className="-top-2 right-6 absolute bg-white w-4 h-4 rotate-45 transform" />
+
                   {/* Fixed Header */}
-                  <div className="relative p-2 border-b border-gray-200 flex justify-between items-center bg-white rounded-t-lg">
-                    <h3 className="font-semibold text-gray-900 text-sm">Recent Doctor's Responses</h3>
-                    <button 
+                  <div className="relative flex justify-between items-center bg-white p-2 border-gray-200 border-b rounded-t-lg">
+                    <h3 className="font-semibold text-gray-900 text-sm">
+                      Recent Doctor's Responses
+                    </h3>
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         markAllAsRead();
                       }}
-                      className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 whitespace-nowrap"
+                      className="hover:bg-blue-50 px-2 py-1 rounded text-blue-600 hover:text-blue-800 text-xs whitespace-nowrap"
                     >
                       Mark all as read
                     </button>
                   </div>
 
                   {/* Scrollable Notification Cards */}
-                  <div className="overflow-y-auto flex-1" style={{ maxHeight: '240px' }}>
+                  <div
+                    className="flex-1 overflow-y-auto"
+                    style={{ maxHeight: "240px" }}
+                  >
                     {notifications.map((notif, index) => (
-                      <div 
-                        key={index} 
-                        className="p-2 border-b border-gray-100 hover:bg-gray-50 relative"
+                      <div
+                        key={index}
+                        className="relative hover:bg-gray-50 p-2 border-gray-100 border-b"
                       >
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             markAsRead(notif.id);
                           }}
-                          className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 p-1"
+                          className="top-1 right-1 absolute p-1 text-gray-400 hover:text-gray-600"
                         >
                           <FaTimes size={12} />
                         </button>
@@ -445,17 +479,27 @@ const PatientDashboard = () => {
                             <p className="font-medium text-gray-900 text-sm">
                               Dr. {notif.doctorfullname}
                             </p>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              notif.status === "accepted" ? "bg-green-100 text-green-800" :
-                              notif.status === "cancelled" ? "bg-red-100 text-red-800" :
-                              notif.status === "completed" ? "bg-blue-100 text-blue-800" :
-                              "bg-yellow-100 text-yellow-800"
-                            }`}>
-                              {notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full ${
+                                notif.status === "accepted"
+                                  ? "bg-green-100 text-green-800"
+                                  : notif.status === "cancelled"
+                                  ? "bg-red-100 text-red-800"
+                                  : notif.status === "completed"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {notif.status.charAt(0).toUpperCase() +
+                                notif.status.slice(1)}
                             </span>
                           </div>
-                          <div className="flex justify-between text-xs text-gray-600">
-                            <span>{new Date(notif.appointment_date).toLocaleDateString()}</span>
+                          <div className="flex justify-between text-gray-600 text-xs">
+                            <span>
+                              {new Date(
+                                notif.appointment_date
+                              ).toLocaleDateString()}
+                            </span>
                             <span>{notif.appointment_time}</span>
                           </div>
                         </div>
@@ -464,13 +508,13 @@ const PatientDashboard = () => {
                   </div>
 
                   {/* Fixed Footer */}
-                  <div className="p-1.5 bg-white border-t border-gray-200 rounded-b-lg">
-                    <button 
+                  <div className="bg-white p-1.5 border-gray-200 border-t rounded-b-lg">
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowNotifications(false);
                       }}
-                      className="w-full text-center text-xs text-gray-600 hover:text-gray-800 py-1 hover:bg-gray-50 rounded"
+                      className="hover:bg-gray-50 py-1 rounded w-full text-gray-600 hover:text-gray-800 text-xs text-center"
                     >
                       Close
                     </button>

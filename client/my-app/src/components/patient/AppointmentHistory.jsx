@@ -10,7 +10,7 @@ import {
   FaTimes,
   FaSpinner,
 } from "react-icons/fa";
-import bgImage from "./assets/b4.jpg";
+import bgImage from "/assets/b4.jpg";
 
 const AppointmentHistory = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -445,7 +445,7 @@ const AppointmentHistory = () => {
                         className="hover:bg-blue-50 border-gray-200 border-b transition-colors"
                       >
                         <td className="p-3 text-gray-700">
-                          A{String(index + 1).padStart(3, '0')}
+                          A{String(index + 1).padStart(3, "0")}
                         </td>
                         <td className="p-3 text-gray-700">
                           {appointment.patientName}

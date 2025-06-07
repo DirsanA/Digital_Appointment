@@ -9,7 +9,7 @@ import {
   FaBars,
   FaTimes,
 } from "react-icons/fa";
-import bgImage from "./assets/b4.jpg";
+import bgImage from "/assets/b4.jpg";
 
 const BookAppointment = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
