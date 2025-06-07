@@ -47,24 +47,29 @@ const BookAppointment = () => {
           throw new Error("Patient ID not found");
         }
 
-        const response = await axios.get(`http://localhost:5000/patient/${patientId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
+        const response = await axios.get(
+          `http://localhost:5000/patient/${patientId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         if (response.data.success) {
           const patientData = response.data.patient;
           setCurrentPatientName(patientData.full_name);
           // Pre-fill the appointment form with patient details
-          setAppointment(prev => ({
+          setAppointment((prev) => ({
             ...prev,
             patientName: patientData.full_name,
             email: patientData.email,
-            phone: patientData.phone
+            phone: patientData.phone,
           }));
         } else {
-          throw new Error(response.data.message || "Failed to fetch patient details");
+          throw new Error(
+            response.data.message || "Failed to fetch patient details"
+          );
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
@@ -172,7 +177,9 @@ const BookAppointment = () => {
       <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
         <div className="flex items-center">
           <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
-          <h1 className="font-bold text-blue-600 text-lg">{currentPatientName || "Loading..."}</h1>
+          <h1 className="font-bold text-blue-600 text-lg">
+            {currentPatientName || "Loading..."}
+          </h1>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -228,7 +235,7 @@ const BookAppointment = () => {
           </nav>
         </div>
         <Link
-          to="/logout"
+          to="/"
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
           onClick={() => setSidebarOpen(false)}
         >

@@ -235,7 +235,7 @@ const AddDoctors = () => {
           </nav>
         </div>
         <Link
-          to="/Logout"
+          to="/"
           className="flex items-center space-x-2 hover:bg-red-50 p-2 rounded-md text-red-500"
           onClick={() => setSidebarOpen(false)}
         >
