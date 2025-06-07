@@ -143,7 +143,7 @@ const DoctorLandingPage = () => {
       "department",
     ];
     authItems.forEach((item) => localStorage.removeItem(item));
-    navigate("/login");
+    navigate("/");
   };
 
   useEffect(() => {
