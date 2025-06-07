@@ -77,8 +77,8 @@ const Doctors = () => {
     fetchData();
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
+  // Live search functionality
+  useEffect(() => {
     if (!doctorName.trim()) {
       setFilteredDoctors(doctors);
       return;
@@ -88,12 +88,7 @@ const Doctors = () => {
       d.doctorfullname.toLowerCase().includes(doctorName.toLowerCase())
     );
     setFilteredDoctors(filtered);
-  };
-
-  const handleClearSearch = () => {
-    setDoctorName("");
-    setFilteredDoctors(doctors);
-  };
+  }, [doctorName, doctors]);
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this doctor?")) {
@@ -264,34 +259,42 @@ const Doctors = () => {
       {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
         <div className="mx-auto max-w-6xl">
-          {/* Search form */}
-          <form
-            onSubmit={handleSearch}
-            className="flex bg-white shadow-md mb-6 p-4 rounded-lg"
-          >
-            <input
-              type="text"
-              value={doctorName}
-              onChange={(e) => setDoctorName(e.target.value)}
-              placeholder="Search by doctor name"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              className="flex items-center bg-blue-500 hover:bg-blue-600 px-4 py-2 text-white"
-            >
-              <FaSearch className="mr-2" /> Search
-            </button>
-            {doctorName && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="flex items-center bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded-r-lg text-white"
+          {/* Search and Add Doctor */}
+          <div className="flex flex-col sm:flex-row justify-between items-center bg-white shadow-md rounded-lg p-4 mb-6">
+            <div className="flex-1 w-full sm:w-auto mb-4 sm:mb-0">
+              <label htmlFor="search-doctor" className="sr-only">
+                Search Doctors
+              </label>
+              <div className="relative flex items-center">
+                <FaSearch className="absolute left-3 text-gray-400" />
+                <input
+                  type="text"
+                  id="search-doctor"
+                  className="py-2 pl-10 pr-4 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Search doctors..."
+                  value={doctorName}
+                  onChange={(e) => setDoctorName(e.target.value)}
+                />
+                {doctorName && (
+                  <button
+                    onClick={() => setDoctorName("")}
+                    className="absolute right-3 text-gray-500 hover:text-gray-700"
+                  >
+                    <FaTimes size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="sm:ml-4 flex-shrink-0 w-full sm:w-auto">
+              <Link
+                to="/admin/doctors"
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center space-x-2 w-full"
               >
-                <FaTimes className="mr-2" /> Clear
-              </button>
-            )}
-          </form>
+                <FaUserMd />
+                <span>Add New Doctor</span>
+              </Link>
+            </div>
+          </div>
 
           {/* Error message */}
           {error && (
