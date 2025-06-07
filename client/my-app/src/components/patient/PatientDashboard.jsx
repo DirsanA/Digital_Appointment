@@ -23,6 +23,7 @@ const PatientDashboard = () => {
   });
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isNotificationMinimized, setIsNotificationMinimized] = useState(false);
   const [lastCheckedTime, setLastCheckedTime] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -149,6 +150,15 @@ const PatientDashboard = () => {
       e.stopPropagation();
     }
     setShowNotifications(!showNotifications);
+    setIsNotificationMinimized(false);
+  };
+
+  const toggleMinimizeNotifications = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsNotificationMinimized(!isNotificationMinimized);
   };
 
   useEffect(() => {
@@ -249,7 +259,7 @@ const PatientDashboard = () => {
   }
 
   return (
-    <div className="flex bg-gray-100 h-screen">
+    <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 h-screen">
       <ToastContainer />
       {/* Mobile Header - Right-aligned hamburger */}
       <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
@@ -428,42 +438,48 @@ const PatientDashboard = () => {
             {showNotifications && notifications.length > 0 && (
               <>
                 {/* Overlay to prevent background scroll */}
-                <div
+                {/* <div
                   className="z-40 fixed inset-0 bg-black bg-opacity-50"
                   onClick={() => setShowNotifications(false)}
-                />
+                /> */}
                 <div
-                  className="top-[calc(100%+1rem)] right-4 z-50 fixed md:absolute flex flex-col bg-white shadow-xl rounded-lg w-[90vw] md:w-96"
-                  style={{ maxHeight: "320px" }}
+                  className="top-full right-4 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0"
                 >
-                  {/* Arrow pointer */}
-                  <div className="-top-2 right-6 absolute bg-white w-4 h-4 rotate-45 transform" />
+                  {/* Arrow pointer - remove if not needed with new positioning */}
+                  {/* <div className="-top-2 right-6 absolute bg-white w-4 h-4 rotate-45 transform" /> */}
 
                   {/* Fixed Header */}
-                  <div className="relative flex justify-between items-center bg-white p-2 border-gray-200 border-b rounded-t-lg">
-                    <h3 className="font-semibold text-gray-900 text-sm">
+                  <div className="relative flex justify-between items-center bg-white p-3 border-gray-200 border-b rounded-t-lg">
+                    <h3 className="font-semibold text-gray-900">
                       Recent Doctor's Responses
                     </h3>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        markAllAsRead();
-                      }}
-                      className="hover:bg-blue-50 px-2 py-1 rounded text-blue-600 hover:text-blue-800 text-xs whitespace-nowrap"
-                    >
-                      Mark all as read
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAllAsRead();
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        Mark all as read
+                      </button>
+                      <button
+                        onClick={toggleMinimizeNotifications}
+                        className="text-gray-600 hover:text-gray-800 text-sm"
+                      >
+                        {isNotificationMinimized ? 'Expand' : 'Minimize'}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Scrollable Notification Cards */}
                   <div
-                    className="flex-1 overflow-y-auto"
-                    style={{ maxHeight: "240px" }}
+                    className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-96'}`}
                   >
                     {notifications.map((notif, index) => (
                       <div
                         key={index}
-                        className="relative hover:bg-gray-50 p-2 border-gray-100 border-b"
+                        className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
                       >
                         <button
                           onClick={(e) => {
@@ -505,19 +521,6 @@ const PatientDashboard = () => {
                         </div>
                       </div>
                     ))}
-                  </div>
-
-                  {/* Fixed Footer */}
-                  <div className="bg-white p-1.5 border-gray-200 border-t rounded-b-lg">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowNotifications(false);
-                      }}
-                      className="hover:bg-gray-50 py-1 rounded w-full text-gray-600 hover:text-gray-800 text-xs text-center"
-                    >
-                      Close
-                    </button>
                   </div>
                 </div>
               </>

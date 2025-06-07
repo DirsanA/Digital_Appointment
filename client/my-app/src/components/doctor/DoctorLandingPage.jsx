@@ -13,6 +13,7 @@ const DoctorLandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeContent, setActiveContent] = useState("dashboard");
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isNotificationMinimized, setIsNotificationMinimized] = useState(false);
   const [doctorData, setDoctorData] = useState({
     doctorfullname: "",
     email: "",
@@ -212,6 +213,15 @@ const DoctorLandingPage = () => {
       e.stopPropagation();
     }
     setShowNotifications(!showNotifications);
+    setIsNotificationMinimized(false);
+  };
+
+  const toggleMinimizeNotifications = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsNotificationMinimized(!isNotificationMinimized);
   };
 
   const toggleMenu = () => {
@@ -367,19 +377,27 @@ const DoctorLandingPage = () => {
                 <p className="text-gray-500 text-xs md:text-sm">New Bookings</p>
 
                 {showNotifications && newAppointments.length > 0 && (
-                  <div className="top-full left-1/2 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-80 -translate-x-1/2 transform">
+                  <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0">
                     <div className="flex justify-between items-center p-3 border-gray-200 border-b">
                       <h3 className="font-semibold text-gray-900">
                         New Appointments
                       </h3>
-                      <button
-                        onClick={markAllAsRead}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        Mark all as read
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          Mark all as read
+                        </button>
+                        <button
+                          onClick={toggleMinimizeNotifications}
+                          className="text-gray-600 hover:text-gray-800 text-sm"
+                        >
+                          {isNotificationMinimized ? 'Expand' : 'Minimize'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-48'}`}>
                       {newAppointments.map((apt) => (
                         <div
                           key={apt.id}
