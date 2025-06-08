@@ -12,29 +12,57 @@ const bookAppointment = (req, res) => {
     appointment_time,
     patient_phone,
     patient_gender,
+    doctorname,
   } = req.body;
 
-  // Check required fields
-  if (
-    !patient_name ||
-    !department ||
-    !appointment_date ||
-    !patient_email ||
-    !doctor_id ||
-    !appointment_time ||
-    !patient_phone ||
-    !patient_gender
-  ) {
+  // Validate required fields
+  const requiredFields = {
+    patient_name: "Patient name",
+    department: "Department",
+    appointment_date: "Appointment date",
+    patient_email: "Patient email",
+    doctor_id: "Doctor ID",
+    appointment_time: "Appointment time",
+    patient_phone: "Patient phone",
+    patient_gender: "Patient gender",
+    doctorname: "Doctor name",
+  };
+
+  const missingFields = Object.keys(requiredFields).filter(
+    (field) => !req.body[field]
+  );
+
+  if (missingFields.length > 0) {
     return res.status(400).json({
       success: false,
-      message: "All fields are required",
+      message: `Missing required fields: ${missingFields
+        .map((f) => requiredFields[f])
+        .join(", ")}`,
+    });
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(appointment_date)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid date format. Use YYYY-MM-DD",
+    });
+  }
+
+  // Validate time format (HH:MM)
+  if (!/^\d{2}:\d{2}$/.test(appointment_time)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid time format. Use HH:MM",
     });
   }
 
   const sql = `
     INSERT INTO appointments 
-    (patient_name, department, appointment_date, patient_email, doctor_id, appointment_time, patient_phone, patient_gender, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    (patient_name, department, appointment_date, patient_email, 
+     doctor_id, appointment_time, patient_phone, patient_gender,
+     doctorname, status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())
   `;
 
   db.query(
@@ -48,6 +76,7 @@ const bookAppointment = (req, res) => {
       appointment_time,
       patient_phone,
       patient_gender,
+      doctorname,
     ],
     (err, result) => {
       if (err) {
@@ -55,7 +84,10 @@ const bookAppointment = (req, res) => {
         return res.status(500).json({
           success: false,
           message: "Failed to book appointment",
-          error: err.sqlMessage,
+          error:
+            err.code === "ER_NO_DEFAULT_FOR_FIELD"
+              ? "Missing required field in database"
+              : err.sqlMessage,
         });
       }
 
@@ -63,6 +95,12 @@ const bookAppointment = (req, res) => {
         success: true,
         message: "✅ Appointment booked successfully",
         appointmentId: result.insertId,
+        appointmentDetails: {
+          patient_name,
+          doctorname,
+          appointment_date,
+          appointment_time,
+        },
       });
     }
   );
@@ -72,7 +110,7 @@ const bookAppointment = (req, res) => {
 const getAllAppointments = async (req, res) => {
   try {
     const { patient_email } = req.query;
-    
+
     let sql = `
       SELECT 
         a.*,
@@ -88,10 +126,9 @@ const getAllAppointments = async (req, res) => {
 
     sql += ` ORDER BY a.appointment_date DESC`;
 
-    const [appointments] = await db.promise().query(
-      sql,
-      patient_email ? [patient_email] : []
-    );
+    const [appointments] = await db
+      .promise()
+      .query(sql, patient_email ? [patient_email] : []);
 
     res.status(200).json(appointments);
   } catch (err) {
@@ -200,8 +237,80 @@ const deleteAppointment = async (req, res) => {
   }
 };
 
+// controllers/appointmentController.js
+
+const updateAppointment = async (req, res) => {
+  const { id } = req.params;
+  const { department, doctor_id, appointment_date, appointment_time } =
+    req.body;
+
+  // Validate required fields
+  if (!department || !doctor_id || !appointment_date || !appointment_time) {
+    return res.status(400).json({
+      success: false,
+      message: "Department, Doctor ID, Date, and Time are required",
+    });
+  }
+
+  // Format validation (optional but helpful)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+  if (!dateRegex.test(appointment_date)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid date format. Use YYYY-MM-DD",
+    });
+  }
+
+  if (!timeRegex.test(appointment_time)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid time format. Use HH:MM (24-hour)",
+    });
+  }
+
+  try {
+    const sql = `
+      UPDATE appointments 
+      SET department = ?, doctor_id = ?, appointment_date = ?, appointment_time = ?, updated_at = NOW()
+      WHERE id = ?
+    `;
+
+    const [result] = await db
+      .promise()
+      .query(sql, [
+        department,
+        doctor_id,
+        appointment_date,
+        appointment_time,
+        id,
+      ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found or no changes made",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Appointment details updated successfully",
+    });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update appointment",
+      error: err.message,
+    });
+  }
+};
+
 // ⛳ Export all controllers
 module.exports = {
+  updateAppointment,
   bookAppointment,
   getAllAppointments,
   updateAppointmentStatus,

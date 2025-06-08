@@ -23,8 +23,10 @@ const AppointmentHistory = () => {
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [patientName, setPatientName] = useState("");
-  const [doctors, setDoctors] = useState([]);
+  const [allDoctors, setAllDoctors] = useState([]);
+  const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [fetchingDoctors, setFetchingDoctors] = useState(false);
   const navigate = useNavigate();
 
   // Fetch departments from the database
@@ -35,7 +37,10 @@ const AppointmentHistory = () => {
           "http://localhost:5000/admin/getAllDepartments"
         );
         if (response.data.success) {
-          setDepartments(response.data.departments);
+          const deptNames = response.data.departments.map((dept) =>
+            typeof dept === "object" ? dept.department_name : dept
+          );
+          setDepartments(deptNames);
         }
       } catch (error) {
         console.error("Error fetching departments:", error);
@@ -45,7 +50,7 @@ const AppointmentHistory = () => {
     fetchDepartments();
   }, []);
 
-  // Fetch doctors from the database
+  // Fetch all doctors from the database
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
@@ -55,10 +60,10 @@ const AppointmentHistory = () => {
         if (response.data.success) {
           const doctorsData = response.data.doctors.map((doctor) => ({
             id: doctor.id,
-            name: doctor.doctorfullname, // Use doctorfullname consistently
+            name: doctor.doctorfullname,
+            department: doctor.department,
           }));
-          console.log("Fetched doctors:", doctorsData); // For debugging
-          setDoctors(doctorsData);
+          setAllDoctors(doctorsData);
         }
       } catch (error) {
         console.error("Error fetching doctors:", error);
@@ -68,6 +73,27 @@ const AppointmentHistory = () => {
     fetchDoctors();
   }, []);
 
+  // Filter doctors based on selected department when editing
+  useEffect(() => {
+    if (editingId && editedAppointment.department) {
+      const filtered = allDoctors.filter(
+        (doctor) => doctor.department === editedAppointment.department
+      );
+      setFilteredDoctors(filtered);
+
+      if (
+        filtered.length > 0 &&
+        !filtered.some((doc) => doc.id === editedAppointment.doctor_id)
+      ) {
+        setEditedAppointment((prev) => ({
+          ...prev,
+          doctor_id: filtered[0].id,
+          doctor: filtered[0].name,
+        }));
+      }
+    }
+  }, [editedAppointment.department, editingId, allDoctors]);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -75,7 +101,6 @@ const AppointmentHistory = () => {
       return;
     }
 
-    // Fetch patient details
     const fetchPatientDetails = async () => {
       try {
         const patientId = localStorage.getItem("patientId");
@@ -113,7 +138,6 @@ const AppointmentHistory = () => {
     fetchPatientDetails();
   }, [navigate]);
 
-  // Fetch appointments from backend
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
@@ -126,24 +150,34 @@ const AppointmentHistory = () => {
         const response = await axios.get(
           `http://localhost:5000/appointments?patient_email=${userEmail}`
         );
-        const formattedAppointments = response.data.map((appt) => ({
+
+        if (!response.data) {
+          throw new Error("No data received from server");
+        }
+
+        const formattedAppointments = response.data.map((appt, index) => ({
           id: appt.id,
           patientName: appt.patient_name,
           department: appt.department,
           date: appt.appointment_date,
           email: appt.patient_email,
+          doctor_id: appt.doctor_id,
           doctor: appt.doctorfullname,
           time: appt.appointment_time,
           phone: appt.patient_phone,
           status:
             appt.status.charAt(0).toUpperCase() +
             appt.status.slice(1).toLowerCase(),
+          uniqueKey: `appt-${index}-${appt.id}`,
         }));
         setAppointments(formattedAppointments);
         setError(null);
       } catch (error) {
         console.error("Error fetching appointments:", error);
-        setError("Failed to load appointments. Please try again later.");
+        setError(
+          error.response?.data?.message ||
+            "Failed to load appointments. Please try again."
+        );
         if (error.message === "User email not found") {
           navigate("/patient-login");
         }
@@ -155,7 +189,6 @@ const AppointmentHistory = () => {
     fetchAppointments();
   }, [navigate]);
 
-  // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -164,7 +197,6 @@ const AppointmentHistory = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setDropdownOpen(null);
     document.addEventListener("click", handleClickOutside);
@@ -213,10 +245,31 @@ const AppointmentHistory = () => {
   };
 
   const handleEditAppointment = (appointment) => {
+    // Verify appointment still exists in the current state
+    const exists = appointments.some((appt) => appt.id === appointment.id);
+    if (!exists) {
+      alert("This appointment no longer exists. Refreshing the list...");
+      window.location.reload();
+      return;
+    }
+
+    // Convert date to yyyy-MM-dd format for the input field
+    const date = new Date(appointment.date);
+    const formattedDate = date.toISOString().split("T")[0];
+
     setEditingId(appointment.id);
-    setEditedAppointment({ ...appointment });
+    setEditedAppointment({
+      ...appointment,
+      date: formattedDate,
+      doctor_id: appointment.doctor_id, // Ensure we have the doctor_id
+    });
     setDateError("");
     setDropdownOpen(null);
+
+    const filtered = allDoctors.filter(
+      (doctor) => doctor.department === appointment.department
+    );
+    setFilteredDoctors(filtered);
   };
 
   const validateDate = (date) => {
@@ -234,32 +287,55 @@ const AppointmentHistory = () => {
     try {
       setUpdating(true);
 
-      await axios.put(`http://localhost:5000/appointment/${editingId}`, {
-        patient_name: editedAppointment.patientName,
-        department: editedAppointment.department,
-        appointment_date: editedAppointment.date,
-        patient_email: editedAppointment.email,
-        doctorfullname: editedAppointment.doctor, // Use doctorfullname consistently
-        appointment_time: editedAppointment.time,
-        patient_phone: editedAppointment.phone,
-        status: editedAppointment.status || "pending",
-      });
+      const formattedDate = new Date(editedAppointment.date)
+        .toISOString()
+        .split("T")[0];
 
-      setAppointments(
-        appointments.map((appt) =>
-          appt.id === editingId
-            ? {
-                ...editedAppointment,
-                doctor: editedAppointment.doctor,
-              }
-            : appt
-        )
+      const updateData = {
+        department: editedAppointment.department,
+        doctor_id: editedAppointment.doctor_id, // Use the doctor_id instead of name
+        appointment_date: formattedDate,
+        appointment_time: editedAppointment.time,
+      };
+
+      const response = await axios.put(
+        `http://localhost:5000/appointment/${editingId}`,
+        updateData
       );
-      setEditingId(null);
-      setDateError("");
+
+      if (response.data.success) {
+        // Find the updated doctor's name
+        const updatedDoctor = allDoctors.find(
+          (doc) => doc.id === editedAppointment.doctor_id
+        );
+
+        setAppointments(
+          appointments.map((appt) =>
+            appt.id === editingId
+              ? {
+                  ...appt,
+                  department: editedAppointment.department,
+                  doctor_id: editedAppointment.doctor_id,
+                  doctor: updatedDoctor ? updatedDoctor.name : appt.doctor,
+                  date: formattedDate,
+                  time: editedAppointment.time,
+                }
+              : appt
+          )
+        );
+        setEditingId(null);
+        setDateError("");
+      } else {
+        throw new Error(
+          response.data.message || "Failed to update appointment"
+        );
+      }
     } catch (error) {
       console.error("Error updating appointment:", error);
-      alert("Failed to update appointment. Please try again.");
+      alert(
+        error.response?.data?.message ||
+          "Failed to update appointment. Please try again."
+      );
     } finally {
       setUpdating(false);
     }
@@ -272,17 +348,26 @@ const AppointmentHistory = () => {
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditedAppointment({
-      ...editedAppointment,
-      [name]: value,
-    });
 
-    if (name === "date") {
-      if (!validateDate(value)) {
-        setDateError("Please select a future date");
-      } else {
-        setDateError("");
-      }
+    if (name === "doctor") {
+      // When doctor is changed, update both doctor_id and doctor name
+      const selectedDoctor = filteredDoctors.find((doc) => doc.name === value);
+      setEditedAppointment((prev) => ({
+        ...prev,
+        doctor_id: selectedDoctor ? selectedDoctor.id : "",
+        [name]: value,
+      }));
+    } else if (name === "time") {
+      const formattedTime = validateAndFormatTime(value);
+      setEditedAppointment((prev) => ({
+        ...prev,
+        [name]: formattedTime,
+      }));
+    } else {
+      setEditedAppointment((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
@@ -292,11 +377,24 @@ const AppointmentHistory = () => {
   };
 
   const formatTimeForDisplay = (timeString) => {
-    const [hours, minutes] = timeString.split(":");
-    const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+    if (!timeString) return "--:--";
+
+    const timeParts = timeString.split(":");
+    return `${timeParts[0]}:${timeParts[1]}`;
+  };
+
+  const validateAndFormatTime = (time) => {
+    if (!time) return null;
+
+    if (time.includes(":") && time.split(":").length > 2) {
+      return time.substring(0, 5);
+    }
+
+    if (!time.includes(":") && time.length === 4) {
+      return `${time.substring(0, 2)}:${time.substring(2)}`;
+    }
+
+    return time;
   };
 
   return (
@@ -441,7 +539,7 @@ const AppointmentHistory = () => {
                   <tbody>
                     {appointments.map((appointment, index) => (
                       <tr
-                        key={appointment.id}
+                        key={appointment.uniqueKey || appointment.id}
                         className="hover:bg-blue-50 border-gray-200 border-b transition-colors"
                       >
                         <td className="p-3 text-gray-700">
@@ -459,9 +557,11 @@ const AppointmentHistory = () => {
                               value={editedAppointment.department}
                               onChange={handleEditChange}
                               className="px-2 py-1 border rounded w-full"
+                              required
                             >
-                              {departments.map((dept) => (
-                                <option key={dept} value={dept}>
+                              <option value="">Select Department</option>
+                              {departments.map((dept, i) => (
+                                <option key={`dept-${i}`} value={dept}>
                                   {dept}
                                 </option>
                               ))}
@@ -474,19 +574,39 @@ const AppointmentHistory = () => {
                         {/* Doctor */}
                         <td className="p-3 text-gray-700">
                           {editingId === appointment.id ? (
-                            <select
-                              name="doctor"
-                              value={editedAppointment.doctor}
-                              onChange={handleEditChange}
-                              className="px-2 py-1 border rounded w-full"
-                            >
-                              <option value="">Select Doctor</option>
-                              {doctors.map((doc) => (
-                                <option key={doc.id} value={doc.name}>
-                                  {doc.name}
-                                </option>
-                              ))}
-                            </select>
+                            fetchingDoctors ? (
+                              <div className="flex items-center">
+                                <FaSpinner className="mr-2 animate-spin" />
+                                Loading doctors...
+                              </div>
+                            ) : (
+                              <select
+                                name="doctor"
+                                value={editedAppointment.doctor}
+                                onChange={handleEditChange}
+                                className="px-2 py-1 border rounded w-full"
+                                required
+                                disabled={filteredDoctors.length === 0}
+                              >
+                                {filteredDoctors.length === 0 ? (
+                                  <option value="">
+                                    No doctors in this department
+                                  </option>
+                                ) : (
+                                  <>
+                                    <option value="">Select Doctor</option>
+                                    {filteredDoctors.map((doc) => (
+                                      <option
+                                        key={`doc-${doc.id}`}
+                                        value={doc.name}
+                                      >
+                                        {doc.name}
+                                      </option>
+                                    ))}
+                                  </>
+                                )}
+                              </select>
+                            )
                           ) : (
                             appointment.doctor
                           )}
@@ -503,6 +623,7 @@ const AppointmentHistory = () => {
                                 onChange={handleEditChange}
                                 min={getTodayDate()}
                                 className="px-2 py-1 border rounded w-full"
+                                required
                               />
                               {dateError && (
                                 <span className="mt-1 text-red-500 text-xs">
@@ -524,6 +645,8 @@ const AppointmentHistory = () => {
                               value={editedAppointment.time}
                               onChange={handleEditChange}
                               className="px-2 py-1 border rounded w-full"
+                              required
+                              step="1800"
                             />
                           ) : (
                             formatTimeForDisplay(appointment.time)
@@ -581,9 +704,21 @@ const AppointmentHistory = () => {
                                         e.stopPropagation();
                                         handleUpdateAppointment();
                                       }}
-                                      disabled={dateError || updating}
+                                      disabled={
+                                        dateError ||
+                                        updating ||
+                                        !editedAppointment.department ||
+                                        !editedAppointment.doctor_id ||
+                                        !editedAppointment.date ||
+                                        !editedAppointment.time
+                                      }
                                       className={`block w-full text-left px-4 py-2 text-sm ${
-                                        dateError || updating
+                                        dateError ||
+                                        updating ||
+                                        !editedAppointment.department ||
+                                        !editedAppointment.doctor_id ||
+                                        !editedAppointment.date ||
+                                        !editedAppointment.time
                                           ? "text-gray-400 cursor-not-allowed"
                                           : "text-green-600 hover:bg-green-50"
                                       }`}
@@ -666,4 +801,3 @@ const AppointmentHistory = () => {
 };
 
 export default AppointmentHistory;
-//comment

@@ -22,6 +22,7 @@ const BookAppointment = () => {
     time: "",
     phone: "",
     gender: "",
+    doctorname: "",
   });
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -65,6 +66,7 @@ const BookAppointment = () => {
             patientName: patientData.full_name,
             email: patientData.email,
             phone: patientData.phone,
+            gender: patientData.gender || "",
           }));
         } else {
           throw new Error(
@@ -95,16 +97,15 @@ const BookAppointment = () => {
 
       try {
         setFetchingDoctors(true);
-        const response = await fetch(
+        const response = await axios.get(
           `http://localhost:5000/getDoctorsByDepartment?department=${appointment.department}`
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch doctors");
+        if (response.data.success) {
+          setDoctors(response.data.doctors || []);
+        } else {
+          throw new Error(response.data.message || "Failed to fetch doctors");
         }
-
-        const data = await response.json();
-        setDoctors(data.doctors || []);
       } catch (error) {
         console.error("Error fetching doctors:", error);
         setDoctors([]);
@@ -121,17 +122,29 @@ const BookAppointment = () => {
     setAppointment((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleDoctorChange = (e) => {
+    const selectedDoctorId = e.target.value;
+    const selectedDoctor = doctors.find(
+      (doctor) => doctor.id == selectedDoctorId
+    );
+
+    setAppointment((prev) => ({
+      ...prev,
+      doctor: selectedDoctorId,
+      doctorname: selectedDoctor ? selectedDoctor.name : "",
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/appointment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        "http://localhost:5000/appointment",
+        {
           patient_name: appointment.patientName,
           department: appointment.department,
           appointment_date: appointment.date,
@@ -140,32 +153,41 @@ const BookAppointment = () => {
           appointment_time: appointment.time,
           patient_phone: appointment.phone,
           patient_gender: appointment.gender,
-        }),
-      });
+          doctorname: appointment.doctorname,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error("Failed to book appointment");
+      if (response.data.success) {
+        console.log("Appointment booked:", response.data);
+        alert("Appointment booked successfully!");
+
+        // Reset form
+        setAppointment({
+          patientName: currentPatientName,
+          department: "",
+          date: "",
+          email: appointment.email,
+          doctor: "",
+          time: "",
+          phone: appointment.phone,
+          gender: appointment.gender,
+          doctorname: "",
+        });
+        setDoctors([]);
+      } else {
+        throw new Error(response.data.message || "Failed to book appointment");
       }
-
-      const result = await response.json();
-      console.log("Appointment booked:", result);
-      alert("Appointment booked successfully!");
-
-      // Reset form
-      setAppointment({
-        patientName: "",
-        department: "",
-        date: "",
-        email: "",
-        doctor: "",
-        time: "",
-        phone: "",
-        gender: "",
-      });
-      setDoctors([]);
     } catch (error) {
       console.error("Error booking appointment:", error);
-      alert("Failed to book appointment. Please try again.");
+      alert(
+        error.response?.data?.message ||
+          "Failed to book appointment. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -237,7 +259,12 @@ const BookAppointment = () => {
         <Link
           to="/"
           className="flex items-center space-x-2 text-red-500 hover:text-red-700"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            localStorage.removeItem("patientId");
+            setSidebarOpen(false);
+          }}
         >
           <FaPowerOff size={20} />
           <span>Log out</span>
@@ -295,6 +322,7 @@ const BookAppointment = () => {
                   onChange={handleChange}
                   className="px-4 py-2 border border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-500 w-full text-gray-700"
                   required
+                  readOnly
                 />
               </div>
 
@@ -350,6 +378,7 @@ const BookAppointment = () => {
                   onChange={handleChange}
                   className="px-4 py-2 border border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-500 w-full text-gray-700"
                   required
+                  min={new Date().toISOString().split("T")[0]}
                 />
               </div>
 
@@ -365,6 +394,7 @@ const BookAppointment = () => {
                   onChange={handleChange}
                   className="px-4 py-2 border border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-500 w-full text-gray-700"
                   required
+                  readOnly
                 />
               </div>
 
@@ -376,7 +406,7 @@ const BookAppointment = () => {
                 <select
                   name="doctor"
                   value={appointment.doctor}
-                  onChange={handleChange}
+                  onChange={handleDoctorChange}
                   className="px-4 py-2 border border-gray-300 focus:border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-500 w-full text-gray-700"
                   required
                   disabled={!appointment.department || fetchingDoctors}
@@ -412,7 +442,7 @@ const BookAppointment = () => {
               </div>
 
               {/* Patient Phone Number */}
-              <div className="md:col-span-2">
+              <div>
                 <label className="block mb-1 font-medium text-gray-700 text-sm">
                   Patient Phone Number
                 </label>
@@ -425,6 +455,13 @@ const BookAppointment = () => {
                   required
                 />
               </div>
+
+              {/* Doctor Name Display (hidden but included in form data) */}
+              <input
+                type="hidden"
+                name="doctorname"
+                value={appointment.doctorname}
+              />
 
               {/* Submit Button */}
               <div className="md:col-span-2">

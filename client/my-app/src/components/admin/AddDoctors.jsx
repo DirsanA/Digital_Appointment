@@ -10,6 +10,7 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
+  FaEyeSlash,
   FaEye,
   FaCamera,
 } from "react-icons/fa";
