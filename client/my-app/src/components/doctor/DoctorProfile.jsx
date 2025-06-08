@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaEye,
+import {
+  FaEye,
   FaEyeSlash,
+  FaCamera,
+  FaTimes,
+  FaUserCircle,
 } from "react-icons/fa";
 
 function DoctorProfile() {
@@ -14,16 +18,19 @@ function DoctorProfile() {
     department: "",
     experience: "",
     role: "",
+    photo_url: "",
   });
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-   const [showPassword, setShowPassword] = useState(false);
-    const [showPasswordd, setShowPasswordd] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordd, setShowPasswordd] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+  const [photoFile, setPhotoFile] = useState(null);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,8 +64,9 @@ function DoctorProfile() {
             email: doctorData.email || "",
             contact: doctorData.contact || "",
             department: doctorData.department || "",
-            experience: doctorData.experiance || doctorData.experience || "0", // Handle both spellings
+            experience: doctorData.experiance || doctorData.experience || "0",
             role: doctorData.role || "doctor",
+            photo_url: doctorData.photo_url || "",
           });
         } else {
           throw new Error(
@@ -84,6 +92,71 @@ function DoctorProfile() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setDoctor({ ...doctor, [name]: value });
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        setError("Please select an image file.");
+        setPhotoFile(null);
+        return;
+      }
+      setPhotoFile(file);
+      setError("");
+      setSuccessMessage("");
+    }
+  };
+
+  const handlePhotoUpload = async () => {
+    if (!photoFile) {
+      setError("Please select a photo to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("photo", photoFile);
+
+    try {
+      const token = localStorage.getItem("token");
+      const doctorId = localStorage.getItem("doctorId");
+
+      if (!doctorId) {
+        throw new Error("Doctor ID not found");
+      }
+
+      const response = await axios.put(
+        `http://localhost:5000/admin/doctors/upload-photo/${doctorId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setDoctor((prevDoctor) => ({
+          ...prevDoctor,
+          photo_url: response.data.photo_url,
+        }));
+        setPhotoFile(null);
+        setSuccessMessage("Profile photo updated successfully!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        throw new Error(response.data.message || "Photo upload failed");
+      }
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      setError(
+        error.response?.data?.message || "Failed to upload profile photo"
+      );
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -134,7 +207,7 @@ function DoctorProfile() {
 
     try {
       const token = localStorage.getItem("token");
-      const doctorId = localStorage.getItem("doctorId"); // Get doctor ID from storage
+      const doctorId = localStorage.getItem("doctorId");
 
       if (!doctorId) {
         throw new Error("Doctor ID not found");
@@ -145,7 +218,7 @@ function DoctorProfile() {
         {
           currentPassword,
           newPassword,
-          id: doctorId, // Include doctor ID in request
+          id: doctorId,
         },
         {
           headers: {
@@ -197,6 +270,54 @@ function DoctorProfile() {
               {successMessage}
             </div>
           )}
+
+          {/* Photo Upload Section */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative rounded-full w-32 h-32 bg-gray-200 flex justify-center items-center overflow-hidden border-2 border-blue-300">
+              {doctor.photo_url ? (
+                <img
+                  src={doctor.photo_url}
+                  alt="Doctor Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <FaUserCircle className="text-gray-400 text-6xl" />
+              )}
+              <button
+                onClick={handlePhotoClick}
+                className="absolute bottom-1 right-1 bg-blue-500 rounded-full p-2 text-white shadow-md hover:bg-blue-600 transition-colors"
+                title="Upload Photo"
+              >
+                <FaCamera size={18} />
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept="image/*"
+              />
+            </div>
+            {photoFile && (
+              <div className="flex items-center space-x-2 mt-3">
+                <span className="text-gray-700 text-sm">
+                  {photoFile.name}
+                </span>
+                <button
+                  onClick={handlePhotoUpload}
+                  className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded"
+                >
+                  Upload
+                </button>
+                <button
+                  onClick={() => setPhotoFile(null)}
+                  className="text-gray-500 hover:text-gray-700 text-sm px-3 py-1 rounded"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="flex md:flex-row flex-col gap-8">
             {/* Profile Information */}
@@ -355,20 +476,20 @@ function DoctorProfile() {
                     Current Password
                   </label>
                   <div className="relative">
-                  <input
-                     type={showPassword ? "text" : "password"}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
-                    required
-                  />
-                   <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                              >
-                                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                              </button>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                    </button>
                   </div>
                 </div>
                 <div>
@@ -376,44 +497,44 @@ function DoctorProfile() {
                     New Password
                   </label>
                   <div className="relative">
-                  <input
-                     type={showPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
-                    required
-                    minLength="6"
-                  />
-                   <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                              >
-                                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                              </button>
-                              </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
+                      required
+                      minLength="6"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block font-medium text-gray-700 text-sm">
                     Confirm New Password
                   </label>
-                   <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
-                    required
-                    minLength="6"
-                  />
-                     <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                              >
-                                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                              </button>
-                              </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="block shadow-sm mt-1 border border-black focus:border-blue-500 rounded-md focus:ring-blue-500 w-full text-black"
+                      required
+                      minLength="6"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                    </button>
+                  </div>
                 </div>
                 {passwordError && (
                   <div className="text-red-500 text-sm">{passwordError}</div>
