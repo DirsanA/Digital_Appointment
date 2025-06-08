@@ -12,10 +12,10 @@ const AppointmentsContent = () => {
   // Fetch appointments on component mount and refresh periodically
   useEffect(() => {
     fetchAppointments();
-    
+
     // Set up interval to check for new appointments every minute
     const intervalId = setInterval(fetchAppointments, 60000);
-    
+
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
   }, []);
@@ -33,9 +33,10 @@ const AppointmentsContent = () => {
       const response = await axios.get("http://localhost:5000/appointments");
 
       // Filter appointments to show only appointments for this doctor, regardless of status
-      const doctorAppointments = response.data.filter(appointment => {
-        const isForDoctor = appointment.doctorfullname === doctorName || 
-                           appointment.doctor_email === doctorEmail;
+      const doctorAppointments = response.data.filter((appointment) => {
+        const isForDoctor =
+          appointment.doctorfullname === doctorName ||
+          appointment.doctor_email === doctorEmail;
         return isForDoctor;
       });
 
@@ -59,9 +60,9 @@ const AppointmentsContent = () => {
       // Update appointment status in database
       const response = await axios.patch(
         `http://localhost:5000/appointments/${id}`,
-        { 
+        {
           status: newStatus,
-          processed_at: new Date().toISOString()
+          processed_at: new Date().toISOString(),
         },
         {
           headers: {
@@ -75,14 +76,11 @@ const AppointmentsContent = () => {
       }
 
       // Update the appointment status in the current view without removing it
-      setPatients(prevPatients => 
-        prevPatients.map(patient => 
-          patient.id === id 
-            ? { ...patient, status: newStatus }
-            : patient
+      setPatients((prevPatients) =>
+        prevPatients.map((patient) =>
+          patient.id === id ? { ...patient, status: newStatus } : patient
         )
       );
-
     } catch (err) {
       console.error("Update error:", err);
       setError(err.message || "Failed to update status");
@@ -103,7 +101,7 @@ const AppointmentsContent = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Sticky Header Section */}
-      <div className="sticky top-0 z-20 bg-gray-50 pb-4">
+      <div className="top-0 z-20 sticky bg-gray-50 pb-4">
         {/* Header */}
         <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6">
           <div>
@@ -137,7 +135,7 @@ const AppointmentsContent = () => {
         )}
 
         {/* Filters - Sticky */}
-        <div className="bg-white sticky top-0 shadow-sm mb-6 p-4 border border-gray-200 rounded-xl">
+        <div className="top-0 sticky bg-white shadow-sm mb-6 p-4 border border-gray-200 rounded-xl">
           <div className="flex md:flex-row flex-col gap-4">
             <div className="flex-1">
               <label htmlFor="search" className="sr-only">
@@ -175,7 +173,7 @@ const AppointmentsContent = () => {
                 id="status-filter"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="block bg-gray-50 py-2 px-3 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full text-gray-900 sm:text-sm"
+                className="block bg-gray-50 px-3 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full text-gray-900 sm:text-sm"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -265,8 +263,8 @@ const AppointmentsContent = () => {
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          P{String(index + 1).padStart(3, '0')}
+                        <div className="text-gray-900 text-sm">
+                          P{String(index + 1).padStart(3, "0")}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -293,7 +291,9 @@ const AppointmentsContent = () => {
                       </td>
                       <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
                         <div className="text-gray-900 text-sm">
-                          {dayjs(patient.appointment_date).format("MMM D, YYYY")}
+                          {dayjs(patient.appointment_date).format(
+                            "MMM D, YYYY"
+                          )}
                         </div>
                         <div className="text-gray-500 text-sm">
                           {patient.appointment_time}
