@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaUserMd,
   FaPhone,
@@ -7,65 +7,94 @@ import {
   FaArrowLeft,
   FaCalendarAlt,
   FaClock,
+  FaUserCircle,
 } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 // Import your local images (adjust paths as needed)
-import drAbreham from "/assets/doc2.jpg";
-import drSarah from "/assets/doc2.jpg";
-import drMichael from "/assets/doc4.jpg";
-import drEmily from "/assets/doc8.jpg";
+// import drAbreham from "/assets/doc2.jpg";
+// import drSarah from "/assets/doc2.jpg";
+// import drMichael from "/assets/doc4.jpg";
+// import drEmily from "/assets/doc8.jpg";
 
 const OurDoctors = () => {
   const [showTableView, setShowTableView] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. Abreham",
-      specialty: "Dentist",
-      image: drAbreham,
-      bio: "Specialized in cosmetic dentistry and dental implants with 10 years of experience. Graduated from Harvard Dental School.",
-      phone: "+251907412708",
-      email: "dr.abreham@gmail.com",
-      availability: "Mon-Fri: 9AM-5PM",
-      experience: "10 years",
-    },
-    {
-      id: 2,
-      name: "Dr. Saraha",
-      specialty: "Cardiologist",
-      image: drSarah,
-      bio: "Board-certified cardiologist specializing in interventional procedures. Former chief resident at Johns Hopkins Hospital.",
-      phone: "+251907412708",
-      email: "dr.sahra@gmail.com",
-      availability: "Mon-Wed, Fri: 8AM-4PM",
-      experience: "12 years",
-    },
-    {
-      id: 3,
-      name: "Dr. Desu Mulat",
-      specialty: "Neurologist",
-      image: drMichael,
-      bio: "Expert in treating complex neurological disorders. Published researcher in neurodegenerative diseases.",
-      phone: "+251907412708",
-      email: "dr.desu@gmail.com",
-      availability: "Tue-Thu: 10AM-6PM",
-      experience: "8 years",
-    },
-    {
-      id: 4,
-      name: "Dr. Dirsan Antehun",
-      specialty: "Pediatrician",
-      image: drEmily,
-      bio: "Caring pediatrician with special interest in childhood immunology.",
-      phone: "+251907412708",
-      email: "dr.girsan@gmail.com",
-      availability: "Mon-Fri: 8AM-3PM",
-      experience: "7 years",
-    },
-  ];
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/admin/getAllDoctors"
+        );
+        let doctorsData = [];
+        if (Array.isArray(response.data)) {
+          doctorsData = response.data;
+        } else if (response.data && Array.isArray(response.data.doctors)) {
+          doctorsData = response.data.doctors;
+        } else {
+          console.warn("Unexpected API response format:", response.data);
+        }
+
+        if (doctorsData.length > 0) {
+          // Format doctor IDs and ensure photo_url exists
+          const formattedDoctors = doctorsData.map((doctor, index) => ({
+            id: doctor._id || index, // Use _id if available, otherwise index
+            name: doctor.doctorfullname,
+            specialty: doctor.department,
+            image: doctor.photo_url || null,
+            bio: doctor.bio || "We are here to care you.",
+            phone: doctor.contact,
+            email: doctor.email,
+            availability: doctor.availability || "6:00 AM - 6:00 PM",
+            experience: doctor.experiance + " years of experience",
+          }));
+          setDoctors(formattedDoctors);
+        } else {
+          setDoctors([]); // Set to empty array if no data
+        }
+        setError(null);
+      } catch (err) {
+        console.error("Failed to fetch doctors:", err);
+        setError("Failed to load doctors. Please try again later.");
+        setDoctors([]); // Ensure doctors array is empty on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   const toggleView = () => setShowTableView(!showTableView);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen text-red-600">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (doctors.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-600">
+        <p>No doctors found.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 px-4 sm:px-6 lg:px-8 py-16 min-h-screen">
@@ -123,11 +152,17 @@ const OurDoctors = () => {
                   {doctors.map((doctor) => (
                     <tr key={doctor.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <img
-                          src={doctor.image}
-                          alt={doctor.name}
-                          className="rounded-full w-12 h-12 object-cover"
-                        />
+                        {doctor.image ? (
+                          <img
+                            src={doctor.image}
+                            alt={doctor.name}
+                            className="rounded-full w-12 h-12 object-cover"
+                          />
+                        ) : (
+                          <div className="flex justify-center items-center bg-gray-200 rounded-full w-12 h-12">
+                            <FaUserCircle className="text-gray-400 text-2xl" />
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900">
@@ -171,17 +206,23 @@ const OurDoctors = () => {
         ) : (
           <>
             <div className="gap-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              {doctors.map((doctor) => (
+              {doctors.slice(0, 4).map((doctor) => (
                 <div
                   key={doctor.id}
                   className="bg-white shadow-md hover:shadow-xl rounded-xl overflow-hidden transition-all hover:-translate-y-1 duration-300 transform"
                 >
                   <div className="relative h-60 overflow-hidden">
-                    <img
-                      src={doctor.image}
-                      alt={doctor.name}
-                      className="absolute w-full h-full object-cover"
-                    />
+                    {doctor.image ? (
+                      <img
+                        src={doctor.image}
+                        alt={doctor.name}
+                        className="absolute w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex justify-center items-center bg-gray-200">
+                        <FaUserCircle className="text-gray-400 text-6xl" />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                     <div className="bottom-0 left-0 absolute p-4">
                       <h3 className="font-bold text-white text-xl">
@@ -195,7 +236,7 @@ const OurDoctors = () => {
                   <div className="p-5">
                     <div className="flex items-center mb-3">
                       <span className="bg-blue-100 px-2.5 py-0.5 rounded font-semibold text-blue-800 text-xs">
-                        {doctor.experience} experience
+                        {doctor.experience}
                       </span>
                     </div>
 
