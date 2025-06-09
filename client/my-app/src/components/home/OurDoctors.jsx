@@ -205,75 +205,74 @@ const OurDoctors = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto pb-4">
-              <div className="flex flex-nowrap gap-8 sm:grid sm:grid-cols-2 lg:grid-cols-4">
-                {doctors.slice(0, 4).map((doctor) => (
-                  <div
-                    key={doctor.id}
-                    className="flex-shrink-0 min-w-[280px] sm:w-auto bg-white shadow-md hover:shadow-xl rounded-xl overflow-hidden transition-all hover:-translate-y-1 duration-300 transform"
-                  >
-                    <div className="relative h-60 overflow-hidden">
-                      {doctor.image ? (
-                        <img
-                          src={doctor.image}
-                          alt={doctor.name}
-                          className="absolute w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex justify-center items-center bg-gray-200">
-                          <FaUserCircle className="text-gray-400 text-6xl" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                      <div className="bottom-0 left-0 absolute p-4">
-                        <h3 className="font-bold text-white text-xl">
-                          {doctor.name}
-                        </h3>
-                        <p className="font-medium text-blue-300">
-                          {doctor.specialty}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      <div className="flex items-center mb-3">
-                        <span className="bg-blue-100 px-2.5 py-0.5 rounded font-semibold text-blue-800 text-xs">
-                          {doctor.experience}
-                        </span>
-                      </div>
-
-                      <p className="mb-4 text-gray-500 text-sm line-clamp-3">
-                        {doctor.bio}
-                      </p>
-
-                      <div className="space-y-3 mb-5">
-                        <div className="flex items-center text-gray-600 text-sm">
-                          <FaClock className="mr-2 text-blue-500" />
-                          {doctor.availability}
-                        </div>
-                        <div className="flex items-center text-gray-600 text-sm">
-                          <FaPhone className="mr-2 text-blue-500" />
-                          {doctor.phone}
-                        </div>
-                        <div className="flex items-center text-gray-600 text-sm">
-                          <FaEnvelope className="mr-2 text-blue-500" />
-                          {doctor.email}
-                        </div>
-                      </div>
-
-                      <div className="flex space-x-2">
-                        <button
-                          className="flex flex-1 justify-center items-center bg-blue-600 hover:bg-blue-700 py-2 rounded-md text-white transition-colors"
-                          onClick={() => navigate("/patient-login")}
-                        >
-                          <FaCalendarAlt className="mr-2" />
-                          Book Now
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+           <div className="overflow-x-auto pb-4">
+  <div className="flex flex-nowrap gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-4 px-4 sm:px-0">
+    {doctors.slice(0, 4).map((doctor) => (
+      <div
+        key={doctor.id}
+        className="flex-shrink-0 w-[300px] sm:w-full bg-white rounded-lg shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      >
+        {/* Image Section - Improved with proper aspect ratio */}
+        <div className="relative h-64 w-full overflow-hidden">
+          {doctor.image ? (
+            <img
+              src={doctor.image}
+              alt={doctor.name}
+              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex justify-center items-center">
+              <FaUserCircle className="text-blue-300 text-7xl" />
             </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 p-4 w-full">
+            <h3 className="font-bold text-white text-xl">{doctor.name}</h3>
+            <p className="font-medium text-blue-200">{doctor.specialty}</p>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="p-5 space-y-4">
+          {/* Experience Badge */}
+          <div className="inline-flex items-center bg-blue-100 px-3 py-1 rounded-full text-sm font-medium text-blue-800">
+            {doctor.experience} experience
+          </div>
+
+          {/* Bio */}
+          <p className="text-gray-600 text-sm line-clamp-3">
+            {doctor.bio || "No biography available"}
+          </p>
+
+          {/* Doctor Info */}
+          <div className="space-y-3">
+            <div className="flex items-start text-gray-600 text-sm">
+              <FaClock className="mt-0.5 mr-2 text-blue-500 flex-shrink-0" />
+              <span>{doctor.availability || "Not specified"}</span>
+            </div>
+            <div className="flex items-start text-gray-600 text-sm">
+              <FaPhone className="mt-0.5 mr-2 text-blue-500 flex-shrink-0" />
+              <span>{doctor.phone || "Not provided"}</span>
+            </div>
+            <div className="flex items-start text-gray-600 text-sm">
+              <FaEnvelope className="mt-0.5 mr-2 text-blue-500 flex-shrink-0" />
+              <span className="truncate">{doctor.email || "Not provided"}</span>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <button
+            className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg transition-colors duration-200"
+            onClick={() => navigate("/patient-login")}
+          >
+            <FaCalendarAlt className="mr-2" />
+            Book Appointment
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
 
             <div className="mt-12 text-center">
               <button

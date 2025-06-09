@@ -479,9 +479,9 @@ const AppointmentHistory = () => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
-        <div className="mx-auto max-w-6xl">
-          {/* Welcome Section */}
+      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-hidden">
+        <div className="mx-auto max-w-6xl h-full flex flex-col">
+          {/* Welcome Section - Fixed height */}
           <div
             className="relative flex flex-col justify-center shadow-md mb-8 p-6 rounded-lg w-full h-48 text-white"
             style={{
@@ -499,8 +499,8 @@ const AppointmentHistory = () => {
             </p>
           </div>
 
-          {/* Appointment History Table */}
-          <div className="bg-white shadow-md p-4 md:p-6 rounded-lg">
+          {/* Appointment History Table - Scrollable area */}
+          <div className="bg-white shadow-md p-4 md:p-6 rounded-lg flex-1 flex flex-col overflow-hidden">
             <h3 className="flex items-center mb-6 font-semibold text-gray-800 text-xl">
               <FaHistory className="mr-2 text-blue-600" />
               Your Appointments
@@ -522,7 +522,7 @@ const AppointmentHistory = () => {
                 </button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-auto flex-1">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
