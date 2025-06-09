@@ -435,96 +435,88 @@ const PatientDashboard = () => {
             </Link>
 
             {/* Notifications Panel */}
-            {showNotifications && notifications.length > 0 && (
-              <>
-                {/* Overlay to prevent background scroll */}
-                {/* <div
-                  className="z-40 fixed inset-0 bg-black bg-opacity-50"
-                  onClick={() => setShowNotifications(false)}
-                /> */}
-                <div
-                  className="top-full right-4 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0"
-                >
-                  {/* Arrow pointer - remove if not needed with new positioning */}
-                  {/* <div className="-top-2 right-6 absolute bg-white w-4 h-4 rotate-45 transform" /> */}
+          {showNotifications && notifications.length > 0 && (
+  <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0">
+    {/* Header */}
+    <div className="flex justify-between items-center p-3 border-gray-200 border-b">
+      <h3 className="font-semibold text-gray-900">
+        Doctor's Responses ({notifications.length})
+      </h3>
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            markAllAsRead();
+          }}
+          className="text-blue-600 hover:text-blue-800 text-sm"
+        >
+          Mark all as read
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleMinimizeNotifications();
+          }}
+          className="text-gray-600 hover:text-gray-800 text-sm"
+        >
+          {isNotificationMinimized ? 'Expand' : 'Minimize'}
+        </button>
+      </div>
+    </div>
 
-                  {/* Fixed Header */}
-                  <div className="relative flex justify-between items-center bg-white p-3 border-gray-200 border-b rounded-t-lg">
-                    <h3 className="font-semibold text-gray-900">
-                      Recent Doctor's Responses
-                    </h3>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markAllAsRead();
-                        }}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        Mark all as read
-                      </button>
-                      <button
-                        onClick={toggleMinimizeNotifications}
-                        className="text-gray-600 hover:text-gray-800 text-sm"
-                      >
-                        {isNotificationMinimized ? 'Expand' : 'Minimize'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Scrollable Notification Cards */}
-                  <div
-                    className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-96'}`}
-                  >
-                    {notifications.map((notif, index) => (
-                      <div
-                        key={index}
-                        className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
-                      >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notif.id);
-                          }}
-                          className="top-1 right-1 absolute p-1 text-gray-400 hover:text-gray-600"
-                        >
-                          <FaTimes size={12} />
-                        </button>
-                        <div className="pr-6">
-                          <div className="flex justify-between items-start mb-1">
-                            <p className="font-medium text-gray-900 text-sm">
-                              Dr. {notif.doctorfullname}
-                            </p>
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded-full ${
-                                notif.status === "accepted"
-                                  ? "bg-green-100 text-green-800"
-                                  : notif.status === "cancelled"
-                                  ? "bg-red-100 text-red-800"
-                                  : notif.status === "completed"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {notif.status.charAt(0).toUpperCase() +
-                                notif.status.slice(1)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-gray-600 text-xs">
-                            <span>
-                              {new Date(
-                                notif.appointment_date
-                              ).toLocaleDateString()}
-                            </span>
-                            <span>{notif.appointment_time}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+    {/* Scrollable Content */}
+    <div className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-48'}`}>
+      {notifications.map((notif) => (
+        <div
+          key={notif.id}
+          className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              markAsRead(notif.id);
+            }}
+            className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
+          >
+            <FaTimes size={14} />
+          </button>
+          <div className="pr-6">
+            <div className="flex justify-between items-start mb-1">
+              <p className="font-medium text-gray-900">
+                Dr. {notif.doctorfullname}
+              </p>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full ${
+                  notif.status === "accepted"
+                    ? "bg-green-100 text-green-800"
+                    : notif.status === "cancelled"
+                    ? "bg-red-100 text-red-800"
+                    : notif.status === "completed"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                {notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}
+              </span>
+            </div>
+            <p className="text-gray-600 text-sm">
+              Date: {new Date(notif.appointment_date).toLocaleDateString()}
+            </p>
+            <p className="text-gray-600 text-sm">
+              Time: {notif.appointment_time}
+            </p>
+            <p className="text-gray-600 text-sm">
+              Department: {notif.department}
+            </p>
+            <p className="mt-1 text-gray-500 text-xs">
+              Updated: {new Date(notif.updatedAt || notif.appointment_date).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
           </div>
         </div>
       </main>
