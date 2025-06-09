@@ -355,121 +355,120 @@ const Appointments = () => {
           </div>
 
           {/* Appointment Details Modal */}
-          {selectedAppointment && (
-            <div className="z-50 fixed inset-0 flex justify-center items-center bg-opacity-50 p-4">
-              <div className="bg-white shadow-xl rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-6">
-                    <h2 className="font-bold text-gray-900 text-2xl">
-                      Appointment Details
-                    </h2>
-                    <button
-                      onClick={handleCloseDetails}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <FaTimes size={24} />
-                    </button>
-                  </div>
+       {selectedAppointment && (
+  <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm p-4">
+    <div className="bg-white shadow-xl rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-6">
+          <h2 className="font-bold text-gray-900 text-2xl">
+            Appointment Details
+          </h2>
+          <button
+            onClick={handleCloseDetails}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <FaTimes size={24} />
+          </button>
+        </div>
 
-                  <div className="space-y-6">
-                    {/* Patient Information */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
-                        <FaUserCircle className="mr-2 text-blue-600" />
-                        Patient Information
-                      </h3>
-                      <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
-                        <div>
-                          <p className="text-gray-500 text-sm">Name</p>
-                          <p className="font-medium text-gray-500 text-base">
-                            {selectedAppointment.patient_name}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Email</p>
-                          <p className="flex items-center font-medium text-gray-500 text-base">
-                            <FaEnvelope className="mr-2 text-gray-400" />
-                            {selectedAppointment.patient_email}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Phone</p>
-                          <p className="flex items-center font-medium text-gray-500 text-base">
-                            <FaPhone className="mr-2 text-gray-400" />
-                            +251{selectedAppointment.patient_phone}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Gender</p>
-                          <p className="font-medium text-gray-500 text-base">
-                            {selectedAppointment.patient_gender === "male"
-                              ? "Male"
-                              : selectedAppointment.patient_gender === "female"
-                              ? "Female"
-                              : "Not specified"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+        <div className="space-y-6">
+          {/* Patient Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
+              <FaUserCircle className="mr-2 text-blue-600" />
+              Patient Information
+            </h3>
+            <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
+              <div>
+                <p className="text-gray-500 text-sm">Name</p>
+                <p className="font-medium text-gray-500 text-base">
+                  {selectedAppointment.patient_name}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Email</p>
+                <p className="flex items-center font-medium text-gray-500 text-base">
+                  <FaEnvelope className="mr-2 text-gray-400" />
+                  {selectedAppointment.patient_email}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Phone</p>
+                <p className="flex items-center font-medium text-gray-500 text-base">
+                  <FaPhone className="mr-2 text-gray-400" />
+                  +251{selectedAppointment.patient_phone}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Gender</p>
+                <p className="font-medium text-gray-500 text-base">
+                  {selectedAppointment.patient_gender === "male"
+                    ? "Male"
+                    : selectedAppointment.patient_gender === "female"
+                    ? "Female"
+                    : "Not specified"}
+                </p>
+              </div>
+            </div>
+          </div>
 
-                    {/* Appointment Information */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
-                        <FaCalendarCheck className="mr-2 text-blue-600" />
-                        Appointment Details
-                      </h3>
-                      <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
-                        <div>
-                          <p className="text-gray-500 text-sm">Date</p>
-                          <p className="flex items-center font-medium text-gray-500 text-base">
-                            <FaCalendarAlt className="mr-2 text-gray-400" />
-                            {dayjs(selectedAppointment.appointment_date).format(
-                              "MMM D, YYYY"
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Time</p>
-                          <p className="flex items-center font-medium text-gray-500 text-base">
-                            <FaClock className="mr-2 text-gray-400" />
-                            {selectedAppointment.appointment_time}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Doctor</p>
-                          <p className="flex items-center font-medium text-gray-500 text-base">
-                            <FaUserMd className="mr-2 text-gray-400" />
-                            Dr.{selectedAppointment.doctorfullname}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Department</p>
-                          <p className="font-medium text-gray-500 text-base">
-                            {selectedAppointment.department}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Status</p>
-                          <div className="mt-1">
-                            {getStatusBadge(selectedAppointment.status)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end mt-6">
-                    <button
-                      onClick={handleCloseDetails}
-                      className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-gray-700"
-                    >
-                      Close
-                    </button>
-                  </div>
+          {/* Appointment Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
+              <FaCalendarCheck className="mr-2 text-blue-600" />
+              Appointment Details
+            </h3>
+            <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
+              <div>
+                <p className="text-gray-500 text-sm">Date</p>
+                <p className="flex items-center font-medium text-gray-500 text-base">
+                  <FaCalendarAlt className="mr-2 text-gray-400" />
+                  {dayjs(selectedAppointment.appointment_date).format("MMM D, YYYY")}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Time</p>
+                <p className="flex items-center font-medium text-gray-500 text-base">
+                  <FaClock className="mr-2 text-gray-400" />
+                  {selectedAppointment.appointment_time}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Doctor</p>
+                <p className="flex items-center font-medium text-gray-500 text-base">
+                  <FaUserMd className="mr-2 text-gray-400" />
+                  Dr.{selectedAppointment.doctorfullname}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Department</p>
+                <p className="font-medium text-gray-500 text-base">
+                  {selectedAppointment.department}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Status</p>
+                <div className="mt-1">
+                  {getStatusBadge(selectedAppointment.status)}
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+
+        <div className="flex justify-end mt-6">
+          <button
+            onClick={handleCloseDetails}
+            className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-gray-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
         </div>
       </main>
     </div>

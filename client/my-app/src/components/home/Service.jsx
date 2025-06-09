@@ -122,66 +122,67 @@ const OurServices = () => {
 
         {/* Service Detail Modal */}
         {selectedService && (
-          <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-75 p-4">
-            <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div className="relative">
-                <img
-                  src={selectedService.image}
-                  alt={selectedService.name}
-                  className="rounded-t-xl w-full h-64 object-cover"
-                />
-                <button
-                  onClick={() => setSelectedService(null)}
-                  className="top-4 right-4 absolute bg-white hover:bg-gray-100 shadow-lg p-3 rounded-full"
-                >
-                  <FaTimes className="text-gray-700 text-xl" />
-                </button>
-              </div>
+  <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm p-4">
+    <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="relative">
+        <img
+          src={selectedService.image}
+          alt={selectedService.name}
+          className="rounded-t-xl w-full h-64 object-cover"
+        />
+        <button
+          onClick={() => setSelectedService(null)}
+          className="top-4 right-4 absolute bg-white hover:bg-gray-100 shadow-lg p-3 rounded-full"
+        >
+          <FaTimes className="text-gray-700 text-xl" />
+        </button>
+      </div>
 
-              <div className="p-8">
-                <div className="flex justify-center items-center mb-6">
-                  <div className="mr-4 text-4xl">{selectedService.icon}</div>
-                  <h2 className="font-bold text-gray-900 text-3xl">
-                    {selectedService.name}
-                  </h2>
-                </div>
+      <div className="p-8">
+        <div className="flex justify-center items-center mb-6">
+          <div className="mr-4 text-4xl">{selectedService.icon}</div>
+          <h2 className="font-bold text-gray-900 text-3xl">
+            {selectedService.name}
+          </h2>
+        </div>
 
-                <div className="max-w-none text-gray-700 prose prose-lg">
-                  <p>{selectedService.article}</p>
+        <div className="max-w-none text-gray-700 prose prose-lg">
+          <p>{selectedService.article}</p>
 
-                  <h3 className="mt-8 mb-4 font-semibold text-gray-900 text-xl">
-                    Key Features
-                  </h3>
-                  <ul className="space-y-2 pl-5 list-disc">
-                    <li>Board-certified specialists</li>
-                    <li>State-of-the-art equipment</li>
-                    <li>Personalized treatment plans</li>
-                    <li>Compassionate patient care</li>
-                  </ul>
+          <h3 className="mt-8 mb-4 font-semibold text-gray-900 text-xl">
+            Key Features
+          </h3>
+          <ul className="space-y-2 pl-5 list-disc">
+            <li>Board-certified specialists</li>
+            <li>State-of-the-art equipment</li>
+            <li>Personalized treatment plans</li>
+            <li>Compassionate patient care</li>
+          </ul>
 
-                  <h3 className="mt-8 mb-4 font-semibold text-gray-900 text-xl">
-                    What to Expect
-                  </h3>
-                  <p>
-                    Your first visit will include a comprehensive consultation,
-                    diagnostic tests if needed, and a customized treatment plan.
-                    Our team will guide you through every step of your
-                    healthcare journey.
-                  </p>
-                </div>
+          <h3 className="mt-8 mb-4 font-semibold text-gray-900 text-xl">
+            What to Expect
+          </h3>
+          <p>
+            Your first visit will include a comprehensive consultation,
+            diagnostic tests if needed, and a customized treatment plan.
+            Our team will guide you through every step of your
+            healthcare journey.
+          </p>
+        </div>
 
-                <div className="flex justify-center mt-10">
-                  <button
-                    onClick={() => setSelectedService(null)}
-                    className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium text-white transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="flex justify-center mt-10">
+          <button
+            onClick={() => setSelectedService(null)}
+            className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium text-white transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
       <MedicalServices />
     </div>
