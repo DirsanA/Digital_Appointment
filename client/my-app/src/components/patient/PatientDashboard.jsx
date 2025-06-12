@@ -67,7 +67,8 @@ const PatientDashboard = () => {
         .filter((appointment) => {
           // Consider any non-pending status as a status change
           const isStatusChange = appointment.status !== "pending";
-          const isUnread = !readNotifications.includes(appointment.id);
+          const notificationKey = `${appointment.id}-${appointment.status}`;
+          const isUnread = !readNotifications.includes(notificationKey);
 
           // Check if the appointment is from today
           const appointmentDate = new Date(appointment.appointment_date);
@@ -77,6 +78,8 @@ const PatientDashboard = () => {
           console.log("Checking appointment:", {
             id: appointment.id,
             status: appointment.status,
+            updatedAt: appointment.updatedAt,
+            notificationKey: notificationKey,
             isStatusChange,
             isUnread,
             isToday,
@@ -93,13 +96,22 @@ const PatientDashboard = () => {
         // Take only the 5 most recent notifications
         .slice(0, 5);
 
-      console.log("Filtered status changes:", statusChanges);
+      console.log("Filtered status changes (after filter/sort/slice):", statusChanges);
 
       if (statusChanges.length > 0) {
         setNotifications(statusChanges);
         // Show toast for new notifications
         statusChanges.forEach((change) => {
-          if (!readNotifications.includes(change.id)) {
+          const notificationKey = `${change.id}-${change.status}`;
+          const alreadyRead = readNotifications.includes(notificationKey);
+          console.log("Attempting to display toast for:", {
+            id: change.id,
+            status: change.status,
+            notificationKey: notificationKey,
+            alreadyRead: alreadyRead,
+          });
+
+          if (!alreadyRead) {
             const statusMessage =
               change.status === "accepted"
                 ? "accepted your appointment"
@@ -123,21 +135,22 @@ const PatientDashboard = () => {
   };
 
   // Function to mark notification as read
-  const markAsRead = (notificationId) => {
+  const markAsRead = (notificationId, status) => {
     const readNotifications = getReadNotifications();
-    const updatedReadNotifications = [...readNotifications, notificationId];
+    const notificationKey = `${notificationId}-${status}`;
+    const updatedReadNotifications = [...readNotifications, notificationKey];
     saveReadNotifications(updatedReadNotifications);
     setNotifications((prev) =>
-      prev.filter((notif) => notif.id !== notificationId)
+      prev.filter((notif) => `${notif.id}-${notif.status}` !== notificationKey)
     );
     setShowNotifications(notifications.length <= 1); // Close panel if no more notifications
   };
 
   // Function to mark all as read
   const markAllAsRead = () => {
-    const notificationIds = notifications.map((notif) => notif.id);
+    const notificationKeys = notifications.map((notif) => `${notif.id}-${notif.status}`);
     const readNotifications = getReadNotifications();
-    const updatedReadNotifications = [...readNotifications, ...notificationIds];
+    const updatedReadNotifications = [...readNotifications, ...notificationKeys];
     saveReadNotifications(updatedReadNotifications);
     setNotifications([]);
     setShowNotifications(false);
@@ -468,13 +481,13 @@ const PatientDashboard = () => {
     <div className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-48'}`}>
       {notifications.map((notif) => (
         <div
-          key={notif.id}
+          key={`${notif.id}-${notif.status}`}
           className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
         >
           <button
             onClick={(e) => {
               e.stopPropagation();
-              markAsRead(notif.id);
+              markAsRead(notif.id, notif.status);
             }}
             className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
           >

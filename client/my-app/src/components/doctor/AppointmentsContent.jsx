@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
+import GoogleCalendarButton from '../GoogleCalendarButton';
 // comments added new for home page
 const AppointmentsContent = () => {
   const [patients, setPatients] = useState([]);
@@ -8,6 +9,7 @@ const AppointmentsContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState(null);
+  const [showTodayAppointments, setShowTodayAppointments] = useState(true);
 
   // Fetch appointments on component mount and refresh periodically
   useEffect(() => {
@@ -182,6 +184,14 @@ const AppointmentsContent = () => {
                 <option value="completed">Completed</option>
               </select>
             </div>
+            <div className="md:w-48">
+              <button
+                onClick={() => setShowTodayAppointments(!showTodayAppointments)}
+                className={`w-full md:w-auto px-3 py-2 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${showTodayAppointments ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                {showTodayAppointments ? "Show All Appointments" : "Show Today's Appointments"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -249,6 +259,9 @@ const AppointmentsContent = () => {
                       Contact
                     </th>
                     <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Calendar
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 font-medium text-gray-500 text-xs text-right uppercase tracking-wider">
@@ -257,98 +270,94 @@ const AppointmentsContent = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPatients.map((patient, index) => (
-                    <tr
-                      key={patient.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-gray-900 text-sm">
-                          P{String(index + 1).padStart(3, "0")}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-10 h-10">
-                            <span className="font-medium text-blue-600">
-                              {patient.patient_name.charAt(0).toUpperCase()}
-                            </span>
+                  {filteredPatients.map((patient, index) => {
+                    const today = dayjs().format("YYYY-MM-DD");
+                    const appointmentDate = dayjs(patient.appointment_date).format("YYYY-MM-DD");
+                    
+                    if (showTodayAppointments && appointmentDate !== today) {
+                      return null; // Skip rendering if not today's appointment and filter is active
+                    }
+
+                    return (
+                      <tr key={patient.id || index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {index + 1}
                           </div>
-                          <div className="ml-4">
-                            <div className="font-medium text-gray-900 text-sm">
-                              {patient.patient_name}
-                            </div>
-                            <div className="sm:hidden text-gray-500 text-sm">
-                              {patient.department}
-                            </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {patient.patient_name}
                           </div>
-                        </div>
-                      </td>
-                      <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-gray-900 text-sm">
-                          {patient.department}
-                        </div>
-                      </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-gray-900 text-sm">
-                          {dayjs(patient.appointment_date).format(
-                            "MMM D, YYYY"
-                          )}
-                        </div>
-                        <div className="text-gray-500 text-sm">
-                          {patient.appointment_time}
-                        </div>
-                      </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                        <div className="text-gray-900 text-sm">
-                          {patient.patient_email}
-                        </div>
-                        <div className="text-gray-500 text-sm">
-                          {patient.patient_phone}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <select
-                          value={patient.status}
-                          onChange={(e) =>
-                            updateAppointmentStatus(patient.id, e.target.value)
-                          }
-                          className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full cursor-pointer ${
-                            patient.status === "accepted"
-                              ? "bg-green-100 text-green-800 border-green-200"
-                              : patient.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                              : patient.status === "cancelled"
-                              ? "bg-red-100 text-red-800 border-red-200"
-                              : "bg-blue-100 text-blue-800 border-blue-200"
-                          } border`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="accepted">Accepted</option>
-                          <option value="cancelled">Cancelled</option>
-                          <option value="completed">Completed</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-sm text-right whitespace-nowrap">
-                        <button
-                          onClick={() =>
-                            updateAppointmentStatus(patient.id, "cancelled")
-                          }
-                          className="mr-3 text-red-600 hover:text-red-900"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() =>
-                            updateAppointmentStatus(patient.id, "completed")
-                          }
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          Complete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                          <div className="text-gray-500 text-sm">
+                            {patient.patient_email}
+                          </div>
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {patient.department}
+                          </div>
+                        </td>
+                        <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {dayjs(patient.appointment_date).format("MMM D, YYYY")}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            {patient.appointment_time}
+                          </div>
+                        </td>
+                        <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {patient.patient_phone}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <GoogleCalendarButton
+                            appointment={{
+                              date: patient.appointment_date,
+                              time: patient.appointment_time,
+                              doctor: patient.doctorfullname,
+                              department: patient.department,
+                              patientName: patient.patient_name,
+                              email: patient.patient_email,
+                            }}
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <select
+                            value={patient.status}
+                            onChange={(e) =>
+                              updateAppointmentStatus(patient.id, e.target.value)
+                            }
+                            className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${patient.status === "accepted" ? "bg-green-100 text-green-800" : patient.status === "cancelled" ? "bg-red-100 text-red-800" : ""}`}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 font-medium text-sm text-right whitespace-nowrap">
+                          <button
+                            onClick={() =>
+                              updateAppointmentStatus(patient.id, "cancelled")
+                            }
+                            className="mr-3 text-red-600 hover:text-red-900"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() =>
+                              updateAppointmentStatus(patient.id, "completed")
+                            }
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Complete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

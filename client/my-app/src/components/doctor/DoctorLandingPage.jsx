@@ -22,16 +22,17 @@ const DoctorLandingPage = () => {
     photo_url: "",
   });
   const [newAppointments, setNewAppointments] = useState([]);
+  const [appointmentsForToday, setAppointmentsForToday] = useState([]);
   const [lastCheckedTime, setLastCheckedTime] = useState(new Date());
   const navigate = useNavigate();
 
-  const getReadAppointments = () => {
-    const readAppointments = localStorage.getItem("readAppointments");
-    return readAppointments ? JSON.parse(readAppointments) : [];
+  const getReadNotifications = () => {
+    const read = localStorage.getItem("readNotifications");
+    return read ? JSON.parse(read) : [];
   };
 
-  const saveReadAppointments = (appointmentIds) => {
-    localStorage.setItem("readAppointments", JSON.stringify(appointmentIds));
+  const saveReadNotifications = (notificationIds) => {
+    localStorage.setItem("readNotifications", JSON.stringify(notificationIds));
   };
 
   const verifyAuth = async () => {
@@ -74,37 +75,55 @@ const DoctorLandingPage = () => {
       }
 
       const response = await axios.get("http://localhost:5000/appointments");
-      const readAppointments = getReadAppointments();
+      const readNotifications = getReadNotifications();
 
       const currentTime = new Date();
-      const recentAppointments = response.data.filter((appointment) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const allAppointmentsForDoctor = response.data.filter((appointment) => {
         const isForCurrentDoctor =
           appointment.doctorfullname === doctorName ||
           appointment.doctor_email === doctorEmail;
+        return isForCurrentDoctor;
+      });
+
+      const newUnreadRequests = allAppointmentsForDoctor.filter((appointment) => {
         const appointmentCreatedTime = new Date(
           appointment.createdAt || appointment.appointment_date
         );
         const isWithin24Hours =
           currentTime - appointmentCreatedTime <= 24 * 60 * 60 * 1000;
-        const isUnread = !readAppointments.includes(appointment.id);
+        const isUnread = !readNotifications.includes(appointment.id);
 
-        return isForCurrentDoctor && isWithin24Hours && isUnread;
+        return isWithin24Hours && isUnread;
       });
 
-      if (recentAppointments.length > 0) {
-        setNewAppointments(recentAppointments);
-        recentAppointments.forEach((appointment) => {
-          if (!readAppointments.includes(appointment.id)) {
-            toast.info(
-              `New appointment request from ${
-                appointment.patient_name
-              } for ${new Date(
-                appointment.appointment_date
-              ).toLocaleDateString()}`
-            );
-          }
-        });
-      }
+      const unreadTodayAppointments = allAppointmentsForDoctor.filter((appointment) => {
+        const appointmentDate = new Date(appointment.appointment_date);
+        appointmentDate.setHours(0, 0, 0, 0);
+
+        const isToday = appointmentDate.getTime() === today.getTime();
+        const isUnread = !readNotifications.includes(`today-${appointment.id}`);
+
+        return isToday && isUnread;
+      });
+
+      setNewAppointments(newUnreadRequests);
+      setAppointmentsForToday(unreadTodayAppointments);
+
+      newUnreadRequests.forEach((appointment) => {
+        if (!readNotifications.includes(appointment.id)) {
+          toast.info(
+            `New appointment request from ${
+              appointment.patient_name
+            } for ${new Date(
+              appointment.appointment_date
+            ).toLocaleDateString()}`
+          );
+        }
+      });
+
     } catch (error) {
       console.error("Error checking new appointments:", error);
       if (error.response?.status === 401) {
@@ -113,24 +132,34 @@ const DoctorLandingPage = () => {
     }
   };
 
-  const markAsRead = (appointmentId) => {
-    const readAppointments = getReadAppointments();
-    const updatedReadAppointments = [...readAppointments, appointmentId];
-    saveReadAppointments(updatedReadAppointments);
-    setNewAppointments((prev) =>
-      prev.filter((apt) => apt.id !== appointmentId)
-    );
-    if (newAppointments.length <= 1) {
+  const markAsRead = (appointmentId, type) => {
+    const readNotifications = getReadNotifications();
+    let notificationIdToMark = appointmentId;
+    if (type === 'today') {
+      notificationIdToMark = `today-${appointmentId}`;
+    }
+    const updatedReadNotifications = [...readNotifications, notificationIdToMark];
+    saveReadNotifications(updatedReadNotifications);
+
+    if (type === 'new') {
+      setNewAppointments((prev) => prev.filter((apt) => apt.id !== appointmentId));
+    } else if (type === 'today') {
+      setAppointmentsForToday((prev) => prev.filter((apt) => apt.id !== appointmentId));
+    }
+
+    if ((newAppointments.length <= (type === 'new' ? 1 : 0)) && (appointmentsForToday.length <= (type === 'today' ? 1 : 0))) {
       setShowNotifications(false);
     }
   };
 
   const markAllAsRead = () => {
-    const appointmentIds = newAppointments.map((apt) => apt.id);
-    const readAppointments = getReadAppointments();
-    const updatedReadAppointments = [...readAppointments, ...appointmentIds];
-    saveReadAppointments(updatedReadAppointments);
+    const newAppointmentIds = newAppointments.map((apt) => apt.id);
+    const todayAppointmentIds = appointmentsForToday.map((apt) => `today-${apt.id}`);
+    const readNotifications = getReadNotifications();
+    const updatedReadNotifications = [...readNotifications, ...newAppointmentIds, ...todayAppointmentIds];
+    saveReadNotifications(updatedReadNotifications);
     setNewAppointments([]);
+    setAppointmentsForToday([]);
     setShowNotifications(false);
   };
 
@@ -211,6 +240,13 @@ const DoctorLandingPage = () => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
+    }
+    if (!showNotifications && appointmentsForToday.length > 0) {
+      const readNotifications = getReadNotifications();
+      const todayAppointmentIds = appointmentsForToday.map((apt) => `today-${apt.id}`);
+      const updatedReadNotifications = [...readNotifications, ...todayAppointmentIds];
+      saveReadNotifications(updatedReadNotifications);
+      setAppointmentsForToday([]);
     }
     setShowNotifications(!showNotifications);
     setIsNotificationMinimized(false);
@@ -338,6 +374,12 @@ const DoctorLandingPage = () => {
               </div>
             </div>
 
+            {appointmentsForToday.length > 0 && (
+              <div className="bg-blue-100 text-blue-800 p-3 rounded-lg shadow-md mt-4 text-center font-semibold text-sm md:text-base">
+                You have {appointmentsForToday.length} today's appointments!
+              </div>
+            )}
+
             <div className="gap-4 md:gap-6 grid grid-cols-1 sm:grid-cols-3 mt-6 md:mt-8">
               <div className="bg-white shadow-md p-4 md:p-6 rounded-lg text-center">
                 <p className="font-bold text-blue-600 text-2xl md:text-3xl">
@@ -359,24 +401,24 @@ const DoctorLandingPage = () => {
                   >
                     <FaBell
                       className={`text-2xl md:text-3xl ${
-                        newAppointments.length > 0
+                        (newAppointments.length > 0 || appointmentsForToday.length > 0)
                           ? "text-blue-600 animate-bounce"
                           : "text-gray-400"
                       }`}
                     />
-                    {newAppointments.length > 0 && (
+                    {(newAppointments.length > 0 || appointmentsForToday.length > 0) && (
                       <span className="-top-2 -right-2 absolute flex justify-center items-center bg-red-500 border-2 border-white rounded-full w-6 h-6 text-white text-xs">
-                        {newAppointments.length}
+                        {newAppointments.length + appointmentsForToday.length}
                       </span>
                     )}
                   </button>
                 </div>
                 <p className="mt-2 font-bold text-blue-600 text-xl md:text-2xl">
-                  {newAppointments.length}
+                  {newAppointments.length + appointmentsForToday.length}
                 </p>
                 <p className="text-gray-500 text-xs md:text-sm">New Bookings</p>
 
-                {showNotifications && newAppointments.length > 0 && (
+                {showNotifications && (newAppointments.length > 0 || appointmentsForToday.length > 0) && (
                   <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0">
                     <div className="flex justify-between items-center p-3 border-gray-200 border-b">
                       <h3 className="font-semibold text-gray-900">
@@ -398,19 +440,21 @@ const DoctorLandingPage = () => {
                       </div>
                     </div>
                     <div className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-48'}`}>
-                      {newAppointments.map((apt) => (
+                      {[...newAppointments.map(apt => ({...apt, type: 'new'})), ...appointmentsForToday.map(apt => ({...apt, type: 'today'}))]
+                        .sort((a, b) => new Date(b.createdAt || b.appointment_date) - new Date(a.createdAt || a.appointment_date))
+                        .map((apt) => (
                         <div
-                          key={apt.id}
+                          key={`${apt.type}-${apt.id}`}
                           className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
                         >
                           <button
-                            onClick={() => markAsRead(apt.id)}
+                            onClick={() => markAsRead(apt.id, apt.type)}
                             className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
                           >
                             <FaTimes size={14} />
                           </button>
                           <p className="font-medium text-gray-900">
-                            {apt.patient_name}
+                            {apt.patient_name} {apt.type === 'today' ? '(Today\'s Appointment)' : '(New Request)'}
                           </p>
                           <p className="text-gray-600 text-sm">
                             Date:{" "}
@@ -654,6 +698,11 @@ const DoctorLandingPage = () => {
                     Dashboard
                   </h1>
                   <div className="bg-white shadow-md px-4 md:px-6 py-2 md:py-3 rounded-lg w-full md:w-auto">
+                    {appointmentsForToday.length > 0 && (
+                      <p className="font-semibold text-blue-600 text-sm md:text-base mb-1">
+                        You have {appointmentsForToday.length} today's appointments!
+                      </p>
+                    )}
                     <span className="text-gray-500 text-xs md:text-sm">
                       Today's Date
                     </span>
@@ -680,4 +729,3 @@ const DoctorLandingPage = () => {
 };
 
 export default DoctorLandingPage;
-// added some comment
