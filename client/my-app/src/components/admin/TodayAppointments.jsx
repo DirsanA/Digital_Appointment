@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { FaClock, FaUser, FaCalendarAlt, FaSync, FaSearch, FaFilter } from "react-icons/fa";
+import {
+  FaClock,
+  FaUser,
+  FaCalendarAlt,
+  FaSync,
+  FaSearch,
+  FaFilter,
+} from "react-icons/fa";
 
 const TodayAppointments = ({
   appointments = [],
@@ -26,10 +33,10 @@ const TodayAppointments = ({
     if (!dateString) return "N/A";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
     } catch (e) {
       return dateString;
@@ -37,14 +44,20 @@ const TodayAppointments = ({
   };
 
   // Filter appointments based on search term and status
-  const filteredAppointments = appointments.filter(appointment => {
-    const matchesSearch = (
-      (appointment.patient_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (appointment.doctor_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (appointment.department?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-    );
+  const filteredAppointments = appointments.filter((appointment) => {
+    const matchesSearch =
+      (appointment.patient_name?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (appointment.doctor_name?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (appointment.department?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      );
 
-    const matchesStatus = statusFilter === "all" || appointment.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || appointment.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -98,7 +111,7 @@ const TodayAppointments = ({
         </div>
 
         {/* Search and Filter Section */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex md:flex-row flex-col gap-4 mb-6">
           <div className="flex-1">
             <div className="relative">
               <input
@@ -106,9 +119,9 @@ const TodayAppointments = ({
                 placeholder="Search by patient, doctor, or department..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                className="py-2 pr-4 pl-10 border focus:border-blue-500 rounded-lg focus:outline-none w-full"
               />
-              <FaSearch className="absolute left-3 top-3 text-gray-400" />
+              <FaSearch className="top-3 left-3 absolute text-gray-400" />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -116,7 +129,7 @@ const TodayAppointments = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+              className="px-3 py-2 border focus:border-blue-500 rounded-lg focus:outline-none text-black"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -136,25 +149,25 @@ const TodayAppointments = ({
         ) : (
           <div className="relative overflow-x-auto">
             <div className="max-h-[600px] overflow-y-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0 z-10">
+              <table className="divide-y divide-gray-200 min-w-full">
+                <thead className="top-0 z-10 sticky bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                    <th className="bg-gray-50 px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Patient
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                    <th className="bg-gray-50 px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Doctor
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                    <th className="bg-gray-50 px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                    <th className="bg-gray-50 px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Time
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                    <th className="bg-gray-50 px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Department
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider bg-gray-50">
+                    <th className="bg-gray-50 px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Status
                     </th>
                   </tr>
