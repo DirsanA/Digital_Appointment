@@ -8,7 +8,6 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaBell, FaTimes, FaUserCircle } from "react-icons/fa";
 import DoctorProfile from "./DoctorProfile";
-import TodayAppointments from "../admin/TodayAppointments";
 
 const DoctorLandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -517,7 +516,6 @@ const DoctorLandingPage = () => {
                 )}
               </div>
             </div>
-            <TodayAppointments />
           </>
         );
     }
