@@ -6,7 +6,16 @@ import AppointmentsContent from "./AppointmentsContent";
 import PatientsContent from "./PatientsContent";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaBell, FaTimes, FaUserCircle } from "react-icons/fa";
+import {
+  FaBell,
+  FaTimes,
+  FaUserCircle,
+  FaThLarge,
+  FaCalendarCheck,
+  FaUsers,
+  FaUserMd,
+  FaBars,
+} from "react-icons/fa";
 import DoctorProfile from "./DoctorProfile";
 
 const DoctorLandingPage = () => {
@@ -294,7 +303,7 @@ const DoctorLandingPage = () => {
     <nav className="space-y-3 mt-8 text-gray-700">
       <a
         href="#"
-        className={`block px-4 py-3 rounded-lg font-medium ${
+        className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-medium ${
           activeContent === "dashboard" ? "bg-blue-100" : "hover:bg-blue-100"
         }`}
         onClick={(e) => {
@@ -302,11 +311,12 @@ const DoctorLandingPage = () => {
           handleContentChange("dashboard");
         }}
       >
-        Dashboard
+        <FaThLarge className="text-blue-500" size={18} />
+        <span>Dashboard</span>
       </a>
       <a
         href="#"
-        className={`block px-4 py-3 rounded-lg ${
+        className={`flex items-center space-x-3 px-4 py-3 rounded-lg ${
           activeContent === "appointments" ? "bg-blue-100" : "hover:bg-blue-100"
         }`}
         onClick={(e) => {
@@ -314,11 +324,12 @@ const DoctorLandingPage = () => {
           handleContentChange("appointments");
         }}
       >
-        My Appointments
+        <FaCalendarCheck className="text-blue-500" size={18} />
+        <span>My Appointments</span>
       </a>
       <a
         href="#"
-        className={`block px-4 py-3 rounded-lg text-gray-700 ${
+        className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 ${
           activeContent === "patients"
             ? "bg-blue-100 text-blue-700"
             : "hover:bg-blue-50 hover:text-blue-600"
@@ -329,11 +340,12 @@ const DoctorLandingPage = () => {
           toggleMenu();
         }}
       >
-        My Patients
+        <FaUsers className="text-blue-500" size={18} />
+        <span>My Patients</span>
       </a>
       <a
         href="#"
-        className={`block px-4 py-3 rounded-lg text-gray-700 ${
+        className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 ${
           activeContent === "doctorProfile"
             ? "bg-blue-100 text-blue-700"
             : "hover:bg-blue-50 hover:text-blue-600"
@@ -344,7 +356,8 @@ const DoctorLandingPage = () => {
           toggleMenu();
         }}
       >
-        My Profile
+        <FaUserMd className="text-blue-500" size={18} />
+        <span>My Profile</span>
       </a>
     </nav>
   );
@@ -575,20 +588,7 @@ const DoctorLandingPage = () => {
           onClick={toggleMenu}
           className="focus:outline-none text-gray-700"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
+          {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
         </button>
       </header>
 
@@ -626,20 +626,7 @@ const DoctorLandingPage = () => {
                 onClick={toggleMenu}
                 className="ml-4 focus:outline-none text-gray-700 hover:text-gray-900"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <FaTimes size={24} />
               </button>
             </div>
 
@@ -653,7 +640,7 @@ const DoctorLandingPage = () => {
             <nav className="flex-1 space-y-2">
               <a
                 href="#"
-                className={`block px-4 py-3 rounded-lg font-medium text-gray-700 ${
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-gray-700 ${
                   activeContent === "dashboard"
                     ? "bg-blue-100 text-blue-700"
                     : "hover:bg-blue-50 hover:text-blue-600"
@@ -664,11 +651,12 @@ const DoctorLandingPage = () => {
                   toggleMenu();
                 }}
               >
-                Dashboard
+                <FaThLarge className="text-blue-500" size={18} />
+                <span>Dashboard</span>
               </a>
               <a
                 href="#"
-                className={`block px-4 py-3 rounded-lg text-gray-700 ${
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 ${
                   activeContent === "appointments"
                     ? "bg-blue-100 text-blue-700"
                     : "hover:bg-blue-50 hover:text-blue-600"
@@ -679,11 +667,12 @@ const DoctorLandingPage = () => {
                   toggleMenu();
                 }}
               >
-                My Appointments
+                <FaCalendarCheck className="text-blue-500" size={18} />
+                <span>My Appointments</span>
               </a>
               <a
                 href="#"
-                className={`block px-4 py-3 rounded-lg text-gray-700 ${
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 ${
                   activeContent === "patients"
                     ? "bg-blue-100 text-blue-700"
                     : "hover:bg-blue-50 hover:text-blue-600"
@@ -694,11 +683,12 @@ const DoctorLandingPage = () => {
                   toggleMenu();
                 }}
               >
-                My Patients
+                <FaUsers className="text-blue-500" size={18} />
+                <span>My Patients</span>
               </a>
               <a
                 href="#"
-                className={`block px-4 py-3 rounded-lg text-gray-700 ${
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 ${
                   activeContent === "doctorProfile"
                     ? "bg-blue-100 text-blue-700"
                     : "hover:bg-blue-50 hover:text-blue-600"
@@ -709,7 +699,8 @@ const DoctorLandingPage = () => {
                   toggleMenu();
                 }}
               >
-                My Profile
+                <FaUserMd className="text-blue-500" size={18} />
+                <span>My Profile</span>
               </a>
             </nav>
           </div>

@@ -9,10 +9,14 @@ import {
   FaBars,
   FaTimes,
   FaBell,
+  FaThLarge,
+  FaCalendarCheck,
+  FaUsers,
 } from "react-icons/fa";
 import bgImage from "/assets/b4.jpg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import PatientSidebar from "./PatientSidebar";
 
 const PatientDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -274,113 +278,14 @@ const PatientDashboard = () => {
   return (
     <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 h-screen">
       <ToastContainer />
-      {/* Mobile Header - Right-aligned hamburger */}
-      <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
-        <div className="flex items-center">
-          <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
-          <h1 className="font-bold text-blue-600 text-lg">
-            {patientData.full_name}
-          </h1>
-        </div>
-        <div className="flex items-center space-x-4">
-          {/* Notification Bell for Mobile */}
-          <div className="relative">
-            <button
-              onClick={toggleNotifications}
-              className="focus:outline-none"
-            >
-              <FaBell
-                className={`text-xl ${
-                  notifications.length > 0
-                    ? "text-blue-600 animate-bounce"
-                    : "text-gray-400"
-                }`}
-              />
-              {notifications.length > 0 && (
-                <span className="-top-2 -right-2 absolute flex justify-center items-center bg-red-500 rounded-full w-5 h-5 text-white text-xs">
-                  {notifications.length}
-                </span>
-              )}
-            </button>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="focus:outline-none text-gray-700"
-          >
-            {sidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Sidebar - Right Side */}
-      <aside
-        className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "translate-x-full"
-        } md:relative md:right-0 md:translate-x-0 md:w-1/4`}
-      >
-        <div>
-          <div className="flex items-center mt-12 md:mt-0 mb-6 p-4">
-            <div className="flex items-center">
-              <FaUserCircle className="mr-3 text-blue-500 text-4xl" />
-              <div>
-                <h1 className="font-bold text-blue-600 text-xl">
-                  {patientData.full_name}
-                </h1>
-                <p className="text-gray-500 text-sm">Registered Patient</p>
-              </div>
-            </div>
-          </div>
-          <nav className="space-y-4 pt-12">
-            <Link
-              to="/Patient-Dashbord"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-500"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaUserCircle size={20} />
-              <span className="font-semibold">Dashboard</span>
-            </Link>
-            <Link
-              to="/BookAppointment"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-500"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaCalendarPlus size={20} />
-              <span>Book Appointment</span>
-            </Link>
-            <Link
-              to="/AppointmentHistory"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-500"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaHistory size={20} />
-              <span>Appointment History</span>
-            </Link>
-          </nav>
-        </div>
-        <Link
-          to="/"
-          className="flex items-center space-x-2 text-red-700 hover:text-red-500"
-          onClick={() => setSidebarOpen(false)}
-        >
-          <FaHistory size={20} />
-          <span>log out</span>
-        </Link>
-        {/* <button
-          onClick={handleLogout}
-          className="flex items-center space-x-2 text-red-500 hover:text-red-700"
-        >
-          <FaPowerOff size={20} />
-          <span>Log out</span>
-        </button> */}
-      </aside>
-
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="md:hidden z-10 fixed inset-0 bg-black bg-opacity-50"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      
+      {/* Use the shared PatientSidebar component */}
+      <PatientSidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        patientData={patientData}
+        handleLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:mr-0 p-6">
@@ -448,88 +353,88 @@ const PatientDashboard = () => {
             </Link>
 
             {/* Notifications Panel */}
-          {showNotifications && notifications.length > 0 && (
-  <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0">
-    {/* Header */}
-    <div className="flex justify-between items-center p-3 border-gray-200 border-b">
-      <h3 className="font-semibold text-gray-900">
-        Doctor's Responses ({notifications.length})
-      </h3>
-      <div className="flex items-center space-x-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            markAllAsRead();
-          }}
-          className="text-blue-600 hover:text-blue-800 text-sm"
-        >
-          Mark all as read
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleMinimizeNotifications();
-          }}
-          className="text-gray-600 hover:text-gray-800 text-sm"
-        >
-          {isNotificationMinimized ? 'Expand' : 'Minimize'}
-        </button>
-      </div>
-    </div>
+            {showNotifications && notifications.length > 0 && (
+              <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0">
+                {/* Header */}
+                <div className="flex justify-between items-center p-3 border-gray-200 border-b">
+                  <h3 className="font-semibold text-gray-900">
+                    Doctor's Responses ({notifications.length})
+                  </h3>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAllAsRead();
+                      }}
+                      className="text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      Mark all as read
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMinimizeNotifications();
+                      }}
+                      className="text-gray-600 hover:text-gray-800 text-sm"
+                    >
+                      {isNotificationMinimized ? 'Expand' : 'Minimize'}
+                    </button>
+                  </div>
+                </div>
 
-    {/* Scrollable Content */}
-    <div className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-48'}`}>
-      {notifications.map((notif) => (
-        <div
-          key={`${notif.id}-${notif.status}`}
-          className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              markAsRead(notif.id, notif.status);
-            }}
-            className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
-          >
-            <FaTimes size={14} />
-          </button>
-          <div className="pr-6">
-            <div className="flex justify-between items-start mb-1">
-              <p className="font-medium text-gray-900">
-                Dr. {notif.doctorfullname}
-              </p>
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
-                  notif.status === "accepted"
-                    ? "bg-green-100 text-green-800"
-                    : notif.status === "cancelled"
-                    ? "bg-red-100 text-red-800"
-                    : notif.status === "completed"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-yellow-100 text-yellow-800"
-                }`}
-              >
-                {notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}
-              </span>
-            </div>
-            <p className="text-gray-600 text-sm">
-              Date: {new Date(notif.appointment_date).toLocaleDateString()}
-            </p>
-            <p className="text-gray-600 text-sm">
-              Time: {notif.appointment_time}
-            </p>
-            <p className="text-gray-600 text-sm">
-              Department: {notif.department}
-            </p>
-            <p className="mt-1 text-gray-500 text-xs">
-              Updated: {new Date(notif.updatedAt || notif.appointment_date).toLocaleString()}
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+                {/* Scrollable Content */}
+                <div className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-48'}`}>
+                  {notifications.map((notif) => (
+                    <div
+                      key={`${notif.id}-${notif.status}`}
+                      className="relative hover:bg-gray-50 p-3 border-gray-100 border-b"
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(notif.id, notif.status);
+                        }}
+                        className="top-2 right-2 absolute text-gray-400 hover:text-gray-600"
+                      >
+                        <FaTimes size={14} />
+                      </button>
+                      <div className="pr-6">
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="font-medium text-gray-900">
+                            Dr. {notif.doctorfullname}
+                          </p>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full ${
+                              notif.status === "accepted"
+                                ? "bg-green-100 text-green-800"
+                                : notif.status === "cancelled"
+                                ? "bg-red-100 text-red-800"
+                                : notif.status === "completed"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 text-sm">
+                          Date: {new Date(notif.appointment_date).toLocaleDateString()}
+                        </p>
+                        <p className="text-gray-600 text-sm">
+                          Time: {notif.appointment_time}
+                        </p>
+                        <p className="text-gray-600 text-sm">
+                          Department: {notif.department}
+                        </p>
+                        <p className="mt-1 text-gray-500 text-xs">
+                          Updated: {new Date(notif.updatedAt || notif.appointment_date).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -11,6 +11,9 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import bgImage from "/assets/b4.jpg";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import PatientSidebar from "./PatientSidebar";
 
 const AppointmentHistory = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,6 +30,11 @@ const AppointmentHistory = () => {
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [fetchingDoctors, setFetchingDoctors] = useState(false);
+  const [patientData, setPatientData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+  });
   const navigate = useNavigate();
 
   // Fetch departments from the database
@@ -119,6 +127,7 @@ const AppointmentHistory = () => {
 
         if (response.data.success) {
           setPatientName(response.data.patient.full_name);
+          setPatientData(response.data.patient);
         } else {
           throw new Error(
             response.data.message || "Failed to fetch patient details"
@@ -397,89 +406,27 @@ const AppointmentHistory = () => {
     return time;
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("patientId");
+    navigate("/");
+  };
+
   return (
-    <div className="flex bg-gray-100 h-screen overflow-hidden">
-      {/* Mobile Header */}
-      <div className="md:hidden top-0 right-0 left-0 z-10 fixed flex justify-between items-center bg-white shadow-md p-4">
-        <div className="flex items-center">
-          <FaUserCircle className="mr-3 text-blue-500 text-2xl" />
-          <h1 className="font-bold text-blue-600 text-lg">
-            {patientName || "Loading..."}
-          </h1>
-        </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="focus:outline-none text-gray-700"
-        >
-          {sidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-        </button>
-      </div>
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 right-0 bottom-0 w-64 bg-white shadow-md p-5 flex flex-col justify-between z-20 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "translate-x-full"
-        } md:relative md:translate-x-0 md:w-1/4`}
-      >
-        <div className="overflow-y-auto">
-          <div className="flex items-center mt-12 md:mt-0 mb-6 p-4">
-            <div className="flex items-center">
-              <FaUserCircle className="mr-3 text-blue-500 text-4xl" />
-              <div>
-                <h1 className="font-bold text-blue-600 text-xl">
-                  {patientName || "Loading..."}
-                </h1>
-                <p className="text-gray-500 text-sm">Registered Patient</p>
-              </div>
-            </div>
-          </div>
-          <nav className="space-y-4 pt-12">
-            <Link
-              to="/Patient-Dashbord"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-500"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaUserCircle size={20} />
-              <span className="font-semibold">Dashboard</span>
-            </Link>
-            <Link
-              to="/BookAppointment"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-500"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaCalendarPlus size={20} />
-              <span>Book Appointment</span>
-            </Link>
-            <Link
-              to="/AppointmentHistory"
-              className="flex items-center space-x-2 font-bold text-blue-500"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaHistory size={20} />
-              <span>Appointment History</span>
-            </Link>
-          </nav>
-        </div>
-        <Link
-          to="/"
-          className="flex items-center space-x-2 text-red-500 hover:text-red-700"
-          onClick={() => setSidebarOpen(false)}
-        >
-          <FaPowerOff size={20} />
-          <span>Log out</span>
-        </Link>
-      </aside>
-
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="md:hidden z-10 fixed inset-0 bg-black bg-opacity-50"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
+      <ToastContainer />
+      
+      {/* Use the shared PatientSidebar component */}
+      <PatientSidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        patientData={patientData}
+        handleLogout={handleLogout}
+      />
 
       {/* Main Content */}
-      <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-hidden">
+      <main className="flex-1 mt-16 md:mt-0 md:mr-0 p-6">
         <div className="mx-auto max-w-6xl h-full flex flex-col">
           {/* Welcome Section - Fixed height */}
           <div
