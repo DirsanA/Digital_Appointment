@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import GoogleCalendarButton from '../GoogleCalendarButton';
-// comments added new for home page
+import { FaHistory, FaTimes } from "react-icons/fa";
+import toast, { Toaster } from "react-hot-toast";
+
 const AppointmentsContent = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,6 +12,14 @@ const AppointmentsContent = () => {
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState(null);
   const [showTodayAppointments, setShowTodayAppointments] = useState(true);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [historyData, setHistoryData] = useState({
+    prescription: "",
+    diagnosis: "",
+    medicine: [{ name: "", dosage: "", frequency: "" }],
+    next_appointment: { date: "", time: "", notes: "" }
+  });
 
   // Fetch appointments on component mount and refresh periodically
   useEffect(() => {
@@ -89,6 +99,103 @@ const AppointmentsContent = () => {
     }
   };
 
+  const handleAddHistory = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowHistoryModal(true);
+  };
+
+  const handleCloseHistoryModal = () => {
+    setShowHistoryModal(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleHistoryChange = (field, value) => {
+    setHistoryData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleMedicineChange = (index, field, value) => {
+    const newMedicine = [...historyData.medicine];
+    newMedicine[index] = {
+      ...newMedicine[index],
+      [field]: value
+    };
+    setHistoryData(prev => ({
+      ...prev,
+      medicine: newMedicine
+    }));
+  };
+
+  const addMedicineField = () => {
+    setHistoryData(prev => ({
+      ...prev,
+      medicine: [...prev.medicine, { name: "", dosage: "", frequency: "" }]
+    }));
+  };
+
+  const removeMedicineField = (index) => {
+    setHistoryData(prev => ({
+      ...prev,
+      medicine: prev.medicine.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSaveHistory = async () => {
+    try {
+      // Format the data to match server expectations
+      const formattedData = {
+        prescription: historyData.prescription,
+        diagnosis: historyData.diagnosis,
+        medicine_name: historyData.medicine[0]?.name || '',
+        medicine_dosage: historyData.medicine[0]?.dosage || '',
+        medicine_frequency: historyData.medicine[0]?.frequency || '',
+        medicine_duration: historyData.medicine[0]?.duration || '',
+        next_appointment_date: historyData.next_appointment?.date || '',
+        next_appointment_time: historyData.next_appointment?.time || ''
+      };
+
+      const response = await axios.post(
+        `http://localhost:5000/api/appointments/${selectedAppointment.id}/history`,
+        formattedData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("History added successfully");
+        handleCloseHistoryModal();
+        // Refresh appointments list
+        fetchAppointments();
+      }
+    } catch (error) {
+      console.error("Error saving history:", error);
+      toast.error(error.response?.data?.message || "Failed to save history");
+    }
+  };
+
+  const handleViewHistory = async (appointment) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/appointments/${appointment.id}/history`);
+      if (response.data.success) {
+        setSelectedAppointment({
+          ...appointment,
+          history: response.data.history
+        });
+        setShowHistoryModal(true);
+      } else {
+        toast.error('No history found for this appointment');
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      toast.error('Failed to fetch appointment history');
+    }
+  };
+
   const filteredPatients = patients.filter((patient) => {
     const matchesSearch =
       patient.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -102,6 +209,7 @@ const AppointmentsContent = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      <Toaster position="top-right" />
       {/* Sticky Header Section */}
       <div className="top-0 z-20 sticky bg-gray-50 pb-4">
         {/* Header */}
@@ -249,20 +357,17 @@ const AppointmentsContent = () => {
                     <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Patient
                     </th>
-                    <th className="hidden sm:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Department
                     </th>
-                    <th className="hidden md:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th className="hidden lg:table-cell px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                      Contact
-                    </th>
                     <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                      Calendar
+                      Date & Time
                     </th>
                     <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       Status
+                    </th>
+                    <th className="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      History
                     </th>
                     <th className="px-6 py-3 font-medium text-gray-500 text-xs text-right uppercase tracking-wider">
                       Actions
@@ -275,7 +380,7 @@ const AppointmentsContent = () => {
                     const appointmentDate = dayjs(patient.appointment_date).format("YYYY-MM-DD");
                     
                     if (showTodayAppointments && appointmentDate !== today) {
-                      return null; // Skip rendering if not today's appointment and filter is active
+                      return null;
                     }
 
                     return (
@@ -293,12 +398,12 @@ const AppointmentsContent = () => {
                             {patient.patient_email}
                           </div>
                         </td>
-                        <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {patient.department}
                           </div>
                         </td>
-                        <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
                             {dayjs(patient.appointment_date).format("MMM D, YYYY")}
                           </div>
@@ -306,30 +411,14 @@ const AppointmentsContent = () => {
                             {patient.appointment_time}
                           </div>
                         </td>
-                        <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {patient.patient_phone}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <GoogleCalendarButton
-                            appointment={{
-                              date: patient.appointment_date,
-                              time: patient.appointment_time,
-                              doctor: patient.doctorfullname,
-                              department: patient.department,
-                              patientName: patient.patient_name,
-                              email: patient.patient_email,
-                            }}
-                          />
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <select
                             value={patient.status}
-                            onChange={(e) =>
-                              updateAppointmentStatus(patient.id, e.target.value)
-                            }
-                            className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${patient.status === "accepted" ? "bg-green-100 text-green-800" : patient.status === "cancelled" ? "bg-red-100 text-red-800" : ""}`}
+                            onChange={(e) => updateAppointmentStatus(patient.id, e.target.value)}
+                            className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${
+                              patient.status === "accepted" ? "bg-green-100 text-green-800" :
+                              patient.status === "cancelled" ? "bg-red-100 text-red-800" : ""
+                            }`}
                           >
                             <option value="pending">Pending</option>
                             <option value="accepted">Accepted</option>
@@ -337,19 +426,24 @@ const AppointmentsContent = () => {
                             <option value="completed">Completed</option>
                           </select>
                         </td>
-                        <td className="px-6 py-4 font-medium text-sm text-right whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() =>
-                              updateAppointmentStatus(patient.id, "cancelled")
-                            }
+                            onClick={() => handleAddHistory(patient)}
+                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <FaHistory className="mr-2" />
+                            Add History
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => updateAppointmentStatus(patient.id, "cancelled")}
                             className="mr-3 text-red-600 hover:text-red-900"
                           >
                             Cancel
                           </button>
                           <button
-                            onClick={() =>
-                              updateAppointmentStatus(patient.id, "completed")
-                            }
+                            onClick={() => updateAppointmentStatus(patient.id, "completed")}
                             className="text-green-600 hover:text-green-900"
                           >
                             Complete
@@ -364,6 +458,170 @@ const AppointmentsContent = () => {
           )}
         </div>
       </div>
+
+      {/* History Modal */}
+      {showHistoryModal && selectedAppointment && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add Appointment History</h3>
+              <button
+                onClick={handleCloseHistoryModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Diagnosis */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Diagnosis</h4>
+                <textarea
+                  value={historyData.diagnosis}
+                  onChange={(e) => handleHistoryChange('diagnosis', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                  rows="3"
+                  placeholder="Enter diagnosis..."
+                />
+              </div>
+
+              {/* Prescription */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Prescription</h4>
+                <textarea
+                  value={historyData.prescription}
+                  onChange={(e) => handleHistoryChange('prescription', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                  rows="3"
+                  placeholder="Enter prescription..."
+                />
+              </div>
+
+              {/* Medication Details */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium text-gray-900">Medication Details</h4>
+                  <button
+                    onClick={addMedicineField}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    + Add Medicine
+                  </button>
+                </div>
+                {historyData.medicine.map((med, index) => (
+                  <div key={index} className="mb-4 p-3 bg-white rounded border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <h5 className="font-medium text-gray-700">Medicine {index + 1}</h5>
+                      {index > 0 && (
+                        <button
+                          onClick={() => removeMedicineField(index)}
+                          className="text-sm text-red-600 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Name</label>
+                        <input
+                          type="text"
+                          value={med.name}
+                          onChange={(e) => handleMedicineChange(index, 'name', e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="Medicine name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Dosage</label>
+                        <input
+                          type="text"
+                          value={med.dosage}
+                          onChange={(e) => handleMedicineChange(index, 'dosage', e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="e.g., 500mg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Frequency</label>
+                        <input
+                          type="text"
+                          value={med.frequency}
+                          onChange={(e) => handleMedicineChange(index, 'frequency', e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="e.g., Twice daily"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">Duration</label>
+                        <input
+                          type="text"
+                          value={med.duration}
+                          onChange={(e) => handleMedicineChange(index, 'duration', e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="e.g., 7 days"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Next Appointment */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Next Appointment</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Date</label>
+                    <input
+                      type="date"
+                      value={historyData.next_appointment.date}
+                      onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, date: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Time</label>
+                    <input
+                      type="time"
+                      value={historyData.next_appointment.time}
+                      onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, time: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm text-gray-600 mb-1">Notes</label>
+                    <textarea
+                      value={historyData.next_appointment.notes}
+                      onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, notes: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                      rows="2"
+                      placeholder="Add any notes for the next appointment..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={handleCloseHistoryModal}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveHistory}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Save History
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
