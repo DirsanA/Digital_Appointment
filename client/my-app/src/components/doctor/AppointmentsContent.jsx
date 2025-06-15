@@ -20,6 +20,7 @@ const AppointmentsContent = () => {
     medicine: [{ name: "", dosage: "", frequency: "" }],
     next_appointment: { date: "", time: "", notes: "" }
   });
+  const [dropdownOpen, setDropdownOpen] = useState(null);
 
   // Fetch appointments on component mount and refresh periodically
   useEffect(() => {
@@ -31,6 +32,19 @@ const AppointmentsContent = () => {
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownOpen && !event.target.closest('.relative')) {
+        setDropdownOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const fetchAppointments = async () => {
     try {
@@ -427,13 +441,42 @@ const AppointmentsContent = () => {
                           </select>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => handleAddHistory(patient)}
-                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <FaHistory className="mr-2" />
-                            Add History
-                          </button>
+                          <div className="relative">
+                            <button
+                              onClick={() => setDropdownOpen(dropdownOpen === patient.id ? null : patient.id)}
+                              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <FaHistory className="mr-2" />
+                              History
+                              <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            {dropdownOpen === patient.id && (
+                              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                                <div className="py-1">
+                                  <button
+                                    onClick={() => {
+                                      handleAddHistory(patient);
+                                      setDropdownOpen(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                                  >
+                                    Add History
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      handleViewHistory(patient);
+                                      setDropdownOpen(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                                  >
+                                    View History
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
@@ -464,7 +507,9 @@ const AppointmentsContent = () => {
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Add Appointment History</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {selectedAppointment.history ? 'Appointment History' : 'Add Appointment History'}
+              </h3>
               <button
                 onClick={handleCloseHistoryModal}
                 className="text-gray-500 hover:text-gray-700"
@@ -473,152 +518,197 @@ const AppointmentsContent = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
-              {/* Diagnosis */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Diagnosis</h4>
-                <textarea
-                  value={historyData.diagnosis}
-                  onChange={(e) => handleHistoryChange('diagnosis', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                  rows="3"
-                  placeholder="Enter diagnosis..."
-                />
-              </div>
-
-              {/* Prescription */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Prescription</h4>
-                <textarea
-                  value={historyData.prescription}
-                  onChange={(e) => handleHistoryChange('prescription', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                  rows="3"
-                  placeholder="Enter prescription..."
-                />
-              </div>
-
-              {/* Medication Details */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-gray-900">Medication Details</h4>
-                  <button
-                    onClick={addMedicineField}
-                    className="text-sm text-blue-600 hover:text-blue-700"
-                  >
-                    + Add Medicine
-                  </button>
-                </div>
-                {historyData.medicine.map((med, index) => (
-                  <div key={index} className="mb-4 p-3 bg-white rounded border border-gray-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <h5 className="font-medium text-gray-700">Medicine {index + 1}</h5>
-                      {index > 0 && (
-                        <button
-                          onClick={() => removeMedicineField(index)}
-                          className="text-sm text-red-600 hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      )}
+            {selectedAppointment.history ? (
+              // View History Mode
+              <div className="space-y-4">
+                {selectedAppointment.history.map((record) => (
+                  <div key={record.id} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-900">Diagnosis</h4>
+                      <p className="text-gray-600">{record.diagnosis || 'No diagnosis recorded'}</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Name</label>
-                        <input
-                          type="text"
-                          value={med.name}
-                          onChange={(e) => handleMedicineChange(index, 'name', e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                          placeholder="Medicine name"
-                        />
+
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-900">Prescription</h4>
+                      <p className="text-gray-600">{record.prescription || 'No prescription recorded'}</p>
+                    </div>
+
+                    {record.medicine_name && (
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900">Medication Details</h4>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          <li><span className="font-medium">Medicine:</span> {record.medicine_name}</li>
+                          <li><span className="font-medium">Dosage:</span> {record.medicine_dosage}</li>
+                          <li><span className="font-medium">Frequency:</span> {record.medicine_frequency}</li>
+                          <li><span className="font-medium">Duration:</span> {record.medicine_duration}</li>
+                        </ul>
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Dosage</label>
-                        <input
-                          type="text"
-                          value={med.dosage}
-                          onChange={(e) => handleMedicineChange(index, 'dosage', e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                          placeholder="e.g., 500mg"
-                        />
+                    )}
+
+                    {record.next_appointment_date && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <h4 className="font-medium text-gray-900">Next Appointment</h4>
+                        <p className="text-gray-600">
+                          {new Date(record.next_appointment_date).toLocaleDateString()} at {record.next_appointment_time}
+                        </p>
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Frequency</label>
-                        <input
-                          type="text"
-                          value={med.frequency}
-                          onChange={(e) => handleMedicineChange(index, 'frequency', e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                          placeholder="e.g., Twice daily"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-1">Duration</label>
-                        <input
-                          type="text"
-                          value={med.duration}
-                          onChange={(e) => handleMedicineChange(index, 'duration', e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                          placeholder="e.g., 7 days"
-                        />
-                      </div>
+                    )}
+
+                    <div className="mt-4 text-sm text-gray-500">
+                      Recorded on: {new Date(record.created_at).toLocaleString()}
                     </div>
                   </div>
                 ))}
               </div>
+            ) : (
+              // Add History Mode
+              <div className="space-y-4">
+                {/* Diagnosis */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Diagnosis</h4>
+                  <textarea
+                    value={historyData.diagnosis}
+                    onChange={(e) => handleHistoryChange('diagnosis', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                    rows="3"
+                    placeholder="Enter diagnosis..."
+                  />
+                </div>
 
-              {/* Next Appointment */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Next Appointment</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Date</label>
-                    <input
-                      type="date"
-                      value={historyData.next_appointment.date}
-                      onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, date: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                    />
+                {/* Prescription */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Prescription</h4>
+                  <textarea
+                    value={historyData.prescription}
+                    onChange={(e) => handleHistoryChange('prescription', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                    rows="3"
+                    placeholder="Enter prescription..."
+                  />
+                </div>
+
+                {/* Medication Details */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-gray-900">Medication Details</h4>
+                    <button
+                      onClick={addMedicineField}
+                      className="text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      + Add Medicine
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Time</label>
-                    <input
-                      type="time"
-                      value={historyData.next_appointment.time}
-                      onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, time: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm text-gray-600 mb-1">Notes</label>
-                    <textarea
-                      value={historyData.next_appointment.notes}
-                      onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, notes: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
-                      rows="2"
-                      placeholder="Add any notes for the next appointment..."
-                    />
+                  {historyData.medicine.map((med, index) => (
+                    <div key={index} className="mb-4 p-3 bg-white rounded border border-gray-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <h5 className="font-medium text-gray-700">Medicine {index + 1}</h5>
+                        {index > 0 && (
+                          <button
+                            onClick={() => removeMedicineField(index)}
+                            className="text-sm text-red-600 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={med.name}
+                            onChange={(e) => handleMedicineChange(index, 'name', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                            placeholder="Medicine name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-1">Dosage</label>
+                          <input
+                            type="text"
+                            value={med.dosage}
+                            onChange={(e) => handleMedicineChange(index, 'dosage', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                            placeholder="e.g., 500mg"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-1">Frequency</label>
+                          <input
+                            type="text"
+                            value={med.frequency}
+                            onChange={(e) => handleMedicineChange(index, 'frequency', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                            placeholder="e.g., Twice daily"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-1">Duration</label>
+                          <input
+                            type="text"
+                            value={med.duration}
+                            onChange={(e) => handleMedicineChange(index, 'duration', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                            placeholder="e.g., 7 days"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Next Appointment */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Next Appointment</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Date</label>
+                      <input
+                        type="date"
+                        value={historyData.next_appointment.date}
+                        onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, date: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Time</label>
+                      <input
+                        type="time"
+                        value={historyData.next_appointment.time}
+                        onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, time: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-sm text-gray-600 mb-1">Notes</label>
+                      <textarea
+                        value={historyData.next_appointment.notes}
+                        onChange={(e) => handleHistoryChange('next_appointment', { ...historyData.next_appointment, notes: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+                        rows="2"
+                        placeholder="Add any notes for the next appointment..."
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={handleCloseHistoryModal}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveHistory}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Save History
-                </button>
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    onClick={handleCloseHistoryModal}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveHistory}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Save History
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
