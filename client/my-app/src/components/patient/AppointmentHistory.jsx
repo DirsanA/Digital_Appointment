@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  FaCalendarPlus,
   FaHistory,
   FaUserCircle,
   FaPowerOff,
@@ -10,10 +9,10 @@ import {
   FaTimes,
   FaSpinner,
 } from "react-icons/fa";
-import bgImage from "/assets/b4.jpg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PatientSidebar from "./PatientSidebar";
+import AppointmentHistoryModal from "../admin/AppointmentHistoryModal";
 
 const AppointmentHistory = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,7 +28,6 @@ const AppointmentHistory = () => {
   const [allDoctors, setAllDoctors] = useState([]);
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [fetchingDoctors, setFetchingDoctors] = useState(false);
   const [patientData, setPatientData] = useState({
     full_name: "",
     email: "",
@@ -233,7 +231,7 @@ const AppointmentHistory = () => {
         );
       } catch (error) {
         console.error("Error cancelling appointment:", error);
-        alert("Failed to cancel appointment. Please try again.");
+        toast.error("Failed to cancel appointment. Please try again.");
       } finally {
         setUpdating(false);
       }
@@ -248,7 +246,7 @@ const AppointmentHistory = () => {
         setAppointments(appointments.filter((appt) => appt.id !== id));
       } catch (error) {
         console.error("Error deleting appointment:", error);
-        alert("Failed to delete appointment. Please try again.");
+        toast.error("Failed to delete appointment. Please try again.");
       } finally {
         setUpdating(false);
       }
@@ -256,15 +254,13 @@ const AppointmentHistory = () => {
   };
 
   const handleEditAppointment = (appointment) => {
-    // Verify appointment still exists in the current state
     const exists = appointments.some((appt) => appt.id === appointment.id);
     if (!exists) {
-      alert("This appointment no longer exists. Refreshing the list...");
+      toast.error("This appointment no longer exists. Refreshing the list...");
       window.location.reload();
       return;
     }
 
-    // Convert date to yyyy-MM-dd format for the input field
     const date = new Date(appointment.date);
     const formattedDate = date.toISOString().split("T")[0];
 
@@ -272,7 +268,7 @@ const AppointmentHistory = () => {
     setEditedAppointment({
       ...appointment,
       date: formattedDate,
-      doctor_id: appointment.doctor_id, // Ensure we have the doctor_id
+      doctor_id: appointment.doctor_id,
     });
     setDateError("");
     setDropdownOpen(null);
@@ -304,7 +300,7 @@ const AppointmentHistory = () => {
 
       const updateData = {
         department: editedAppointment.department,
-        doctor_id: editedAppointment.doctor_id, // Use the doctor_id instead of name
+        doctor_id: editedAppointment.doctor_id,
         appointment_date: formattedDate,
         appointment_time: editedAppointment.time,
       };
@@ -315,7 +311,6 @@ const AppointmentHistory = () => {
       );
 
       if (response.data.success) {
-        // Find the updated doctor's name
         const updatedDoctor = allDoctors.find(
           (doc) => doc.id === editedAppointment.doctor_id
         );
@@ -336,6 +331,7 @@ const AppointmentHistory = () => {
         );
         setEditingId(null);
         setDateError("");
+        toast.success("Appointment updated successfully");
       } else {
         throw new Error(
           response.data.message || "Failed to update appointment"
@@ -343,7 +339,7 @@ const AppointmentHistory = () => {
       }
     } catch (error) {
       console.error("Error updating appointment:", error);
-      alert(
+      toast.error(
         error.response?.data?.message ||
           "Failed to update appointment. Please try again."
       );
@@ -361,7 +357,6 @@ const AppointmentHistory = () => {
     const { name, value } = e.target;
 
     if (name === "doctor") {
-      // When doctor is changed, update both doctor_id and doctor name
       const selectedDoctor = filteredDoctors.find((doc) => doc.name === value);
       setEditedAppointment((prev) => ({
         ...prev,
@@ -389,22 +384,18 @@ const AppointmentHistory = () => {
 
   const formatTimeForDisplay = (timeString) => {
     if (!timeString) return "--:--";
-
     const timeParts = timeString.split(":");
     return `${timeParts[0]}:${timeParts[1]}`;
   };
 
   const validateAndFormatTime = (time) => {
     if (!time) return null;
-
     if (time.includes(":") && time.split(":").length > 2) {
       return time.substring(0, 5);
     }
-
     if (!time.includes(":") && time.length === 4) {
       return `${time.substring(0, 2)}:${time.substring(2)}`;
     }
-
     return time;
   };
 
@@ -417,19 +408,21 @@ const AppointmentHistory = () => {
 
   const handleViewHistory = async (appointment) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/appointments/${appointment.id}/history`);
+      const response = await axios.get(
+        `http://localhost:5000/api/appointments/${appointment.id}/history`
+      );
       if (response.data.success) {
         setSelectedAppointment({
           ...appointment,
-          history: response.data.history
+          history: response.data.history,
         });
         setShowHistoryModal(true);
       } else {
-        toast.error('No history found for this appointment');
+        toast.error("No history found for this appointment");
       }
     } catch (error) {
-      console.error('Error fetching history:', error);
-      toast.error('Failed to fetch appointment history');
+      console.error("Error fetching history:", error);
+      toast.error("Failed to fetch appointment history");
     }
   };
 
@@ -441,8 +434,7 @@ const AppointmentHistory = () => {
   return (
     <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
       <ToastContainer />
-      
-      {/* Use the shared PatientSidebar component */}
+
       <PatientSidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -450,29 +442,18 @@ const AppointmentHistory = () => {
         handleLogout={handleLogout}
       />
 
-      {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:mr-0 p-6">
-        <div className="mx-auto max-w-6xl h-full flex flex-col">
-          {/* Welcome Section - Fixed height */}
-          <div
-            className="relative flex flex-col justify-center shadow-md mb-8 p-6 rounded-lg w-full h-48 text-white"
-            style={{
-              backgroundImage: `url(${bgImage})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          >
-            <h2 className="font-bold text-blue-500 text-2xl">
-              Welcome {patientName || "Loading..."}
+        <div className="flex flex-col mx-auto max-w-6xl h-full">
+          <div className="bg-white shadow-md mb-8 p-6 rounded-lg">
+            <h2 className="font-bold text-blue-600 text-2xl">
+              Welcome {patientName || "Patient"}
             </h2>
-            <p className="mt-2 text-blue-500">
-              Manage your medical appointments, you can update, delete and
-              cancel your appointments.
+            <p className="mt-2 text-gray-600">
+              Manage your medical appointments - update, delete, or cancel them.
             </p>
           </div>
 
-          {/* Appointment History Table - Scrollable area */}
-          <div className="bg-white shadow-md p-4 md:p-6 rounded-lg flex-1 flex flex-col overflow-hidden">
+          <div className="flex flex-col flex-1 bg-white shadow-md p-4 md:p-6 rounded-lg overflow-hidden">
             <h3 className="flex items-center mb-6 font-semibold text-gray-800 text-xl">
               <FaHistory className="mr-2 text-blue-600" />
               Your Appointments
@@ -494,10 +475,10 @@ const AppointmentHistory = () => {
                 </button>
               </div>
             ) : (
-              <div className="overflow-auto flex-1">
+              <div className="flex-1 overflow-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+                    <tr className="bg-blue-600 text-white">
                       <th className="p-3 rounded-l-lg text-left">Roll No.</th>
                       <th className="p-3 text-left">Patient</th>
                       <th className="p-3 text-left">Department</th>
@@ -513,7 +494,7 @@ const AppointmentHistory = () => {
                     {appointments.map((appointment, index) => (
                       <tr
                         key={appointment.uniqueKey || appointment.id}
-                        className="hover:bg-blue-50 border-gray-200 border-b transition-colors"
+                        className="hover:bg-blue-50 border-gray-200 border-b"
                       >
                         <td className="p-3 text-gray-700">
                           A{String(index + 1).padStart(3, "0")}
@@ -522,7 +503,6 @@ const AppointmentHistory = () => {
                           {appointment.patientName}
                         </td>
 
-                        {/* Department */}
                         <td className="p-3 text-gray-700">
                           {editingId === appointment.id ? (
                             <select
@@ -544,48 +524,39 @@ const AppointmentHistory = () => {
                           )}
                         </td>
 
-                        {/* Doctor */}
                         <td className="p-3 text-gray-700">
                           {editingId === appointment.id ? (
-                            fetchingDoctors ? (
-                              <div className="flex items-center">
-                                <FaSpinner className="mr-2 animate-spin" />
-                                Loading doctors...
-                              </div>
-                            ) : (
-                              <select
-                                name="doctor"
-                                value={editedAppointment.doctor}
-                                onChange={handleEditChange}
-                                className="px-2 py-1 border rounded w-full"
-                                required
-                                disabled={filteredDoctors.length === 0}
-                              >
-                                {filteredDoctors.length === 0 ? (
-                                  <option value="">
-                                    No doctors in this department
-                                  </option>
-                                ) : (
-                                  <>
-                                    <option value="">Select Doctor</option>
-                                    {filteredDoctors.map((doc) => (
-                                      <option
-                                        key={`doc-${doc.id}`}
-                                        value={doc.name}
-                                      >
-                                        {doc.name}
-                                      </option>
-                                    ))}
-                                  </>
-                                )}
-                              </select>
-                            )
+                            <select
+                              name="doctor"
+                              value={editedAppointment.doctor}
+                              onChange={handleEditChange}
+                              className="px-2 py-1 border rounded w-full"
+                              required
+                              disabled={filteredDoctors.length === 0}
+                            >
+                              {filteredDoctors.length === 0 ? (
+                                <option value="">
+                                  No doctors in this department
+                                </option>
+                              ) : (
+                                <>
+                                  <option value="">Select Doctor</option>
+                                  {filteredDoctors.map((doc) => (
+                                    <option
+                                      key={`doc-${doc.id}`}
+                                      value={doc.name}
+                                    >
+                                      {doc.name}
+                                    </option>
+                                  ))}
+                                </>
+                              )}
+                            </select>
                           ) : (
                             appointment.doctor
                           )}
                         </td>
 
-                        {/* Date */}
                         <td className="p-3 text-gray-700">
                           {editingId === appointment.id ? (
                             <div className="flex flex-col">
@@ -609,7 +580,6 @@ const AppointmentHistory = () => {
                           )}
                         </td>
 
-                        {/* Time */}
                         <td className="p-3 text-gray-700">
                           {editingId === appointment.id ? (
                             <input
@@ -626,7 +596,6 @@ const AppointmentHistory = () => {
                           )}
                         </td>
 
-                        {/* Status */}
                         <td className="p-3">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -644,23 +613,21 @@ const AppointmentHistory = () => {
                           </span>
                         </td>
 
-                        {/* History */}
                         <td className="p-3">
                           <button
                             onClick={() => handleViewHistory(appointment)}
-                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="inline-flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium text-blue-600 text-sm"
                           >
                             <FaHistory className="mr-2" />
                             View History
                           </button>
                         </td>
 
-                        {/* Actions */}
                         <td className="relative p-3">
-                          <div className="relative dropdown">
+                          <div className="relative">
                             <button
                               onClick={(e) => toggleDropdown(appointment.id, e)}
-                              className="hover:bg-gray-50 p-1 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
+                              className="hover:bg-gray-50 p-1 rounded-full text-gray-500 hover:text-gray-700"
                               disabled={updating}
                             >
                               {updating && dropdownOpen === appointment.id ? (
@@ -678,7 +645,7 @@ const AppointmentHistory = () => {
                             </button>
                             {dropdownOpen === appointment.id && (
                               <div
-                                className="right-0 z-10 absolute bg-white shadow-lg mt-2 border border-gray-200 rounded-md w-48 dropdown-menu"
+                                className="right-0 z-10 absolute bg-white shadow-lg mt-2 border border-gray-200 rounded-md w-48"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {editingId === appointment.id ? (
@@ -781,78 +748,11 @@ const AppointmentHistory = () => {
         </div>
       </main>
 
-     {/* History Modal */}
-              {showHistoryModal && selectedAppointment && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Appointment History</h3>
-                      <button
-                        onClick={handleCloseHistoryModal}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        <FaTimes size={20} />
-                      </button>
-                    </div>
-    
-                    {selectedAppointment.history && selectedAppointment.history.length > 0 ? (
-                      <div className="space-y-4">
-                        {selectedAppointment.history.map((record) => (
-                          <div key={record.id} className="bg-gray-50 p-4 rounded-lg">
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-900">Diagnosis</h4>
-                              <p className="text-gray-600">{record.diagnosis || 'No diagnosis recorded'}</p>
-                            </div>
-    
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-900">Prescription</h4>
-                              <p className="text-gray-600">{record.prescription || 'No prescription recorded'}</p>
-                            </div>
-    
-                            {record.medicine_name && (
-                              <div className="mb-4">
-                                <h4 className="font-medium text-gray-900">Medication Details</h4>
-                                <ul className="text-sm text-gray-600 space-y-1">
-                                  <li><span className="font-medium">Medicine:</span> {record.medicine_name}</li>
-                                  <li><span className="font-medium">Dosage:</span> {record.medicine_dosage}</li>
-                                  <li><span className="font-medium">Frequency:</span> {record.medicine_frequency}</li>
-                                  <li><span className="font-medium">Duration:</span> {record.medicine_duration}</li>
-                                </ul>
-                              </div>
-                            )}
-    
-                            {record.next_appointment_date && (
-                              <div className="mt-4 pt-4 border-t border-gray-200">
-                                <h4 className="font-medium text-gray-900">Next Appointment</h4>
-                                <p className="text-gray-600">
-                                  {new Date(record.next_appointment_date).toLocaleDateString()} at {record.next_appointment_time}
-                                </p>
-                              </div>
-                            )}
-    
-                            <div className="mt-4 text-sm text-gray-500">
-                              Recorded on: {new Date(record.created_at).toLocaleString()}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500">No history found for this appointment.</p>
-                      </div>
-                    )}
-    
-                    <div className="mt-6 flex justify-end">
-                      <button
-                        onClick={handleCloseHistoryModal}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+      <AppointmentHistoryModal
+        showModal={showHistoryModal}
+        selectedAppointment={selectedAppointment}
+        onClose={handleCloseHistoryModal}
+      />
     </div>
   );
 };

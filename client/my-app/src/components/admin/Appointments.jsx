@@ -1,30 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import axios from "axios";
 import dayjs from "dayjs";
 import {
   FaUserCircle,
   FaCalendarCheck,
   FaUserMd,
-  FaUsers,
-  FaThLarge,
-  FaSignOutAlt,
-  FaBars,
-  FaTimes,
   FaSearch,
   FaPhone,
   FaEnvelope,
   FaClock,
   FaCalendarAlt,
-  FaEdit,
-  FaTrash,
-  FaCheck,
-  FaEllipsisV,
   FaHistory,
 } from "react-icons/fa";
-import GoogleCalendarButton from '../GoogleCalendarButton';
+import GoogleCalendarButton from "../GoogleCalendarButton";
 import AdminSidebar from "./AdminSidebar";
 import { toast } from "react-hot-toast";
+import AppointmentHistoryModal from "./AppointmentHistoryModal";
 
 const Appointments = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -35,6 +26,7 @@ const Appointments = () => {
   const [error, setError] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
@@ -107,19 +99,24 @@ const Appointments = () => {
 
   const handleViewHistory = async (appointment) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/appointments/${appointment.id}/history`);
+      setHistoryLoading(true);
+      const response = await axios.get(
+        `http://localhost:5000/api/appointments/${appointment.id}/history`
+      );
       if (response.data.success) {
         setSelectedAppointment({
           ...appointment,
-          history: response.data.history
+          history: response.data.history,
         });
         setShowHistoryModal(true);
       } else {
-        toast.error('No history found for this appointment');
+        toast.error("No history found for this appointment");
       }
     } catch (error) {
-      console.error('Error fetching history:', error);
-      toast.error('Failed to fetch appointment history');
+      console.error("Error fetching history:", error);
+      toast.error("Failed to fetch appointment history.");
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -134,7 +131,7 @@ const Appointments = () => {
 
       {/* Main Content */}
       <main className="flex-1 mt-16 md:mt-0 md:ml-0 p-6 overflow-y-auto">
-        <div className="mx-auto max-w-6xl flex flex-col h-[calc(100vh-5rem)] md:h-[calc(100vh-2rem)]">
+        <div className="flex flex-col mx-auto max-w-6xl h-[calc(100vh-5rem)] md:h-[calc(100vh-2rem)]">
           {/* Fixed Header Section */}
           <div className="flex-none space-y-3 md:space-y-4">
             {/* Header */}
@@ -166,15 +163,15 @@ const Appointments = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 md:p-4 rounded-lg text-sm">
+              <div className="bg-red-50 p-3 md:p-4 rounded-lg text-red-600 text-sm">
                 {error}
               </div>
             )}
 
             {/* Search and Filter Section */}
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="bg-white shadow-sm rounded-lg">
               <div className="p-3 md:p-4">
-                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                <div className="flex md:flex-row flex-col gap-3 md:gap-4">
                   <div className="flex-1">
                     <div className="relative">
                       <input
@@ -182,16 +179,16 @@ const Appointments = () => {
                         placeholder="Search by patient name, email, or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        className="py-2 pr-4 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-black text-sm"
                       />
-                      <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                      <FaSearch className="top-3 left-3 absolute text-gray-400" />
                     </div>
                   </div>
                   <div className="flex items-center">
                     <select
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      className="w-full md:w-auto border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto text-black text-sm"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -206,34 +203,34 @@ const Appointments = () => {
           </div>
 
           {/* Table Section */}
-          <div className="flex-1 bg-white shadow-md p-2 md:p-4 rounded-lg overflow-hidden mt-3 md:mt-4">
+          <div className="flex-1 bg-white shadow-md mt-3 md:mt-4 p-2 md:p-4 rounded-lg overflow-hidden">
             <div className="relative h-full">
-              <div className="overflow-auto h-full pb-16 md:pb-0">
+              <div className="pb-16 md:pb-0 h-full overflow-auto">
                 <table className="border border-gray-300 w-full border-collapse">
-                  <thead className="bg-gray-200 sticky top-0 z-10">
+                  <thead className="top-0 z-10 sticky bg-gray-200">
                     <tr>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Roll No.
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Patient Name
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Appointment Details
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Doctor Name
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Calendar
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         History
                       </th>
-                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      <th className="px-3 md:px-6 py-2 md:py-3 border-b font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -242,13 +239,13 @@ const Appointments = () => {
                     {loading ? (
                       [...Array(5)].map((_, index) => (
                         <tr key={index}>
-                          <td colSpan="6" className="px-3 md:px-6 py-3 md:py-4">
-                            <div className="animate-pulse flex space-x-4">
+                          <td colSpan="8" className="px-3 md:px-6 py-3 md:py-4">
+                            <div className="flex space-x-4 animate-pulse">
                               <div className="flex-1 space-y-4 py-1">
-                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div className="bg-gray-200 rounded w-3/4 h-4"></div>
                                 <div className="space-y-2">
-                                  <div className="h-4 bg-gray-200 rounded"></div>
-                                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                                  <div className="bg-gray-200 rounded h-4"></div>
+                                  <div className="bg-gray-200 rounded w-5/6 h-4"></div>
                                 </div>
                               </div>
                             </div>
@@ -257,7 +254,10 @@ const Appointments = () => {
                       ))
                     ) : filteredAppointments.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="px-3 md:px-6 py-3 md:py-4 text-center text-gray-500">
+                        <td
+                          colSpan="8"
+                          className="px-3 md:px-6 py-3 md:py-4 text-gray-500 text-center"
+                        >
                           No appointments found
                         </td>
                       </tr>
@@ -265,25 +265,27 @@ const Appointments = () => {
                       filteredAppointments.map((appointment, index) => (
                         <tr key={appointment.id} className="hover:bg-gray-50">
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm text-gray-900">
-                              P{String(index + 1).padStart(3, '0')}
+                            <div className="text-gray-900 text-xs md:text-sm">
+                              P{String(index + 1).padStart(3, "0")}
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm font-medium text-gray-900">
+                            <div className="font-medium text-gray-900 text-xs md:text-sm">
                               {appointment.patient_name}
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm text-gray-900">
-                              {dayjs(appointment.appointment_date).format("MMM D, YYYY")}
+                            <div className="text-gray-900 text-xs md:text-sm">
+                              {dayjs(appointment.appointment_date).format(
+                                "MMM D, YYYY"
+                              )}
                             </div>
-                            <div className="text-xs md:text-sm text-gray-500">
+                            <div className="text-gray-500 text-xs md:text-sm">
                               {appointment.appointment_time}
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <div className="text-xs md:text-sm text-gray-900">
+                            <div className="text-gray-900 text-xs md:text-sm">
                               {appointment.doctorfullname}
                             </div>
                           </td>
@@ -291,27 +293,27 @@ const Appointments = () => {
                             {getStatusBadge(appointment.status)}
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                            <GoogleCalendarButton 
+                            <GoogleCalendarButton
                               appointment={{
                                 date: appointment.appointment_date,
                                 time: appointment.appointment_time,
                                 doctor: appointment.doctorfullname,
                                 department: appointment.department,
                                 patientName: appointment.patient_name,
-                                email: appointment.patient_email
-                              }} 
+                                email: appointment.patient_email,
+                              }}
                             />
                           </td>
                           <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
                             <button
                               onClick={() => handleViewHistory(appointment)}
-                              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="inline-flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-blue-600 text-sm"
                             >
                               <FaHistory className="mr-2" />
                               View History
                             </button>
                           </td>
-                          <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
+                          <td className="px-3 md:px-6 py-3 md:py-4 text-gray-500 text-xs md:text-sm whitespace-nowrap">
                             <button
                               onClick={() => handleViewDetails(appointment)}
                               className="text-blue-600 hover:text-blue-900"
@@ -329,12 +331,14 @@ const Appointments = () => {
           </div>
 
           {/* Appointment Details Modal */}
-          {selectedAppointment && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          {selectedAppointment && !showHistoryModal && (
+            <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 p-4">
+              <div className="bg-white shadow-xl rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Appointment Details</h2>
+                    <h2 className="font-bold text-gray-900 text-2xl">
+                      Appointment Details
+                    </h2>
                     <button
                       onClick={handleCloseDetails}
                       className="text-gray-500 hover:text-gray-700"
@@ -346,35 +350,39 @@ const Appointments = () => {
                   <div className="space-y-6">
                     {/* Patient Information */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
                         <FaUserCircle className="mr-2 text-blue-600" />
                         Patient Information
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                         <div>
-                          <p className="text-sm text-gray-500">Name</p>
-                          <p className="text-base font-medium text-gray-500">{selectedAppointment.patient_name}</p>
+                          <p className="text-gray-500 text-sm">Name</p>
+                          <p className="font-medium text-gray-500 text-base">
+                            {selectedAppointment.patient_name}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Email</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Email</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaEnvelope className="mr-2 text-gray-400" />
                             {selectedAppointment.patient_email}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Phone</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Phone</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaPhone className="mr-2 text-gray-400" />
                             {selectedAppointment.patient_phone}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Gender</p>
-                          <p className="text-base font-medium text-gray-500">
-                            {selectedAppointment.patient_gender === 'M' ? 'Male' : 
-                             selectedAppointment.patient_gender === 'F' ? 'Female' : 
-                             'Not specified'}
+                          <p className="text-gray-500 text-sm">Gender</p>
+                          <p className="font-medium text-gray-500 text-base">
+                            {selectedAppointment.patient_gender === "M"
+                              ? "Male"
+                              : selectedAppointment.patient_gender === "F"
+                              ? "Female"
+                              : "Not specified"}
                           </p>
                         </div>
                       </div>
@@ -382,44 +390,50 @@ const Appointments = () => {
 
                     {/* Appointment Information */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <h3 className="flex items-center mb-4 font-semibold text-gray-900 text-lg">
                         <FaCalendarCheck className="mr-2 text-blue-600" />
                         Appointment Details
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                         <div>
-                          <p className="text-sm text-gray-500">Date</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Date</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaCalendarAlt className="mr-2 text-gray-400" />
-                            {dayjs(selectedAppointment.appointment_date).format("MMM D, YYYY")}
+                            {dayjs(selectedAppointment.appointment_date).format(
+                              "MMM D, YYYY"
+                            )}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Time</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Time</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaClock className="mr-2 text-gray-400" />
                             {selectedAppointment.appointment_time}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Doctor</p>
-                          <p className="text-base font-medium flex items-center text-gray-500">
+                          <p className="text-gray-500 text-sm">Doctor</p>
+                          <p className="flex items-center font-medium text-gray-500 text-base">
                             <FaUserMd className="mr-2 text-gray-400" />
                             {selectedAppointment.doctorfullname}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Department</p>
-                          <p className="text-base font-medium text-gray-500">{selectedAppointment.department}</p>
+                          <p className="text-gray-500 text-sm">Department</p>
+                          <p className="font-medium text-gray-500 text-base">
+                            {selectedAppointment.department}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Status</p>
+                          <p className="text-gray-500 text-sm">Status</p>
                           <div className="mt-1">
                             {getStatusBadge(selectedAppointment.status)}
                           </div>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Add to Calendar</p>
+                          <p className="text-gray-500 text-sm">
+                            Add to Calendar
+                          </p>
                           <div className="mt-1">
                             <GoogleCalendarButton
                               appointment={{
@@ -428,7 +442,7 @@ const Appointments = () => {
                                 doctor: selectedAppointment.doctorfullname,
                                 department: selectedAppointment.department,
                                 patientName: selectedAppointment.patient_name,
-                                email: selectedAppointment.patient_email
+                                email: selectedAppointment.patient_email,
                               }}
                             />
                           </div>
@@ -436,19 +450,23 @@ const Appointments = () => {
                       </div>
                     </div>
 
-                    {/* Additional Notes or Reason */}
+                    {/* Additional Notes */}
                     {selectedAppointment.notes && (
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Notes</h3>
-                        <p className="text-gray-700">{selectedAppointment.notes}</p>
+                        <h3 className="mb-2 font-semibold text-gray-900 text-lg">
+                          Notes
+                        </h3>
+                        <p className="text-gray-700">
+                          {selectedAppointment.notes}
+                        </p>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-6 flex justify-end">
+                  <div className="flex justify-end mt-6">
                     <button
                       onClick={handleCloseDetails}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                      className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-gray-700"
                     >
                       Close
                     </button>
@@ -457,80 +475,15 @@ const Appointments = () => {
               </div>
             </div>
           )}
-
-          {/* History Modal */}
-          {showHistoryModal && selectedAppointment && (
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Appointment History</h3>
-                  <button
-                    onClick={handleCloseHistoryModal}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <FaTimes size={20} />
-                  </button>
-                </div>
-
-                {selectedAppointment.history && selectedAppointment.history.length > 0 ? (
-                  <div className="space-y-4">
-                    {selectedAppointment.history.map((record) => (
-                      <div key={record.id} className="bg-gray-50 p-4 rounded-lg">
-                        <div className="mb-4">
-                          <h4 className="font-medium text-gray-900">Diagnosis</h4>
-                          <p className="text-gray-600">{record.diagnosis || 'No diagnosis recorded'}</p>
-                        </div>
-
-                        <div className="mb-4">
-                          <h4 className="font-medium text-gray-900">Prescription</h4>
-                          <p className="text-gray-600">{record.prescription || 'No prescription recorded'}</p>
-                        </div>
-
-                        {record.medicine_name && (
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900">Medication Details</h4>
-                            <ul className="text-sm text-gray-600 space-y-1">
-                              <li><span className="font-medium">Medicine:</span> {record.medicine_name}</li>
-                              <li><span className="font-medium">Dosage:</span> {record.medicine_dosage}</li>
-                              <li><span className="font-medium">Frequency:</span> {record.medicine_frequency}</li>
-                              <li><span className="font-medium">Duration:</span> {record.medicine_duration}</li>
-                            </ul>
-                          </div>
-                        )}
-
-                        {record.next_appointment_date && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <h4 className="font-medium text-gray-900">Next Appointment</h4>
-                            <p className="text-gray-600">
-                              {new Date(record.next_appointment_date).toLocaleDateString()} at {record.next_appointment_time}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="mt-4 text-sm text-gray-500">
-                          Recorded on: {new Date(record.created_at).toLocaleString()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No history found for this appointment.</p>
-                  </div>
-                )}
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handleCloseHistoryModal}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* History Modal */}
+        <AppointmentHistoryModal
+          showModal={showHistoryModal}
+          selectedAppointment={selectedAppointment}
+          onClose={handleCloseHistoryModal}
+          isLoading={historyLoading}
+        />
       </main>
     </div>
   );
