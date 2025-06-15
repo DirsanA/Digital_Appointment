@@ -35,6 +35,8 @@ const AppointmentHistory = () => {
     email: "",
     phone: "",
   });
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const navigate = useNavigate();
 
   // Fetch departments from the database
@@ -413,6 +415,29 @@ const AppointmentHistory = () => {
     navigate("/");
   };
 
+  const handleViewHistory = async (appointment) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/appointments/${appointment.id}/history`);
+      if (response.data.success) {
+        setSelectedAppointment({
+          ...appointment,
+          history: response.data.history
+        });
+        setShowHistoryModal(true);
+      } else {
+        toast.error('No history found for this appointment');
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      toast.error('Failed to fetch appointment history');
+    }
+  };
+
+  const handleCloseHistoryModal = () => {
+    setShowHistoryModal(false);
+    setSelectedAppointment(null);
+  };
+
   return (
     <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
       <ToastContainer />
@@ -480,6 +505,7 @@ const AppointmentHistory = () => {
                       <th className="p-3 text-left">Date</th>
                       <th className="p-3 text-left">Time</th>
                       <th className="p-3 text-left">Status</th>
+                      <th className="p-3 text-left">History</th>
                       <th className="p-3 rounded-r-lg text-left">Actions</th>
                     </tr>
                   </thead>
@@ -618,6 +644,17 @@ const AppointmentHistory = () => {
                           </span>
                         </td>
 
+                        {/* History */}
+                        <td className="p-3">
+                          <button
+                            onClick={() => handleViewHistory(appointment)}
+                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <FaHistory className="mr-2" />
+                            View History
+                          </button>
+                        </td>
+
                         {/* Actions */}
                         <td className="relative p-3">
                           <div className="relative dropdown">
@@ -743,6 +780,79 @@ const AppointmentHistory = () => {
           </div>
         </div>
       </main>
+
+     {/* History Modal */}
+              {showHistoryModal && selectedAppointment && (
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Appointment History</h3>
+                      <button
+                        onClick={handleCloseHistoryModal}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <FaTimes size={20} />
+                      </button>
+                    </div>
+    
+                    {selectedAppointment.history && selectedAppointment.history.length > 0 ? (
+                      <div className="space-y-4">
+                        {selectedAppointment.history.map((record) => (
+                          <div key={record.id} className="bg-gray-50 p-4 rounded-lg">
+                            <div className="mb-4">
+                              <h4 className="font-medium text-gray-900">Diagnosis</h4>
+                              <p className="text-gray-600">{record.diagnosis || 'No diagnosis recorded'}</p>
+                            </div>
+    
+                            <div className="mb-4">
+                              <h4 className="font-medium text-gray-900">Prescription</h4>
+                              <p className="text-gray-600">{record.prescription || 'No prescription recorded'}</p>
+                            </div>
+    
+                            {record.medicine_name && (
+                              <div className="mb-4">
+                                <h4 className="font-medium text-gray-900">Medication Details</h4>
+                                <ul className="text-sm text-gray-600 space-y-1">
+                                  <li><span className="font-medium">Medicine:</span> {record.medicine_name}</li>
+                                  <li><span className="font-medium">Dosage:</span> {record.medicine_dosage}</li>
+                                  <li><span className="font-medium">Frequency:</span> {record.medicine_frequency}</li>
+                                  <li><span className="font-medium">Duration:</span> {record.medicine_duration}</li>
+                                </ul>
+                              </div>
+                            )}
+    
+                            {record.next_appointment_date && (
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <h4 className="font-medium text-gray-900">Next Appointment</h4>
+                                <p className="text-gray-600">
+                                  {new Date(record.next_appointment_date).toLocaleDateString()} at {record.next_appointment_time}
+                                </p>
+                              </div>
+                            )}
+    
+                            <div className="mt-4 text-sm text-gray-500">
+                              Recorded on: {new Date(record.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">No history found for this appointment.</p>
+                      </div>
+                    )}
+    
+                    <div className="mt-6 flex justify-end">
+                      <button
+                        onClick={handleCloseHistoryModal}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
     </div>
   );
 };

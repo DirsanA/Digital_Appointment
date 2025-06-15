@@ -15,6 +15,7 @@ const departmentRoutes = require("./routes/department.routes");
 const appointmentRoutes = require("./routes/appointment.routes");
 const loginRoutes = require("./routes/login.routes");
 const dashboardRoutes = require("./routes/dashboardRoutes.routes");
+const appointmentHistoryRoutes = require("./routes/appointmentHistory.routes");
 
 // Mount routes
 app.use("/", loginRoutes);
@@ -23,6 +24,7 @@ app.use("/", doctorRoutes);
 app.use("/", departmentRoutes);
 app.use("/", appointmentRoutes);
 app.use("/api", dashboardRoutes);
+app.use("/api/appointments", appointmentHistoryRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
