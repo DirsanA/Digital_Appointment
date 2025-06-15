@@ -39,7 +39,7 @@ const AppointmentHistoryModal = ({
         <div className="flex-1 p-4 overflow-y-auto">
           {isLoading ? (
             <div className="flex flex-col justify-center items-center py-12">
-              <div className="mb-4 border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
+              <div className="mb-4 border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin text-black"></div>
               <p className="text-gray-500">Loading history...</p>
             </div>
           ) : selectedAppointment.history?.length > 0 ? (
@@ -47,7 +47,7 @@ const AppointmentHistoryModal = ({
               {selectedAppointment.history.map((record) => (
                 <div
                   key={record.id}
-                  className="hover:shadow-sm p-4 border border-gray-200 rounded-lg transition-shadow"
+                  className="hover:shadow-sm p-4 border border-gray-200 rounded-lg transition-shadow text-black"
                 >
                   {/* Record Header */}
                   <div className="flex justify-between items-start mb-3">

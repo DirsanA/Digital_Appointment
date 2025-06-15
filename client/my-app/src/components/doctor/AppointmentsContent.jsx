@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import GoogleCalendarButton from '../GoogleCalendarButton';
 import { FaHistory, FaTimes } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
-
+import AppointmentHistoryModal from "../admin/AppointmentHistoryModal";
 const AppointmentsContent = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -222,7 +222,7 @@ const AppointmentsContent = () => {
   });
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="container mx-auto px-4 py-8">
       <Toaster position="top-right" />
       {/* Sticky Header Section */}
       <div className="top-0 z-20 sticky bg-gray-50 pb-4">
@@ -504,7 +504,7 @@ const AppointmentsContent = () => {
 
       {/* History Modal */}
       {showHistoryModal && selectedAppointment && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="z-50 fixed inset-0 flex justify-center items-center backdrop-blur-sm p-4">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -519,47 +519,12 @@ const AppointmentsContent = () => {
             </div>
 
             {selectedAppointment.history ? (
-              // View History Mode
-              <div className="space-y-4">
-                {selectedAppointment.history.map((record) => (
-                  <div key={record.id} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-900">Diagnosis</h4>
-                      <p className="text-gray-600">{record.diagnosis || 'No diagnosis recorded'}</p>
-                    </div>
-
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-900">Prescription</h4>
-                      <p className="text-gray-600">{record.prescription || 'No prescription recorded'}</p>
-                    </div>
-
-                    {record.medicine_name && (
-                      <div className="mb-4">
-                        <h4 className="font-medium text-gray-900">Medication Details</h4>
-                        <ul className="text-sm text-gray-600 space-y-1">
-                          <li><span className="font-medium">Medicine:</span> {record.medicine_name}</li>
-                          <li><span className="font-medium">Dosage:</span> {record.medicine_dosage}</li>
-                          <li><span className="font-medium">Frequency:</span> {record.medicine_frequency}</li>
-                          <li><span className="font-medium">Duration:</span> {record.medicine_duration}</li>
-                        </ul>
-                      </div>
-                    )}
-
-                    {record.next_appointment_date && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <h4 className="font-medium text-gray-900">Next Appointment</h4>
-                        <p className="text-gray-600">
-                          {new Date(record.next_appointment_date).toLocaleDateString()} at {record.next_appointment_time}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="mt-4 text-sm text-gray-500">
-                      Recorded on: {new Date(record.created_at).toLocaleString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <AppointmentHistoryModal
+                showModal={showHistoryModal}
+                selectedAppointment={selectedAppointment}
+                onClose={handleCloseHistoryModal}
+                isLoading={false}
+              />
             ) : (
               // Add History Mode
               <div className="space-y-4">
