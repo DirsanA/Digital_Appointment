@@ -13,6 +13,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PatientSidebar from "./PatientSidebar";
 import AppointmentHistoryModal from "../admin/AppointmentHistoryModal";
+import bgImage from "/assets/b4.jpg";
 
 const AppointmentHistory = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -442,30 +443,39 @@ const AppointmentHistory = () => {
         handleLogout={handleLogout}
       />
 
-      <main className="flex-1 mt-16 md:mt-0 md:mr-0 p-6">
-        <div className="flex flex-col mx-auto max-w-6xl h-full">
-          <div className="bg-white shadow-md mb-8 p-6 rounded-lg">
-            <h2 className="font-bold text-blue-600 text-2xl">
-              Welcome {patientName || "Patient"}
-            </h2>
-            <p className="mt-2 text-gray-600">
-              Manage your medical appointments - update, delete, or cancel them.
-            </p>
-          </div>
+      <main className="flex-1 md:ml-30 mt-16 md:mt-0 overflow-x-auto">
+        <div className="w-full h-full p-2 md:p-6">
+         
+           <div
+                    className="relative flex flex-col justify-center shadow-md p-6 rounded-lg w-full h-48 md:h-60 text-white"
+                    style={{
+                      backgroundImage: `url(${bgImage})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    <h2 className="font-bold text-blue-500 text-3xl">
+                      Welcome, {patientName || "Patient"}
+                    </h2>
+                    <p className="mt-2 text-blue-500 text-sm">
+                      Manage your medical appointments - update, delete, or cancel them.
+                    </p>
+                  </div>
+          
 
-          <div className="flex flex-col flex-1 bg-white shadow-md p-4 md:p-6 rounded-lg overflow-hidden">
-            <h3 className="flex items-center mb-6 font-semibold text-gray-800 text-xl">
+          <div className="flex flex-col w-full bg-white shadow-md p-4 md:p-6 rounded-lg">
+            <h3 className="flex items-center mb-4 md:mb-6 font-semibold text-gray-800 text-lg md:text-xl">
               <FaHistory className="mr-2 text-blue-600" />
               Your Appointments
             </h3>
 
             {loading ? (
-              <div className="py-8 text-gray-500 text-center">
+              <div className="py-8 text-gray-500 text-center text-sm md:text-base">
                 <FaSpinner className="inline-block mr-2 animate-spin" />
                 Loading appointments...
               </div>
             ) : error ? (
-              <div className="py-8 text-red-500 text-center">
+              <div className="py-8 text-red-500 text-center text-sm md:text-base">
                 {error}
                 <button
                   onClick={() => window.location.reload()}
@@ -475,272 +485,259 @@ const AppointmentHistory = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex-1 overflow-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-blue-600 text-white">
-                      <th className="p-3 rounded-l-lg text-left">Roll No.</th>
-                      <th className="p-3 text-left">Patient</th>
-                      <th className="p-3 text-left">Department</th>
-                      <th className="p-3 text-left">Doctor</th>
-                      <th className="p-3 text-left">Date</th>
-                      <th className="p-3 text-left">Time</th>
-                      <th className="p-3 text-left">Status</th>
-                      <th className="p-3 text-left">History</th>
-                      <th className="p-3 rounded-r-lg text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {appointments.map((appointment, index) => (
-                      <tr
-                        key={appointment.uniqueKey || appointment.id}
-                        className="hover:bg-blue-50 border-gray-200 border-b"
-                      >
-                        <td className="p-3 text-gray-700">
-                          A{String(index + 1).padStart(3, "0")}
-                        </td>
-                        <td className="p-3 text-gray-700">
-                          {appointment.patientName}
-                        </td>
-
-                        <td className="p-3 text-gray-700">
-                          {editingId === appointment.id ? (
-                            <select
-                              name="department"
-                              value={editedAppointment.department}
-                              onChange={handleEditChange}
-                              className="px-2 py-1 border rounded w-full"
-                              required
-                            >
-                              <option value="">Select Department</option>
-                              {departments.map((dept, i) => (
-                                <option key={`dept-${i}`} value={dept}>
-                                  {dept}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            appointment.department
-                          )}
-                        </td>
-
-                        <td className="p-3 text-gray-700">
-                          {editingId === appointment.id ? (
-                            <select
-                              name="doctor"
-                              value={editedAppointment.doctor}
-                              onChange={handleEditChange}
-                              className="px-2 py-1 border rounded w-full"
-                              required
-                              disabled={filteredDoctors.length === 0}
-                            >
-                              {filteredDoctors.length === 0 ? (
-                                <option value="">
-                                  No doctors in this department
-                                </option>
-                              ) : (
-                                <>
-                                  <option value="">Select Doctor</option>
-                                  {filteredDoctors.map((doc) => (
-                                    <option
-                                      key={`doc-${doc.id}`}
-                                      value={doc.name}
-                                    >
-                                      {doc.name}
+              <div className="relative">
+                <div className="overflow-x-auto">
+                  <div className="max-h-[calc(100vh-400px)] overflow-y-auto">
+                    <table className="w-full border-collapse min-w-[1200px]">
+                      <thead className="sticky top-0 z-10">
+                        <tr className="bg-blue-600 text-white">
+                          <th className="p-2 md:p-3 rounded-l-lg text-left text-xs md:text-sm">Roll No.</th>
+                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Patient</th>
+                          <th className="hidden md:table-cell p-3 text-left text-sm">Department</th>
+                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Doctor</th>
+                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Date</th>
+                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Time</th>
+                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Status</th>
+                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">History</th>
+                          <th className="p-2 md:p-3 rounded-r-lg text-left text-xs md:text-sm">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="overflow-y-auto">
+                        {appointments.map((appointment, index) => (
+                          <tr
+                            key={appointment.uniqueKey || appointment.id}
+                            className="hover:bg-blue-50 border-gray-200 border-b"
+                          >
+                            <td className="p-2 md:p-3 text-gray-700 text-xs md:text-sm">
+                              A{String(index + 1).padStart(3, "0")}
+                            </td>
+                            <td className="p-2 md:p-3 text-gray-700 text-xs md:text-sm">
+                              {appointment.patientName}
+                            </td>
+                            <td className="hidden md:table-cell p-3 text-gray-700 text-sm">
+                              {editingId === appointment.id ? (
+                                <select
+                                  name="department"
+                                  value={editedAppointment.department}
+                                  onChange={handleEditChange}
+                                  className="px-2 py-1 border rounded w-full text-sm"
+                                  required
+                                >
+                                  <option value="">Select Department</option>
+                                  {departments.map((dept, i) => (
+                                    <option key={`dept-${i}`} value={dept}>
+                                      {dept}
                                     </option>
                                   ))}
-                                </>
-                              )}
-                            </select>
-                          ) : (
-                            appointment.doctor
-                          )}
-                        </td>
-
-                        <td className="p-3 text-gray-700">
-                          {editingId === appointment.id ? (
-                            <div className="flex flex-col">
-                              <input
-                                type="date"
-                                name="date"
-                                value={editedAppointment.date}
-                                onChange={handleEditChange}
-                                min={getTodayDate()}
-                                className="px-2 py-1 border rounded w-full"
-                                required
-                              />
-                              {dateError && (
-                                <span className="mt-1 text-red-500 text-xs">
-                                  {dateError}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            formatDateForDisplay(appointment.date)
-                          )}
-                        </td>
-
-                        <td className="p-3 text-gray-700">
-                          {editingId === appointment.id ? (
-                            <input
-                              type="time"
-                              name="time"
-                              value={editedAppointment.time}
-                              onChange={handleEditChange}
-                              className="px-2 py-1 border rounded w-full"
-                              required
-                              step="1800"
-                            />
-                          ) : (
-                            formatTimeForDisplay(appointment.time)
-                          )}
-                        </td>
-
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              appointment.status.toLowerCase() === "approved"
-                                ? "bg-green-100 text-green-800"
-                                : appointment.status.toLowerCase() ===
-                                    "declined" ||
-                                  appointment.status.toLowerCase() ===
-                                    "cancelled"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {appointment.status}
-                          </span>
-                        </td>
-
-                        <td className="p-3">
-                          <button
-                            onClick={() => handleViewHistory(appointment)}
-                            className="inline-flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium text-blue-600 text-sm"
-                          >
-                            <FaHistory className="mr-2" />
-                            View History
-                          </button>
-                        </td>
-
-                        <td className="relative p-3">
-                          <div className="relative">
-                            <button
-                              onClick={(e) => toggleDropdown(appointment.id, e)}
-                              className="hover:bg-gray-50 p-1 rounded-full text-gray-500 hover:text-gray-700"
-                              disabled={updating}
-                            >
-                              {updating && dropdownOpen === appointment.id ? (
-                                <FaSpinner className="w-5 h-5 animate-spin" />
+                                </select>
                               ) : (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="w-5 h-5"
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                >
-                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                </svg>
+                                appointment.department
                               )}
-                            </button>
-                            {dropdownOpen === appointment.id && (
-                              <div
-                                className="right-0 z-10 absolute bg-white shadow-lg mt-2 border border-gray-200 rounded-md w-48"
-                                onClick={(e) => e.stopPropagation()}
+                            </td>
+                            <td className="p-2 md:p-3 text-gray-700 text-xs md:text-sm">
+                              {editingId === appointment.id ? (
+                                <select
+                                  name="doctor"
+                                  value={editedAppointment.doctor}
+                                  onChange={handleEditChange}
+                                  className="px-2 py-1 border rounded w-full text-sm"
+                                  required
+                                  disabled={filteredDoctors.length === 0}
+                                >
+                                  {filteredDoctors.length === 0 ? (
+                                    <option value="">No doctors in this department</option>
+                                  ) : (
+                                    <>
+                                      <option value="">Select Doctor</option>
+                                      {filteredDoctors.map((doc) => (
+                                        <option key={`doc-${doc.id}`} value={doc.name}>
+                                          {doc.name}
+                                        </option>
+                                      ))}
+                                    </>
+                                  )}
+                                </select>
+                              ) : (
+                                appointment.doctor
+                              )}
+                            </td>
+                            <td className="p-2 md:p-3 text-gray-700 text-xs md:text-sm">
+                              {editingId === appointment.id ? (
+                                <div className="flex flex-col">
+                                  <input
+                                    type="date"
+                                    name="date"
+                                    value={editedAppointment.date}
+                                    onChange={handleEditChange}
+                                    min={getTodayDate()}
+                                    className="px-2 py-1 border rounded w-full text-sm"
+                                    required
+                                  />
+                                  {dateError && (
+                                    <span className="mt-1 text-red-500 text-xs">
+                                      {dateError}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                formatDateForDisplay(appointment.date)
+                              )}
+                            </td>
+                            <td className="p-2 md:p-3 text-gray-700 text-xs md:text-sm">
+                              {editingId === appointment.id ? (
+                                <input
+                                  type="time"
+                                  name="time"
+                                  value={editedAppointment.time}
+                                  onChange={handleEditChange}
+                                  className="px-2 py-1 border rounded w-full text-sm"
+                                  required
+                                  step="1800"
+                                />
+                              ) : (
+                                formatTimeForDisplay(appointment.time)
+                              )}
+                            </td>
+                            <td className="p-2 md:p-3">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  appointment.status.toLowerCase() === "approved"
+                                    ? "bg-green-100 text-green-800"
+                                    : appointment.status.toLowerCase() === "declined" ||
+                                      appointment.status.toLowerCase() === "cancelled"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }`}
                               >
-                                {editingId === appointment.id ? (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleUpdateAppointment();
-                                      }}
-                                      disabled={
-                                        dateError ||
-                                        updating ||
-                                        !editedAppointment.department ||
-                                        !editedAppointment.doctor_id ||
-                                        !editedAppointment.date ||
-                                        !editedAppointment.time
-                                      }
-                                      className={`block w-full text-left px-4 py-2 text-sm ${
-                                        dateError ||
-                                        updating ||
-                                        !editedAppointment.department ||
-                                        !editedAppointment.doctor_id ||
-                                        !editedAppointment.date ||
-                                        !editedAppointment.time
-                                          ? "text-gray-400 cursor-not-allowed"
-                                          : "text-green-600 hover:bg-green-50"
-                                      }`}
+                                {appointment.status}
+                              </span>
+                            </td>
+                            <td className="p-2 md:p-3">
+                              <button
+                                onClick={() => handleViewHistory(appointment)}
+                                className="inline-flex items-center bg-blue-50 hover:bg-blue-100 px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-medium text-blue-600 text-xs md:text-sm"
+                              >
+                                <FaHistory className="mr-1 md:mr-2" />
+                                View History
+                              </button>
+                            </td>
+                            <td className="relative p-2 md:p-3">
+                              <div className="relative">
+                                <button
+                                  onClick={(e) => toggleDropdown(appointment.id, e)}
+                                  className="hover:bg-gray-50 p-1 rounded-full text-gray-500 hover:text-gray-700"
+                                  disabled={updating}
+                                >
+                                  {updating && dropdownOpen === appointment.id ? (
+                                    <FaSpinner className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                                  ) : (
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-4 h-4 md:w-5 md:h-5"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
                                     >
-                                      {updating ? "Saving..." : "Save Changes"}
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleCancelEdit();
-                                      }}
-                                      disabled={updating}
-                                      className="block hover:bg-gray-100 px-4 py-2 w-full text-gray-700 text-sm text-left"
-                                    >
-                                      Cancel Edit
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    {appointment.status.toLowerCase() ===
-                                      "pending" && (
+                                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                    </svg>
+                                  )}
+                                </button>
+                                {dropdownOpen === appointment.id && (
+                                  <div
+                                    className="right-0 z-10 absolute bg-white shadow-lg mt-2 border border-gray-200 rounded-md w-40 md:w-48"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {editingId === appointment.id ? (
                                       <>
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleEditAppointment(appointment);
+                                            handleUpdateAppointment();
                                           }}
-                                          disabled={updating}
-                                          className="block hover:bg-blue-50 px-4 py-2 w-full text-blue-600 text-sm text-left"
+                                          disabled={
+                                            dateError ||
+                                            updating ||
+                                            !editedAppointment.department ||
+                                            !editedAppointment.doctor_id ||
+                                            !editedAppointment.date ||
+                                            !editedAppointment.time
+                                          }
+                                          className={`block w-full text-left px-3 md:px-4 py-2 text-xs md:text-sm ${
+                                            dateError ||
+                                            updating ||
+                                            !editedAppointment.department ||
+                                            !editedAppointment.doctor_id ||
+                                            !editedAppointment.date ||
+                                            !editedAppointment.time
+                                              ? "text-gray-400 cursor-not-allowed"
+                                              : "text-green-600 hover:bg-green-50"
+                                          }`}
                                         >
-                                          Update
+                                          {updating ? "Saving..." : "Save Changes"}
                                         </button>
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleCancelAppointment(
-                                              appointment.id
-                                            );
+                                            handleCancelEdit();
                                           }}
                                           disabled={updating}
-                                          className="block hover:bg-red-50 px-4 py-2 w-full text-red-600 text-sm text-left"
+                                          className="block hover:bg-gray-100 px-3 md:px-4 py-2 w-full text-gray-700 text-xs md:text-sm text-left"
                                         >
-                                          Cancel Appointment
+                                          Cancel Edit
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        {appointment.status.toLowerCase() === "pending" && (
+                                          <>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEditAppointment(appointment);
+                                              }}
+                                              disabled={updating}
+                                              className="block hover:bg-blue-50 px-3 md:px-4 py-2 w-full text-blue-600 text-xs md:text-sm text-left"
+                                            >
+                                              Update
+                                            </button>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleCancelAppointment(appointment.id);
+                                              }}
+                                              disabled={updating}
+                                              className="block hover:bg-red-50 px-3 md:px-4 py-2 w-full text-red-600 text-xs md:text-sm text-left"
+                                            >
+                                              Cancel Appointment
+                                            </button>
+                                          </>
+                                        )}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteAppointment(appointment.id);
+                                          }}
+                                          disabled={updating}
+                                          className="block hover:bg-gray-100 px-3 md:px-4 py-2 w-full text-gray-700 text-xs md:text-sm text-left"
+                                        >
+                                          Delete
                                         </button>
                                       </>
                                     )}
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteAppointment(appointment.id);
-                                      }}
-                                      disabled={updating}
-                                      className="block hover:bg-gray-100 px-4 py-2 w-full text-gray-700 text-sm text-left"
-                                    >
-                                      Delete
-                                    </button>
-                                  </>
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
 
             {!loading && appointments.length === 0 && !error && (
-              <div className="py-8 text-gray-500 text-center">
+              <div className="py-8 text-gray-500 text-center text-sm md:text-base">
                 No appointment history found
               </div>
             )}

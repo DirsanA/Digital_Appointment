@@ -214,7 +214,7 @@ const BookAppointment = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 mt-16 md:mt-0 md:mr-0 p-6">
+      <main className="flex-1 md:ml-30 mt-16 md:mt-0 overflow-x-auto">
         <div className="mx-auto max-w-4xl">
           {/* Welcome Section */}
           <div

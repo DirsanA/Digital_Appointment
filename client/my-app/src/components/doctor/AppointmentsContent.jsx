@@ -334,159 +334,161 @@ const AppointmentsContent = () => {
         {/* Scrollable Table Container */}
         <div className="flex-1 overflow-auto">
           <div className="overflow-x-auto">
-            <table className="divide-y divide-gray-200 min-w-full">
-              <thead className="bg-gray-200 sticky top-0 z-10">
-                <tr>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                    No.
-                  </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                    Patient
-                  </th>
-                  {!isMobile && (
-                    <>
-                      <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                        Department
-                      </th>
-                      <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                        Date & Time
-                      </th>
-                    </>
-                  )}
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
-                    History
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPatients.length > 0 ? (
-                  filteredPatients.map((patient, index) => {
-                    const today = dayjs().format("YYYY-MM-DD");
-                    const appointmentDate = dayjs(patient.appointment_date).format("YYYY-MM-DD");
-                    
-                    if (showTodayAppointments && appointmentDate !== today) {
-                      return null;
-                    }
+            <div className="max-h-[calc(100vh-400px)] overflow-y-auto">
+              <table className="divide-y divide-gray-200 min-w-full">
+                <thead className="bg-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      No.
+                    </th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Patient
+                    </th>
+                    {!isMobile && (
+                      <>
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                          Department
+                        </th>
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                          Date & Time
+                        </th>
+                      </>
+                    )}
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      History
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredPatients.length > 0 ? (
+                    filteredPatients.map((patient, index) => {
+                      const today = dayjs().format("YYYY-MM-DD");
+                      const appointmentDate = dayjs(patient.appointment_date).format("YYYY-MM-DD");
+                      
+                      if (showTodayAppointments && appointmentDate !== today) {
+                        return null;
+                      }
 
-                    return (
-                      <tr key={patient.id} className="hover:bg-gray-50">
-                        <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
-                          <div className="text-xs sm:text-sm text-gray-900">
-                            {index + 1}
-                          </div>
-                        </td>
-                        <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
-                          <div className="text-xs sm:text-sm font-medium text-gray-900">
-                            {patient.patient_name}
-                          </div>
-                          {!isMobile && (
-                            <div className="text-gray-500 text-xs sm:text-sm">
-                              {patient.patient_email}
+                      return (
+                        <tr key={patient.id} className="hover:bg-gray-50">
+                          <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
+                            <div className="text-xs sm:text-sm text-gray-900">
+                              {index + 1}
                             </div>
-                          )}
-                        </td>
-                        {!isMobile && (
-                          <>
-                            <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
-                              <div className="text-xs sm:text-sm text-gray-900">
-                                {patient.department}
-                              </div>
-                            </td>
-                            <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
-                              <div className="text-xs sm:text-sm text-gray-900">
-                                {dayjs(patient.appointment_date).format("MMM D, YYYY")}
-                              </div>
+                          </td>
+                          <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
+                            <div className="text-xs sm:text-sm font-medium text-gray-900">
+                              {patient.patient_name}
+                            </div>
+                            {!isMobile && (
                               <div className="text-gray-500 text-xs sm:text-sm">
-                                {patient.appointment_time}
-                              </div>
-                            </td>
-                          </>
-                        )}
-                        <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
-                          <select
-                            value={patient.status}
-                            onChange={(e) => updateAppointmentStatus(patient.id, e.target.value)}
-                            className={`bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 sm:p-2 ${
-                              patient.status === "accepted" ? "bg-green-100 text-green-800" :
-                              patient.status === "cancelled" ? "bg-red-100 text-red-800" : ""
-                            }`}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="cancelled">Cancelled</option>
-                            <option value="completed">Completed</option>
-                          </select>
-                        </td>
-                        <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
-                          <div className="relative">
-                            <button
-                              onClick={() => setDropdownOpen(dropdownOpen === patient.id ? null : patient.id)}
-                              className="inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            >
-                              {isMobile ? <FaHistory /> : (
-                                <>
-                                  <FaHistory className="mr-1 sm:mr-2" />
-                                  History
-                                </>
-                              )}
-                            </button>
-                            {dropdownOpen === patient.id && (
-                              <div className="fixed inset-0 flex items-center justify-center z-50">
-                                <div className="fixed inset-0 backdrop-blur-sm" onClick={() => setDropdownOpen(null)}></div>
-                                <div className="relative bg-white rounded-lg shadow-lg w-full max-w-xs sm:max-w-sm md:max-w-md transform transition-all">
-                                  <div className="p-3 sm:p-4 border-b border-gray-200">
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">History Options</h3>
-                                  </div>
-                                  <div className="p-2">
-                                    <button
-                                      onClick={() => {
-                                        handleAddHistory(patient);
-                                        setDropdownOpen(null);
-                                      }}
-                                      className="w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"
-                                    >
-                                      <FaHistory className="mr-2 sm:mr-3 text-blue-500" />
-                                      Add History
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        handleViewHistory(patient);
-                                        setDropdownOpen(null);
-                                      }}
-                                      className="w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"
-                                    >
-                                      <FaHistory className="mr-2 sm:mr-3 text-blue-500" />
-                                      View History
-                                    </button>
-                                  </div>
-                                  <div className="p-2 border-t border-gray-200">
-                                    <button
-                                      onClick={() => setDropdownOpen(null)}
-                                      className="w-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
+                                {patient.patient_email}
                               </div>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={isMobile ? 4 : 6} className="px-3 sm:px-6 py-4 text-center text-gray-500 text-xs sm:text-sm">
-                      No appointments found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                          </td>
+                          {!isMobile && (
+                            <>
+                              <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
+                                <div className="text-xs sm:text-sm text-gray-900">
+                                  {patient.department}
+                                </div>
+                              </td>
+                              <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
+                                <div className="text-xs sm:text-sm text-gray-900">
+                                  {dayjs(patient.appointment_date).format("MMM D, YYYY")}
+                                </div>
+                                <div className="text-gray-500 text-xs sm:text-sm">
+                                  {patient.appointment_time}
+                                </div>
+                              </td>
+                            </>
+                          )}
+                          <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
+                            <select
+                              value={patient.status}
+                              onChange={(e) => updateAppointmentStatus(patient.id, e.target.value)}
+                              className={`bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1 sm:p-2 ${
+                                patient.status === "accepted" ? "bg-green-100 text-green-800" :
+                                patient.status === "cancelled" ? "bg-red-100 text-red-800" : ""
+                              }`}
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="accepted">Accepted</option>
+                              <option value="cancelled">Cancelled</option>
+                              <option value="completed">Completed</option>
+                            </select>
+                          </td>
+                          <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
+                            <div className="relative">
+                              <button
+                                onClick={() => setDropdownOpen(dropdownOpen === patient.id ? null : patient.id)}
+                                className="inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                              >
+                                {isMobile ? <FaHistory /> : (
+                                  <>
+                                    <FaHistory className="mr-1 sm:mr-2" />
+                                    History
+                                  </>
+                                )}
+                              </button>
+                              {dropdownOpen === patient.id && (
+                                <div className="fixed inset-0 flex items-center justify-center z-50">
+                                  <div className="fixed inset-0 backdrop-blur-sm" onClick={() => setDropdownOpen(null)}></div>
+                                  <div className="relative bg-white rounded-lg shadow-lg w-full max-w-xs sm:max-w-sm md:max-w-md transform transition-all">
+                                    <div className="p-3 sm:p-4 border-b border-gray-200">
+                                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">History Options</h3>
+                                    </div>
+                                    <div className="p-2">
+                                      <button
+                                        onClick={() => {
+                                          handleAddHistory(patient);
+                                          setDropdownOpen(null);
+                                        }}
+                                        className="w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"
+                                      >
+                                        <FaHistory className="mr-2 sm:mr-3 text-blue-500" />
+                                        Add History
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          handleViewHistory(patient);
+                                          setDropdownOpen(null);
+                                        }}
+                                        className="w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"
+                                      >
+                                        <FaHistory className="mr-2 sm:mr-3 text-blue-500" />
+                                        View History
+                                      </button>
+                                    </div>
+                                    <div className="p-2 border-t border-gray-200">
+                                      <button
+                                        onClick={() => setDropdownOpen(null)}
+                                        className="w-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={isMobile ? 4 : 6} className="px-3 sm:px-6 py-4 text-center text-gray-500 text-xs sm:text-sm">
+                        No appointments found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
