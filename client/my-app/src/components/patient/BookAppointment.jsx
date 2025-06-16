@@ -30,7 +30,11 @@ const BookAppointment = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchingDoctors, setFetchingDoctors] = useState(false);
-  const [currentPatientName, setCurrentPatientName] = useState("");
+  const [patientData, setPatientData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+  });
   const navigate = useNavigate();
 
   // Predefined departments
@@ -61,29 +65,22 @@ const BookAppointment = () => {
         );
 
         if (response.data.success) {
-          const patientData = response.data.patient;
-          setCurrentPatientName(patientData.full_name);
-          // Pre-fill the appointment form with patient details
-          setAppointment((prev) => ({
+          const patientDetails = response.data.patient;
+          setPatientData({
+            full_name: patientDetails.full_name,
+            email: patientDetails.email,
+            phone: patientDetails.phone,
+          });
+          setAppointment(prev => ({
             ...prev,
-            patientName: patientData.full_name,
-            email: patientData.email,
-            phone: patientData.phone,
-            gender: patientData.gender || "",
+            patientName: patientDetails.full_name,
+            email: patientDetails.email,
+            phone: patientDetails.phone
           }));
-        } else {
-          throw new Error(
-            response.data.message || "Failed to fetch patient details"
-          );
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
-        if (error.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("role");
-          localStorage.removeItem("patientId");
-          navigate("/patient-login");
-        }
+        toast.error("Failed to fetch patient details");
       }
     };
 
@@ -171,7 +168,7 @@ const BookAppointment = () => {
 
         // Reset form
         setAppointment({
-          patientName: currentPatientName,
+          patientName: patientData.full_name,
           department: "",
           date: "",
           email: appointment.email,
@@ -208,11 +205,11 @@ const BookAppointment = () => {
     <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
       <ToastContainer />
       
-      {/* Use the shared PatientSidebar component */}
+      {/* Use the shared PatientSidebar component with proper patient data */}
       <PatientSidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
-        patientData={appointment}
+        patientData={patientData}
         handleLogout={handleLogout}
       />
 
@@ -229,7 +226,7 @@ const BookAppointment = () => {
             }}
           >
             <h2 className="font-bold text-blue-500 text-2xl">
-              Welcome {currentPatientName || "Loading..."}
+              Welcome {patientData.full_name}
             </h2>
             <p className="mt-2 text-blue-500">
               Schedule your medical appointment with our specialists
