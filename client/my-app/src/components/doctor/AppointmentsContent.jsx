@@ -360,6 +360,9 @@ const AppointmentsContent = () => {
                     <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
                       History
                     </th>
+                    <th className="px-3 sm:px-6 py-2 sm:py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">
+                      Calendar
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -476,12 +479,24 @@ const AppointmentsContent = () => {
                               )}
                             </div>
                           </td>
+                          <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
+                            <GoogleCalendarButton
+                              appointment={{
+                                date: patient.appointment_date,
+                                time: patient.appointment_time,
+                                doctor: patient.doctorfullname,
+                                department: patient.department,
+                                patientName: patient.patient_name,
+                                email: patient.patient_email,
+                              }}
+                            />
+                          </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan={isMobile ? 4 : 6} className="px-3 sm:px-6 py-4 text-center text-gray-500 text-xs sm:text-sm">
+                      <td colSpan={isMobile ? 5 : 7} className="px-3 sm:px-6 py-4 text-center text-gray-500 text-xs sm:text-sm">
                         No appointments found
                       </td>
                     </tr>
