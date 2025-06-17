@@ -97,7 +97,7 @@ const PatientSidebar = ({ sidebarOpen, setSidebarOpen, patientData, handleLogout
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
         <div
-          className="md:hidden z-10 fixed inset-0 bg-black bg-opacity-50"
+          className="md:hidden z-10 fixed inset-0  backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
