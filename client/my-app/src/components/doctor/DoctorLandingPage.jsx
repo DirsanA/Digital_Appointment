@@ -599,7 +599,7 @@ const DoctorLandingPage = () => {
         }`}
       >
         <div
-          className="absolute inset-0 bg-black bg-opacity-50"
+          className="absolute inset-0 backdrop-blur-sm"
           onClick={toggleMenu}
         ></div>
         <div className="top-0 right-0 absolute bg-white shadow-lg w-4/5 h-full overflow-y-auto">
