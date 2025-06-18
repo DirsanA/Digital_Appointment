@@ -11,10 +11,10 @@ import {
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
-const HOSPITAL_NAME = "D² Medical Center";
-const HOSPITAL_ADDRESS = "123 Medical Plaza, Healthcare City";
-const HOSPITAL_PHONE = "+1 (555) 123-4567";
-const HOSPITAL_EMAIL = "contact@d2medical.com";
+const HOSPITAL_NAME = "D² Digital Appointmnt Medical Center";
+const HOSPITAL_ADDRESS = "Addis Abeba, Megenagna";
+const HOSPITAL_PHONE = "+251 907 412 708";
+const HOSPITAL_EMAIL = "D²@gmail.com";
 
 const AppointmentHistoryModal = ({
   showModal,
