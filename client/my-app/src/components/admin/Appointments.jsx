@@ -7,7 +7,7 @@ import {
   FaUserMd,
   FaSearch,
   FaPhone,
-  FaEnvelope,
+  FaEnvelope,FaTimes,
   FaClock,
   FaCalendarAlt,
   FaHistory,
@@ -332,7 +332,7 @@ const Appointments = () => {
 
           {/* Appointment Details Modal */}
           {selectedAppointment && !showHistoryModal && (
-            <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 p-4">
+            <div className="z-50 fixed inset-0 flex justify-center items-center backdrop-blur-sm  p-4">
               <div className="bg-white shadow-xl rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
@@ -378,9 +378,9 @@ const Appointments = () => {
                         <div>
                           <p className="text-gray-500 text-sm">Gender</p>
                           <p className="font-medium text-gray-500 text-base">
-                            {selectedAppointment.patient_gender === "M"
+                            {selectedAppointment.patient_gender === "male"
                               ? "Male"
-                              : selectedAppointment.patient_gender === "F"
+                              : selectedAppointment.patient_gender === "female"
                               ? "Female"
                               : "Not specified"}
                           </p>
