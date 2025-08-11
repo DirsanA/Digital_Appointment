@@ -21,7 +21,7 @@ import {
   FaCalendarAlt,
   FaClock,
   FaSync,
-  FaFileExcel,
+  FaFileExcel
 } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -120,8 +120,35 @@ const DashboardMain = () => {
     try {
       setReportLoading(true);
 
-      // In a real app, you would fetch yearly data from your API
-      // For this example, we'll use the current data and simulate yearly data
+      // Fetch all detailed data for Excel export with year filter
+      const [appointmentsRes, doctorsRes, patientsRes] = await Promise.all([
+        fetch(`http://localhost:5000/api/dashboard/excel/appointments?year=${reportYear}`),
+        fetch("http://localhost:5000/api/dashboard/excel/doctors"),
+        fetch("http://localhost:5000/api/dashboard/excel/patients"),
+      ]);
+
+      if (!appointmentsRes.ok || !doctorsRes.ok || !patientsRes.ok) {
+        throw new Error("Failed to fetch data for Excel export");
+      }
+
+      const [appointmentsJson, doctorsJson, patientsJson] = await Promise.all([
+        appointmentsRes.json(),
+        doctorsRes.json(),
+        patientsRes.json(),
+      ]);
+
+      const appointments = appointmentsJson.success ? appointmentsJson.data : [];
+      const doctors = doctorsJson.success ? doctorsJson.data : [];
+      const patients = patientsJson.success ? patientsJson.data : [];
+
+      console.log('Excel Export Data:', {
+        appointments: appointments.length,
+        doctors: doctors.length,
+        patients: patients.length,
+        reportYear
+      });
+
+      // Prepare data for Excel
       const yearData = {
         statusData: dashboardData.statusData,
         departmentData: dashboardData.departmentData,
@@ -129,54 +156,90 @@ const DashboardMain = () => {
         year: reportYear,
       };
 
-      // Create worksheets
-      const statusWS = XLSX.utils.json_to_sheet(
-        yearData.statusData.map((item) => ({
-          Status: item.name,
-          Count: item.value,
-          Percentage: `${(
-            (item.value / yearData.stats.totalAppointments) *
-            100
-          ).toFixed(2)}%`,
+      // Create detailed appointments worksheet
+      const appointmentsWS = XLSX.utils.json_to_sheet(
+        appointments.map((apt) => ({
+          "Appointment ID": apt.id,
+          "Patient Name": apt.patient_name || "N/A",
+          "Patient Email": apt.patient_email || "N/A",
+          "Patient Phone": apt.patient_phone || "N/A",
+          "Appointment Date": apt.appointment_date ? new Date(apt.appointment_date).toLocaleDateString() : "N/A",
+          "Appointment Time": apt.appointment_time || "N/A",
+          "Status": apt.status || "N/A",
+          "Doctor Name": apt.doctor_name || "Not Assigned",
+          "Department": apt.doctor_department || "General",
+          "Doctor Email": apt.doctor_email || "N/A",
+          "Doctor Contact": apt.doctor_contact || "N/A",
+          "Created At": apt.created_at ? new Date(apt.created_at).toLocaleString() : "N/A",
+          "Updated At": apt.updated_at ? new Date(apt.updated_at).toLocaleString() : "N/A",
         }))
       );
 
-      const departmentWS = XLSX.utils.json_to_sheet(
-        yearData.departmentData.map((item) => ({
-          Department: item.name,
-          Patients: item.value,
-          Percentage: `${(
-            (item.value / yearData.stats.totalPatients) *
-            100
-          ).toFixed(2)}%`,
+      // Create detailed doctors worksheet
+      const doctorsWS = XLSX.utils.json_to_sheet(
+        doctors.map((doc) => ({
+          "Doctor ID": doc.id,
+          "Doctor Name": doc.doctor_name || "N/A",
+          "Email": doc.email || "N/A",
+          "Department": doc.department || "N/A",
+          "Contact": doc.contact || "N/A",
+          "Experience": doc.experience || "N/A",
         }))
       );
+
+      // Create detailed patients worksheet
+      const patientsWS = XLSX.utils.json_to_sheet(
+        patients.map((patient) => ({
+          "Patient ID": patient.id,
+          "Patient Name": patient.patient_name || "N/A",
+          "Email": patient.email || "N/A",
+          "Phone": patient.phone || "N/A",
+        }))
+      );
+
+      // Create summary worksheet with year-specific data
+      const yearSpecificStats = {
+        totalAppointments: appointments.length,
+        completedAppointments: appointments.filter(apt => apt.status === 'completed').length,
+        cancelledAppointments: appointments.filter(apt => apt.status === 'cancelled').length,
+        pendingAppointments: appointments.filter(apt => apt.status === 'pending').length,
+        acceptedAppointments: appointments.filter(apt => apt.status === 'accepted').length,
+        totalDoctors: doctors.length,
+        totalPatients: patients.length,
+      };
 
       const summaryWS = XLSX.utils.json_to_sheet([
-        { Metric: "Year", Value: yearData.year },
-        { Metric: "Total Patients", Value: yearData.stats.totalPatients },
-        { Metric: "Total Doctors", Value: yearData.stats.totalDoctors },
+        { Metric: "Year", Value: reportYear },
+        { Metric: "Total Patients", Value: yearSpecificStats.totalPatients },
+        { Metric: "Total Doctors", Value: yearSpecificStats.totalDoctors },
         {
           Metric: "Total Appointments",
-          Value: yearData.stats.totalAppointments,
+          Value: yearSpecificStats.totalAppointments,
         },
         {
           Metric: "Completed Appointments",
-          Value:
-            yearData.statusData.find((s) => s.name === "Completed")?.value || 0,
+          Value: yearSpecificStats.completedAppointments,
         },
         {
           Metric: "Cancelled Appointments",
-          Value:
-            yearData.statusData.find((s) => s.name === "Cancelled")?.value || 0,
+          Value: yearSpecificStats.cancelledAppointments,
+        },
+        {
+          Metric: "Pending Appointments",
+          Value: yearSpecificStats.pendingAppointments,
+        },
+        {
+          Metric: "Accepted Appointments",
+          Value: yearSpecificStats.acceptedAppointments,
         },
       ]);
 
-      // Create workbook
+      // Create workbook with all worksheets
       const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, appointmentsWS, "All Appointments");
+      XLSX.utils.book_append_sheet(wb, doctorsWS, "All Doctors");
+      XLSX.utils.book_append_sheet(wb, patientsWS, "All Patients");
       XLSX.utils.book_append_sheet(wb, summaryWS, "Summary");
-      XLSX.utils.book_append_sheet(wb, statusWS, "Appointment Status");
-      XLSX.utils.book_append_sheet(wb, departmentWS, "Department Distribution");
 
       // Generate Excel file
       const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -189,10 +252,10 @@ const DashboardMain = () => {
       const formattedDate = `${today.getFullYear()}-${(today.getMonth() + 1)
         .toString()
         .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
-      saveAs(
-        data,
-        `Medical_Dashboard_Report_${yearData.year}_${formattedDate}.xlsx`
-      );
+                        saveAs(
+                    data,
+                    `Medical_Dashboard_Complete_Report_${reportYear}_${formattedDate}.xlsx`
+                  );
     } catch (error) {
       console.error("Error generating report:", error);
       alert("Failed to generate report. Please try again.");
