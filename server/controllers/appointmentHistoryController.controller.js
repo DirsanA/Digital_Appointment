@@ -223,7 +223,7 @@ const appointmentHistoryController = {
                     ah.*,
                     a.appointment_date,
                     a.appointment_time,
-                    p.name as patient_name,
+                    p.full_name as patient_name,
                     p.phone as patient_phone,
                     p.email as patient_email
                 FROM appointment_history ah
@@ -265,7 +265,7 @@ const appointmentHistoryController = {
                     a.appointment_time,
                     d.doctorfullname as doctor_name,
                     d.department,
-                    p.name as patient_name,
+                    p.full_name as patient_name,
                     p.phone as patient_phone,
                     p.email as patient_email,
                     p.address as patient_address,

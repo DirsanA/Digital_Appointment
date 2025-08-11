@@ -152,8 +152,152 @@ const getTodayAppointments = async (req, res) => {
   }
 };
 
+// New function to get all appointments for Excel export
+const getAllAppointmentsForExcel = async (req, res) => {
+  try {
+    // First check if appointments table exists
+    const [tables] = await db.promise().query("SHOW TABLES LIKE 'appointments'");
+    
+    if (tables.length === 0) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const { year } = req.query;
+    let query = `
+      SELECT 
+        a.id,
+        a.patient_name,
+        a.patient_email,
+        a.patient_phone,
+        a.appointment_date,
+        a.appointment_time,
+        a.status,
+        a.created_at,
+        a.updated_at,
+        d.doctorfullname as doctor_name,
+        d.department as doctor_department,
+        d.email as doctor_email,
+        d.contact as doctor_contact
+      FROM 
+        appointments a
+        LEFT JOIN doctor d ON a.doctor_id = d.id
+    `;
+
+    // Add year filter if provided
+    if (year) {
+      query += ` WHERE YEAR(a.appointment_date) = ?`;
+    }
+
+    query += ` ORDER BY a.appointment_date DESC, a.appointment_time ASC`;
+
+    const queryParams = year ? [year] : [];
+    const [appointments] = await db.promise().query(query, queryParams);
+
+    res.json({
+      success: true,
+      data: appointments
+    });
+  } catch (error) {
+    console.error("Error fetching all appointments for Excel:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch appointments data",
+      error: error.message
+    });
+  }
+};
+
+// New function to get all doctors for Excel export
+const getAllDoctorsForExcel = async (req, res) => {
+  try {
+    // First check if doctor table exists
+    const [tables] = await db.promise().query("SHOW TABLES LIKE 'doctor'");
+    
+    if (tables.length === 0) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const [doctors] = await db.promise().query(`
+      SELECT 
+        id,
+        doctorfullname as doctor_name,
+        email,
+        department,
+        contact,
+        experiance as experience,
+        photo_url
+      FROM 
+        doctor
+      ORDER BY 
+        doctorfullname ASC
+    `);
+
+    console.log('Doctors data for Excel:', doctors.length, 'doctors found');
+
+    res.json({
+      success: true,
+      data: doctors
+    });
+  } catch (error) {
+    console.error("Error fetching all doctors for Excel:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch doctors data",
+      error: error.message
+    });
+  }
+};
+
+// New function to get all patients for Excel export
+const getAllPatientsForExcel = async (req, res) => {
+  try {
+    // First check if patient table exists
+    const [tables] = await db.promise().query("SHOW TABLES LIKE 'patient'");
+    
+    if (tables.length === 0) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+        const [patients] = await db.promise().query(`
+      SELECT 
+        id,
+        full_name as patient_name,
+        email,
+        phone
+      FROM 
+        patient
+      ORDER BY 
+        full_name ASC
+    `);
+
+    res.json({
+      success: true,
+      data: patients
+    });
+  } catch (error) {
+    console.error("Error fetching all patients for Excel:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch patients data",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getGraphData,
   getTodayAppointments,
+  getAllAppointmentsForExcel,
+  getAllDoctorsForExcel,
+  getAllPatientsForExcel,
 };
