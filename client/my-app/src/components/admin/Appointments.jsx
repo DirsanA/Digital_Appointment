@@ -10,8 +10,7 @@ import {
   FaEnvelope,FaTimes,
   FaClock,
   FaCalendarAlt,
-  FaHistory,
-  FaTimes
+  FaHistory
 } from "react-icons/fa";
 import GoogleCalendarButton from "../GoogleCalendarButton";
 import AdminSidebar from "./AdminSidebar";
