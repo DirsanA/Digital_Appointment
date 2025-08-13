@@ -332,7 +332,7 @@ const Appointments = () => {
 
           {/* Appointment Details Modal */}
           {selectedAppointment && !showHistoryModal && (
-            <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 p-4">
+            <div className="z-50 fixed inset-0 flex justify-center items-center backdrop-blur-sm p-4">
               <div className="bg-white shadow-xl rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
