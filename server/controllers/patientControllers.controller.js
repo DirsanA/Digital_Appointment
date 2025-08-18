@@ -2,6 +2,13 @@ const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 const transporter = require("../config/nodeEmailer");
 
+const crypto = require("crypto");
+
+// Helper function to generate OTP
+function generateOTP() {
+  return crypto.randomInt(100000, 999999).toString();
+}
+
 async function registerPatient(req, res) {
   const { name, email, phone, password } = req.body;
 
@@ -47,24 +54,37 @@ async function registerPatient(req, res) {
 
       if (patientResults.length > 0 || userResults.length > 0) {
         await new Promise((resolve) => db.rollback(() => resolve()));
-        return res
-          .status(400)
-          .json({ success: false, message: "Email already exists" });
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists",
+        });
       }
 
-      // Insert into patient
+      // Generate OTP
+      const otp = generateOTP();
+
+      // Store OTP in verification table
+      await new Promise((resolve, reject) => {
+        db.query(
+          "INSERT INTO otp_verification (email, otp) VALUES (?, ?) ON DUPLICATE KEY UPDATE otp = ?, created_at = CURRENT_TIMESTAMP, expires_at = (CURRENT_TIMESTAMP + INTERVAL 10 MINUTE), is_verified = FALSE",
+          [email, otp, otp],
+          (err) => (err ? reject(err) : resolve())
+        );
+      });
+
+      // Insert into patient (but mark as inactive)
       const patientInsert = await new Promise((resolve, reject) => {
         db.query(
-          "INSERT INTO patient (full_name, email, phone, password) VALUES (?, ?, ?, ?)",
+          "INSERT INTO patient (full_name, email, phone, password, is_active) VALUES (?, ?, ?, ?, FALSE)",
           [name, email, phone, password],
           (err, result) => (err ? reject(err) : resolve(result))
         );
       });
 
-      // Insert into users
+      // Insert into users (but mark as inactive)
       await new Promise((resolve, reject) => {
         db.query(
-          "INSERT INTO users (email, password, role, reference_id) VALUES (?, ?, 'patient', ?)",
+          "INSERT INTO users (email, password, role, reference_id, is_active) VALUES (?, ?, 'patient', ?, FALSE)",
           [email, password, patientInsert.insertId],
           (err) => (err ? reject(err) : resolve())
         );
@@ -74,33 +94,266 @@ async function registerPatient(req, res) {
         db.commit((err) => (err ? reject(err) : resolve()));
       });
 
-      // Respond success
-      res.status(201).json({
-        success: true,
-        message: "Patient registered successfully",
-        patientId: patientInsert.insertId,
-      });
-
-      // Fire email (non-blocking)
+      // Send OTP email (non-blocking)
       (async () => {
         try {
           await transporter.sendMail({
             from: process.env.SMTP_USER,
             to: email,
-            subject: "Welcome to Our Service",
-            text: `Hello ${name},\n\nThank you for registering as a patient.\n\nBest regards,\nYour Healthcare Team`,
+            subject: "Your Verification OTP",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #4f46e5;">Email Verification</h2>
+                <p>Hello ${name},</p>
+                <p>Thank you for registering with our healthcare service. Please use the following OTP to verify your email address:</p>
+                <div style="background: #f3f4f6; padding: 16px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                  ${otp}
+                </div>
+                <p>This OTP will expire in 10 minutes.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+                <p>Best regards,<br>Healthcare Team</p>
+              </div>
+            `,
           });
-          console.log("✅ Welcome email sent successfully to:", email);
+          console.log("✅ OTP email sent successfully to:", email);
         } catch (err) {
-          console.error("❌ Failed to send welcome email:", err.message);
+          console.error("❌ Failed to send OTP email:", err.message);
         }
       })();
+
+      res.status(201).json({
+        success: true,
+        message: "OTP sent to your email for verification",
+        email: email,
+      });
     } catch (error) {
       await new Promise((resolve) => db.rollback(() => resolve()));
       console.error("Database error:", error);
-      res.status(500).json({ success: false, message: "Registration failed" });
+      res.status(500).json({
+        success: false,
+        message: "Registration failed",
+      });
     }
   });
+}
+
+async function verifyOTP(req, res) {
+  const { email, otp } = req.body;
+
+  // Validate input
+  if (!email || !otp) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and OTP are required",
+    });
+  }
+
+  db.beginTransaction(async (err) => {
+    if (err) {
+      console.error("Transaction error:", err);
+      return res
+        .status(500)
+        .json({ success: false, message: "Database error" });
+    }
+
+    try {
+      // 1. Verify OTP exists and is valid
+      const otpRecords = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT * FROM otp_verification 
+           WHERE email = ? AND is_verified = 0
+           AND expires_at > NOW()`,
+          [email],
+          (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+          }
+        );
+      });
+
+      if (otpRecords.length === 0) {
+        await new Promise((resolve) => db.rollback(() => resolve()));
+        return res.status(400).json({
+          success: false,
+          message: "Invalid or expired OTP",
+        });
+      }
+
+      if (otpRecords[0].otp !== otp) {
+        await new Promise((resolve) => db.rollback(() => resolve()));
+        return res.status(400).json({
+          success: false,
+          message: "Incorrect OTP",
+        });
+      }
+
+      // 2. Get patient data safely
+      const patients = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT id, full_name FROM patient 
+           WHERE email = ? LIMIT 1`,
+          [email],
+          (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+          }
+        );
+      });
+
+      if (patients.length === 0) {
+        await new Promise((resolve) => db.rollback(() => resolve()));
+        throw new Error("Patient record not found");
+      }
+
+      // 3. Update records in transaction
+      await new Promise((resolve, reject) => {
+        db.query(
+          `UPDATE otp_verification 
+           SET is_verified = 1 
+           WHERE email = ?`,
+          [email],
+          (err) => (err ? reject(err) : resolve())
+        );
+      });
+
+      await new Promise((resolve, reject) => {
+        db.query(
+          `UPDATE patient SET is_active = 1 WHERE email = ?`,
+          [email],
+          (err) => (err ? reject(err) : resolve())
+        );
+      });
+
+      await new Promise((resolve, reject) => {
+        db.query(
+          `UPDATE users SET is_active = 1 
+           WHERE email = ? AND role = 'patient'`,
+          [email],
+          (err) => (err ? reject(err) : resolve())
+        );
+      });
+
+      await new Promise((resolve, reject) => {
+        db.commit((err) => (err ? reject(err) : resolve()));
+      });
+
+      // 4. Send welcome email (non-blocking)
+      (async () => {
+        try {
+          await transporter.sendMail({
+            from: `"Healthcare System" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: "Welcome to Our Healthcare Service",
+            html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #4f46e5;">Welcome!</h2>
+                    <p>Hello,</p>
+                    <p>Your account has been verified successfully. You can now use our healthcare services.</p>
+                    <p>Best regards,<br>Healthcare Team</p>
+                  </div>`,
+          });
+          console.log(`Welcome email sent to ${email}`);
+        } catch (emailError) {
+          console.error("Welcome email failed:", emailError);
+        }
+      })();
+
+      return res.json({
+        success: true,
+        message: "Account verified successfully",
+      });
+    } catch (error) {
+      await new Promise((resolve) => db.rollback(() => resolve()));
+      console.error("OTP verification error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: error.message || "OTP verification failed",
+        ...(process.env.NODE_ENV === "development" && { error: error.message }),
+      });
+    }
+  });
+}
+
+async function resendOTP(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required",
+    });
+  }
+
+  try {
+    // Check if patient exists but is not active
+    const [patient] = await new Promise((resolve, reject) => {
+      db.query(
+        "SELECT * FROM patient WHERE email = ? AND is_active = FALSE",
+        [email],
+        (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        }
+      );
+    });
+
+    if (!patient || patient.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No pending registration found for this email",
+      });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+
+    // Update OTP in database
+    await new Promise((resolve, reject) => {
+      db.query(
+        "UPDATE otp_verification SET otp = ?, created_at = CURRENT_TIMESTAMP, expires_at = (CURRENT_TIMESTAMP + INTERVAL 10 MINUTE), is_verified = FALSE WHERE email = ?",
+        [otp, email],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+
+    // Send new OTP email (non-blocking)
+    (async () => {
+      try {
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: email,
+          subject: "Your New Verification OTP",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4f46e5;">New Verification Code</h2>
+              <p>Hello ${patient[0].full_name},</p>
+              <p>Here is your new verification code:</p>
+              <div style="background: #f3f4f6; padding: 16px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                ${otp}
+              </div>
+              <p>This OTP will expire in 10 minutes.</p>
+              <p>If you didn't request this, please ignore this email.</p>
+              <p>Best regards,<br>Healthcare Team</p>
+            </div>
+          `,
+        });
+        console.log("✅ New OTP email sent successfully to:", email);
+      } catch (err) {
+        console.error("❌ Failed to send new OTP email:", err.message);
+      }
+    })();
+
+    res.status(200).json({
+      success: true,
+      message: "New OTP sent to your email",
+    });
+  } catch (error) {
+    console.error("Error resending OTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to resend OTP",
+    });
+  }
 }
 
 // Fetch all patients
@@ -413,6 +666,8 @@ function getCurrentPatient(req, res) {
 
 module.exports = {
   registerPatient,
+  verifyOTP,
+  resendOTP,
   getAllPatients,
   getPatientById,
   updatePatientById,
