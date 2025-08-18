@@ -1,5 +1,5 @@
 // import nodemailer
-import nodemailer from "nodemailer";
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
@@ -20,4 +20,4 @@ transporter.verify((error, success) => {
   }
 });
 
-export default transporter;
+module.exports = transporter;

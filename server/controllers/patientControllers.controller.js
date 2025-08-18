@@ -1,10 +1,10 @@
 const db = require("../config/db");
 const jwt = require("jsonwebtoken");
+const transporter = require("../config/nodeEmailer");
 
-function registerPatient(req, res) {
+async function registerPatient(req, res) {
   const { name, email, phone, password } = req.body;
 
-  // Basic validation
   if (!name || !email || !phone || !password) {
     return res.status(400).json({
       success: false,
@@ -12,19 +12,16 @@ function registerPatient(req, res) {
     });
   }
 
-  // Start transaction
   db.beginTransaction(async (err) => {
     if (err) {
       console.error("Transaction error:", err);
-      return res.status(500).json({
-        success: false,
-        message: "Database error",
-        error: err.message,
-      });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database error" });
     }
 
     try {
-      // Check if email exists in either patient or users table
+      // Check if email exists
       const [patientResults, userResults] = await Promise.all([
         new Promise((resolve, reject) => {
           db.query(
@@ -50,70 +47,58 @@ function registerPatient(req, res) {
 
       if (patientResults.length > 0 || userResults.length > 0) {
         await new Promise((resolve) => db.rollback(() => resolve()));
-        return res.status(400).json({
-          success: false,
-          message: "Email already exists",
-        });
+        return res
+          .status(400)
+          .json({ success: false, message: "Email already exists" });
       }
 
-      // Insert into patient table
-      const patientQuery = `
-        INSERT INTO patient 
-        (full_name, email, phone, password)
-        VALUES (?, ?, ?, ?);
-      `;
-
+      // Insert into patient
       const patientInsert = await new Promise((resolve, reject) => {
         db.query(
-          patientQuery,
+          "INSERT INTO patient (full_name, email, phone, password) VALUES (?, ?, ?, ?)",
           [name, email, phone, password],
-          (err, result) => {
-            if (err) return reject(err);
-            resolve(result);
-          }
+          (err, result) => (err ? reject(err) : resolve(result))
         );
       });
 
-      // Insert into users table for authentication
-      const userQuery = `
-        INSERT INTO users 
-        (email, password, role, reference_id)
-        VALUES (?, ?, 'patient', ?);
-      `;
-
+      // Insert into users
       await new Promise((resolve, reject) => {
         db.query(
-          userQuery,
+          "INSERT INTO users (email, password, role, reference_id) VALUES (?, ?, 'patient', ?)",
           [email, password, patientInsert.insertId],
-          (err) => {
-            if (err) return reject(err);
-            resolve();
-          }
+          (err) => (err ? reject(err) : resolve())
         );
       });
 
-      // Commit transaction
       await new Promise((resolve, reject) => {
-        db.commit((err) => {
-          if (err) return reject(err);
-          resolve();
-        });
+        db.commit((err) => (err ? reject(err) : resolve()));
       });
 
+      // Respond success
       res.status(201).json({
         success: true,
         message: "Patient registered successfully",
         patientId: patientInsert.insertId,
       });
+
+      // Fire email (non-blocking)
+      (async () => {
+        try {
+          await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: email,
+            subject: "Welcome to Our Service",
+            text: `Hello ${name},\n\nThank you for registering as a patient.\n\nBest regards,\nYour Healthcare Team`,
+          });
+          console.log("✅ Welcome email sent successfully to:", email);
+        } catch (err) {
+          console.error("❌ Failed to send welcome email:", err.message);
+        }
+      })();
     } catch (error) {
-      // Rollback on error
       await new Promise((resolve) => db.rollback(() => resolve()));
       console.error("Database error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Registration failed",
-        error: error.message,
-      });
+      res.status(500).json({ success: false, message: "Registration failed" });
     }
   });
 }
@@ -369,55 +354,59 @@ function deletePatientById(req, res) {
 
 // Get current patient profile using JWT token
 function getCurrentPatient(req, res) {
-  const token = req.headers.authorization?.split(' ')[1];
-  
+  const token = req.headers.authorization?.split(" ")[1];
+
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: "No token provided"
+      message: "No token provided",
     });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    
-    if (!decoded.id || decoded.role !== 'patient') {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your-secret-key"
+    );
+
+    if (!decoded.id || decoded.role !== "patient") {
       return res.status(401).json({
         success: false,
-        message: "Invalid token"
+        message: "Invalid token",
       });
     }
 
-    const query = "SELECT id, full_name, email, phone FROM patient WHERE id = ?";
-    
-    db.query(query, [decoded.id], function(err, results) {
+    const query =
+      "SELECT id, full_name, email, phone FROM patient WHERE id = ?";
+
+    db.query(query, [decoded.id], function (err, results) {
       if (err) {
         console.error("Database error:", err);
         return res.status(500).json({
           success: false,
           message: "Failed to fetch patient profile",
-          error: err.message
+          error: err.message,
         });
       }
 
       if (results.length === 0) {
         return res.status(404).json({
           success: false,
-          message: "Patient not found"
+          message: "Patient not found",
         });
       }
 
       res.status(200).json({
         success: true,
         message: "Patient profile fetched successfully",
-        data: results[0]
+        data: results[0],
       });
     });
   } catch (error) {
     console.error("Token verification error:", error);
     return res.status(401).json({
       success: false,
-      message: "Invalid token"
+      message: "Invalid token",
     });
   }
 }
@@ -428,5 +417,5 @@ module.exports = {
   getPatientById,
   updatePatientById,
   deletePatientById,
-  getCurrentPatient
+  getCurrentPatient,
 };
