@@ -82,15 +82,32 @@ async function registerPatient(req, res) {
       });
 
       // Fire email (non-blocking)
+
       (async () => {
         try {
-          await transporter.sendMail({
-            from: process.env.SMTP_USER,
+          const mailOptions = {
+            from: {
+              name: "Healthcare Service",
+              address: "dirsanantehun739@gmail.com", // ← USE YOUR VERIFIED EMAIL
+            },
             to: email,
-            subject: "Welcome to Our Service",
+            subject: "Welcome to Our Healthcare Service",
             text: `Hello ${name},\n\nThank you for registering as a patient.\n\nBest regards,\nYour Healthcare Team`,
-          });
+            html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2c5aa0;">Welcome to Our Healthcare Service!</h2>
+          <p>Hello ${name},</p>
+          <p>Thank you for registering as a patient with our healthcare service.</p>
+          <p>You can now book appointments and access your medical records through our portal.</p>
+          <br>
+          <p>Best regards,<br>Your Healthcare Team</p>
+        </div>
+      `,
+          };
+
+          const info = await transporter.sendMail(mailOptions);
           console.log("✅ Welcome email sent successfully to:", email);
+          console.log("✅ Message ID:", info.messageId);
         } catch (err) {
           console.error("❌ Failed to send welcome email:", err.message);
         }
