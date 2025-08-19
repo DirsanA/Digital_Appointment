@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaEye, FaEyeSlash, FaArrowLeft, FaUser } from "react-icons/fa";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaArrowLeft,
+  FaUser,
+  FaEnvelope,
+  FaKey,
+} from "react-icons/fa";
 import { motion } from "framer-motion";
 
 const Login = () => {
@@ -9,6 +16,10 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
   const navigate = useNavigate();
 
   const Handler = async (e) => {
@@ -19,7 +30,16 @@ const Login = () => {
         email,
         password,
       });
-      const { token, role, patientId, doctorId } = res.data;
+
+      const { token, role, patientId, doctorId, needsVerification } = res.data;
+
+      if (needsVerification) {
+        // Show OTP verification modal
+        setOtpEmail(email);
+        setShowOtpModal(true);
+        setIsLoading(false);
+        return;
+      }
 
       if (token && role) {
         localStorage.setItem("token", token);
@@ -43,10 +63,65 @@ const Login = () => {
         navigate(redirectPath);
       }
     } catch (err) {
-      alert("Login failed: " + err.response?.data?.message || "Server error");
+      const errorMessage = err.response?.data?.message || "Server error";
+      alert("Login failed: " + errorMessage);
+
+      // If it's a verification error, show OTP modal
+      if (err.response?.data?.needsVerification) {
+        setOtpEmail(err.response.data.email);
+        setShowOtpModal(true);
+      }
+
       console.error(err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOtpVerification = async (e) => {
+    e.preventDefault();
+    setIsOtpLoading(true);
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/patient/verify-otp",
+        {
+          email: otpEmail,
+          otp: otp,
+        }
+      );
+
+      if (response.data.success) {
+        alert("Email verified successfully! Please login again.");
+        setShowOtpModal(false);
+        setOtp("");
+        // Clear form and let user login again
+        setEmail(otpEmail);
+        setPassword("");
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "OTP verification failed";
+      alert("Verification failed: " + errorMessage);
+      console.error("OTP verification error:", error);
+    } finally {
+      setIsOtpLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/patient/resend-otp",
+        { email: otpEmail }
+      );
+
+      if (response.data.success) {
+        alert("New OTP sent to your email!");
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to resend OTP";
+      alert("Resend failed: " + errorMessage);
     }
   };
 
@@ -195,6 +270,73 @@ const Login = () => {
           <p>© {new Date().getFullYear()} Your Company. All rights reserved.</p>
         </div>
       </motion.div>
+
+      {/* OTP Verification Modal */}
+      {showOtpModal && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white p-6 rounded-2xl w-full max-w-md"
+          >
+            <div className="mb-6 text-center">
+              <div className="inline-flex bg-indigo-100 mb-4 p-3 rounded-full">
+                <FaEnvelope className="text-indigo-600 text-2xl" />
+              </div>
+              <h2 className="font-bold text-gray-800 text-2xl">
+                Verify Your Email
+              </h2>
+              <p className="mt-2 text-gray-600">
+                Enter the OTP sent to {otpEmail}
+              </p>
+            </div>
+
+            <form onSubmit={handleOtpVerification} className="space-y-4">
+              <div>
+                <label className="block mb-2 font-medium text-gray-700">
+                  Verification Code
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="Enter 6-digit code"
+                    className="px-4 py-3 border border-gray-300 focus:border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-500 w-full text-black transition-all"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 px-4 py-3 rounded-lg font-medium text-gray-700 transition-colors"
+                >
+                  Resend OTP
+                </button>
+                <button
+                  type="submit"
+                  disabled={isOtpLoading || otp.length !== 6}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 px-4 py-3 rounded-lg font-medium text-white transition-colors"
+                >
+                  {isOtpLoading ? "Verifying..." : "Verify"}
+                </button>
+              </div>
+            </form>
+
+            <button
+              onClick={() => setShowOtpModal(false)}
+              className="mt-4 text-gray-500 hover:text-gray-700 text-sm"
+            >
+              Cancel
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

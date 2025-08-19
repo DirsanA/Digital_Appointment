@@ -1,7 +1,6 @@
 const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 const transporter = require("../config/nodeEmailer");
-
 const crypto = require("crypto");
 
 // Helper function to generate OTP
@@ -64,9 +63,10 @@ async function registerPatient(req, res) {
       const otp = generateOTP();
 
       // Store OTP in verification table
+      // In registerPatient function, update the OTP insertion:
       await new Promise((resolve, reject) => {
         db.query(
-          "INSERT INTO otp_verification (email, otp) VALUES (?, ?) ON DUPLICATE KEY UPDATE otp = ?, created_at = CURRENT_TIMESTAMP, expires_at = (CURRENT_TIMESTAMP + INTERVAL 10 MINUTE), is_verified = FALSE",
+          "INSERT INTO otp_verification (email, otp, expires_at, is_verified) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0) ON DUPLICATE KEY UPDATE otp = ?, expires_at = DATE_ADD(NOW(), INTERVAL 10 MINUTE), is_verified = 0",
           [email, otp, otp],
           (err) => (err ? reject(err) : resolve())
         );
@@ -97,8 +97,11 @@ async function registerPatient(req, res) {
       // Send OTP email (non-blocking)
       (async () => {
         try {
-          await transporter.sendMail({
-            from: process.env.SMTP_USER,
+          const mailOptions = {
+            from: {
+              name: "Healthcare Service",
+              address: "dirsanantehun739@gmail.com", // Your verified email
+            },
             to: email,
             subject: "Your Verification OTP",
             html: `
@@ -114,8 +117,11 @@ async function registerPatient(req, res) {
                 <p>Best regards,<br>Healthcare Team</p>
               </div>
             `,
-          });
+          };
+
+          const info = await transporter.sendMail(mailOptions);
           console.log("✅ OTP email sent successfully to:", email);
+          console.log("✅ Message ID:", info.messageId);
         } catch (err) {
           console.error("❌ Failed to send OTP email:", err.message);
         }
@@ -148,6 +154,9 @@ async function verifyOTP(req, res) {
     });
   }
 
+  // Add debug logging
+  console.log("OTP Verification Request:", { email, otp });
+
   db.beginTransaction(async (err) => {
     if (err) {
       console.error("Transaction error:", err);
@@ -157,7 +166,7 @@ async function verifyOTP(req, res) {
     }
 
     try {
-      // 1. Verify OTP exists and is valid
+      // 1. Verify OTP exists and is valid - FIXED QUERY
       const otpRecords = await new Promise((resolve, reject) => {
         db.query(
           `SELECT * FROM otp_verification 
@@ -171,19 +180,31 @@ async function verifyOTP(req, res) {
         );
       });
 
+      console.log("OTP Records Found:", otpRecords);
+
       if (otpRecords.length === 0) {
         await new Promise((resolve) => db.rollback(() => resolve()));
         return res.status(400).json({
           success: false,
-          message: "Invalid or expired OTP",
+          message: "Invalid or expired OTP. Please request a new one.",
         });
       }
 
-      if (otpRecords[0].otp !== otp) {
+      // Convert both OTPs to string for safe comparison
+      const storedOTP = otpRecords[0].otp.toString().trim();
+      const receivedOTP = otp.toString().trim();
+
+      console.log("OTP Comparison:", {
+        storedOTP,
+        receivedOTP,
+        match: storedOTP === receivedOTP,
+      });
+
+      if (storedOTP !== receivedOTP) {
         await new Promise((resolve) => db.rollback(() => resolve()));
         return res.status(400).json({
           success: false,
-          message: "Incorrect OTP",
+          message: "Incorrect OTP. Please try again.",
         });
       }
 
@@ -202,7 +223,10 @@ async function verifyOTP(req, res) {
 
       if (patients.length === 0) {
         await new Promise((resolve) => db.rollback(() => resolve()));
-        throw new Error("Patient record not found");
+        return res.status(400).json({
+          success: false,
+          message: "Patient record not found. Please register again.",
+        });
       }
 
       // 3. Update records in transaction
@@ -210,8 +234,8 @@ async function verifyOTP(req, res) {
         db.query(
           `UPDATE otp_verification 
            SET is_verified = 1 
-           WHERE email = ?`,
-          [email],
+           WHERE email = ? AND otp = ?`,
+          [email, storedOTP],
           (err) => (err ? reject(err) : resolve())
         );
       });
@@ -237,23 +261,31 @@ async function verifyOTP(req, res) {
         db.commit((err) => (err ? reject(err) : resolve()));
       });
 
+      console.log("OTP verified successfully for:", email);
+
       // 4. Send welcome email (non-blocking)
       (async () => {
         try {
-          await transporter.sendMail({
-            from: `"Healthcare System" <${process.env.SMTP_USER}>`,
+          const mailOptions = {
+            from: {
+              name: "Healthcare Service",
+              address: "dirsanantehun739@gmail.com",
+            },
             to: email,
             subject: "Welcome to Our Healthcare Service",
             html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2 style="color: #4f46e5;">Welcome!</h2>
-                    <p>Hello,</p>
+                    <p>Hello ${patients[0].full_name},</p>
                     <p>Your account has been verified successfully. You can now use our healthcare services.</p>
                     <p>Best regards,<br>Healthcare Team</p>
                   </div>`,
-          });
-          console.log(`Welcome email sent to ${email}`);
+          };
+
+          const info = await transporter.sendMail(mailOptions);
+          console.log(`✅ Welcome email sent to ${email}`);
+          console.log("✅ Message ID:", info.messageId);
         } catch (emailError) {
-          console.error("Welcome email failed:", emailError);
+          console.error("❌ Welcome email failed:", emailError);
         }
       })();
 
@@ -267,7 +299,7 @@ async function verifyOTP(req, res) {
 
       return res.status(500).json({
         success: false,
-        message: error.message || "OTP verification failed",
+        message: "OTP verification failed. Please try again.",
         ...(process.env.NODE_ENV === "development" && { error: error.message }),
       });
     }
@@ -286,7 +318,7 @@ async function resendOTP(req, res) {
 
   try {
     // Check if patient exists but is not active
-    const [patient] = await new Promise((resolve, reject) => {
+    const patients = await new Promise((resolve, reject) => {
       db.query(
         "SELECT * FROM patient WHERE email = ? AND is_active = FALSE",
         [email],
@@ -297,7 +329,7 @@ async function resendOTP(req, res) {
       );
     });
 
-    if (!patient || patient.length === 0) {
+    if (!patients || patients.length === 0) {
       return res.status(400).json({
         success: false,
         message: "No pending registration found for this email",
@@ -319,14 +351,17 @@ async function resendOTP(req, res) {
     // Send new OTP email (non-blocking)
     (async () => {
       try {
-        await transporter.sendMail({
-          from: process.env.SMTP_USER,
+        const mailOptions = {
+          from: {
+            name: "Healthcare Service",
+            address: "dirsanantehun739@gmail.com", // Your verified email
+          },
           to: email,
           subject: "Your New Verification OTP",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #4f46e5;">New Verification Code</h2>
-              <p>Hello ${patient[0].full_name},</p>
+              <p>Hello ${patients[0].full_name},</p>
               <p>Here is your new verification code:</p>
               <div style="background: #f3f4f6; padding: 16px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
                 ${otp}
@@ -336,8 +371,11 @@ async function resendOTP(req, res) {
               <p>Best regards,<br>Healthcare Team</p>
             </div>
           `,
-        });
+        };
+
+        const info = await transporter.sendMail(mailOptions);
         console.log("✅ New OTP email sent successfully to:", email);
+        console.log("✅ Message ID:", info.messageId);
       } catch (err) {
         console.error("❌ Failed to send new OTP email:", err.message);
       }

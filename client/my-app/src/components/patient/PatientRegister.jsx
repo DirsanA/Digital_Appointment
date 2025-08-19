@@ -16,6 +16,7 @@ const PatientRegister = () => {
   const [showOtpForm, setShowOtpForm] = useState(false);
   const [otp, setOtp] = useState("");
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [canResend, setCanResend] = useState(true); // Added missing state
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isValidPhone = (phone) => /^09\d{8}$/.test(phone);
@@ -85,8 +86,36 @@ const PatientRegister = () => {
 
       setMessage(response.data.message || "Verification successful!");
 
-      // Redirect to login after 2 seconds
-      setTimeout(() => navigate("/patient-login"), 2000);
+      // After successful verification, automatically log the user in
+      try {
+        // First try to login with the registered credentials
+        const loginResponse = await axios.post("http://localhost:5000/login", {
+          email: registeredEmail,
+          password: password,
+        });
+
+        if (loginResponse.data.token) {
+          // Store authentication data
+          localStorage.setItem("token", loginResponse.data.token);
+          localStorage.setItem("role", loginResponse.data.role);
+          localStorage.setItem("userEmail", registeredEmail);
+          localStorage.setItem(
+            "loginTimestamp",
+            new Date().getTime().toString()
+          );
+
+          if (loginResponse.data.patientId) {
+            localStorage.setItem("patientId", loginResponse.data.patientId);
+          }
+
+          // Redirect to patient dashboard after 1 second
+          setTimeout(() => navigate("/Patient-Dashbord"), 1000);
+        }
+      } catch (loginError) {
+        console.error("Auto-login failed:", loginError);
+        // If auto-login fails, just redirect to login page
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } catch (err) {
       console.error("OTP verification error:", err);
 
@@ -312,7 +341,7 @@ const PatientRegister = () => {
                   <button
                     type="button"
                     onClick={resendOtp}
-                    disabled={isLoading}
+                    disabled={isLoading || !canResend}
                     className="disabled:opacity-50 mt-3 font-medium text-indigo-600 hover:text-indigo-800 text-sm"
                   >
                     Didn't receive code? Resend OTP
