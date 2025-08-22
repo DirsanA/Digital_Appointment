@@ -306,94 +306,6 @@ async function verifyOTP(req, res) {
   });
 }
 
-async function resendOTP(req, res) {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({
-      success: false,
-      message: "Email is required",
-    });
-  }
-
-  try {
-    // Check if patient exists but is not active
-    const patients = await new Promise((resolve, reject) => {
-      db.query(
-        "SELECT * FROM patient WHERE email = ? AND is_active = FALSE",
-        [email],
-        (err, results) => {
-          if (err) return reject(err);
-          resolve(results);
-        }
-      );
-    });
-
-    if (!patients || patients.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No pending registration found for this email",
-      });
-    }
-
-    // Generate new OTP
-    const otp = generateOTP();
-
-    // Update OTP in database
-    await new Promise((resolve, reject) => {
-      db.query(
-        "UPDATE otp_verification SET otp = ?, created_at = CURRENT_TIMESTAMP, expires_at = (CURRENT_TIMESTAMP + INTERVAL 10 MINUTE), is_verified = FALSE WHERE email = ?",
-        [otp, email],
-        (err) => (err ? reject(err) : resolve())
-      );
-    });
-
-    // Send new OTP email (non-blocking)
-    (async () => {
-      try {
-        const mailOptions = {
-          from: {
-            name: "Healthcare Service",
-            address: "dirsanantehun739@gmail.com", // Your verified email
-          },
-          to: email,
-          subject: "Your New Verification OTP",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #4f46e5;">New Verification Code</h2>
-              <p>Hello ${patients[0].full_name},</p>
-              <p>Here is your new verification code:</p>
-              <div style="background: #f3f4f6; padding: 16px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
-                ${otp}
-              </div>
-              <p>This OTP will expire in 10 minutes.</p>
-              <p>If you didn't request this, please ignore this email.</p>
-              <p>Best regards,<br>Healthcare Team</p>
-            </div>
-          `,
-        };
-
-        const info = await transporter.sendMail(mailOptions);
-        console.log("✅ New OTP email sent successfully to:", email);
-        console.log("✅ Message ID:", info.messageId);
-      } catch (err) {
-        console.error("❌ Failed to send new OTP email:", err.message);
-      }
-    })();
-
-    res.status(200).json({
-      success: true,
-      message: "New OTP sent to your email",
-    });
-  } catch (error) {
-    console.error("Error resending OTP:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to resend OTP",
-    });
-  }
-}
-
 // Fetch all patients
 function getAllPatients(req, res) {
   const query = "SELECT * FROM patient";
@@ -702,10 +614,372 @@ function getCurrentPatient(req, res) {
   }
 }
 
+// Forgot Password - Send OTP
+async function forgotPassword(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required",
+    });
+  }
+
+  try {
+    // Check if user exists
+    const users = await new Promise((resolve, reject) => {
+      db.query(
+        "SELECT * FROM users WHERE email = ?",
+        [email],
+        (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        }
+      );
+    });
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with this email",
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+
+    // Store OTP in database with expiration (10 minutes)
+    await new Promise((resolve, reject) => {
+      db.query(
+        `INSERT INTO password_reset_otps (email, otp, expires_at) 
+         VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))
+         ON DUPLICATE KEY UPDATE otp = ?, expires_at = DATE_ADD(NOW(), INTERVAL 10 MINUTE)`,
+        [email, otp, otp],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+
+    // Send OTP email (non-blocking)
+    (async () => {
+      try {
+        const mailOptions = {
+          from: {
+            name: "Healthcare Service",
+            address: "dirsanantehun739@gmail.com",
+          },
+          to: email,
+          subject: "Password Reset OTP",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4f46e5;">Password Reset Request</h2>
+              <p>We received a request to reset your password. Use the following OTP to proceed:</p>
+              <div style="background: #f3f4f6; padding: 16px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                ${otp}
+              </div>
+              <p>This OTP will expire in 10 minutes.</p>
+              <p>If you didn't request a password reset, please ignore this email.</p>
+              <p>Best regards,<br>Healthcare Team</p>
+            </div>
+          `,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log("✅ Password reset OTP email sent successfully to:", email);
+        console.log("✅ Message ID:", info.messageId);
+      } catch (err) {
+        console.error(
+          "❌ Failed to send password reset OTP email:",
+          err.message
+        );
+      }
+    })();
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent to your email for password reset",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process password reset request",
+    });
+  }
+}
+
+// Verify Password Reset OTP
+async function verifyPasswordResetOTP(req, res) {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and OTP are required",
+    });
+  }
+
+  try {
+    // Verify OTP
+    const otpRecords = await new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM password_reset_otps 
+         WHERE email = ? AND otp = ? AND expires_at > NOW()`,
+        [email, otp],
+        (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        }
+      );
+    });
+
+    if (otpRecords.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+    });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify OTP",
+    });
+  }
+}
+
+// Reset Password
+async function resetPassword(req, res) {
+  const { email, otp, newPassword } = req.body;
+
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "Email, OTP, and new password are required",
+    });
+  }
+
+  // Start transaction
+  db.beginTransaction(async (err) => {
+    if (err) {
+      console.error("Transaction error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Database error",
+      });
+    }
+
+    try {
+      // Verify OTP first
+      const otpRecords = await new Promise((resolve, reject) => {
+        db.query(
+          `SELECT * FROM password_reset_otps 
+           WHERE email = ? AND otp = ? AND expires_at > NOW()`,
+          [email, otp],
+          (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+          }
+        );
+      });
+
+      if (otpRecords.length === 0) {
+        await new Promise((resolve) => db.rollback(() => resolve()));
+        return res.status(400).json({
+          success: false,
+          message: "Invalid or expired OTP",
+        });
+      }
+
+      // Update password in users table
+      await new Promise((resolve, reject) => {
+        db.query(
+          "UPDATE users SET password = ? WHERE email = ?",
+          [newPassword, email],
+          (err) => {
+            if (err) return reject(err);
+            resolve();
+          }
+        );
+      });
+
+      // Update password in patient/doctor table based on role
+      const users = await new Promise((resolve, reject) => {
+        db.query(
+          "SELECT role, reference_id FROM users WHERE email = ?",
+          [email],
+          (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+          }
+        );
+      });
+
+      if (users.length > 0) {
+        const user = users[0];
+        let updateQuery = "";
+
+        if (user.role === "patient") {
+          updateQuery = "UPDATE patient SET password = ? WHERE id = ?";
+        } else if (user.role === "doctor") {
+          updateQuery = "UPDATE doctor SET password = ? WHERE id = ?";
+        } else if (user.role === "admin") {
+          updateQuery = "UPDATE admin SET password = ? WHERE id = ?";
+        }
+
+        if (updateQuery) {
+          await new Promise((resolve, reject) => {
+            db.query(updateQuery, [newPassword, user.reference_id], (err) => {
+              if (err) return reject(err);
+              resolve();
+            });
+          });
+        }
+      }
+
+      // Delete the used OTP
+      await new Promise((resolve, reject) => {
+        db.query(
+          "DELETE FROM password_reset_otps WHERE email = ? AND otp = ?",
+          [email, otp],
+          (err) => {
+            if (err) return reject(err);
+            resolve();
+          }
+        );
+      });
+
+      // Commit transaction
+      await new Promise((resolve, reject) => {
+        db.commit((err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Password reset successfully",
+      });
+    } catch (error) {
+      await new Promise((resolve) => db.rollback(() => resolve()));
+      console.error("Password reset error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to reset password",
+      });
+    }
+  });
+}
+
+// Resend Password Reset OTP
+async function resendPasswordResetOTP(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required",
+    });
+  }
+
+  try {
+    // Check if user exists
+    const users = await new Promise((resolve, reject) => {
+      db.query(
+        "SELECT * FROM users WHERE email = ?",
+        [email],
+        (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        }
+      );
+    });
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with this email",
+      });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+
+    // Update OTP in database
+    await new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE password_reset_otps SET otp = ?, expires_at = DATE_ADD(NOW(), INTERVAL 10 MINUTE) 
+         WHERE email = ?`,
+        [otp, email],
+        (err) => {
+          if (err) return reject(err);
+          resolve();
+        }
+      );
+    });
+
+    // Send new OTP email (non-blocking)
+    (async () => {
+      try {
+        const mailOptions = {
+          from: {
+            name: "Healthcare Service",
+            address: "dirsanantehun739@gmail.com",
+          },
+          to: email,
+          subject: "New Password Reset OTP",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4f46e5;">New Password Reset Code</h2>
+              <p>Here is your new verification code for password reset:</p>
+              <div style="background: #f3f4f6; padding: 16px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                ${otp}
+              </div>
+              <p>This OTP will expire in 10 minutes.</p>
+              <p>If you didn't request this, please ignore this email.</p>
+              <p>Best regards,<br>Healthcare Team</p>
+            </div>
+          `,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(
+          "✅ New password reset OTP email sent successfully to:",
+          email
+        );
+        console.log("✅ Message ID:", info.messageId);
+      } catch (err) {
+        console.error(
+          "❌ Failed to send new password reset OTP email:",
+          err.message
+        );
+      }
+    })();
+
+    res.status(200).json({
+      success: true,
+      message: "New OTP sent to your email",
+    });
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to resend OTP",
+    });
+  }
+}
 module.exports = {
   registerPatient,
   verifyOTP,
-  resendOTP,
+  forgotPassword,
+  verifyPasswordResetOTP,
+  resetPassword,
+  resendPasswordResetOTP,
   getAllPatients,
   getPatientById,
   updatePatientById,

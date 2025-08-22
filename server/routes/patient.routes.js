@@ -5,8 +5,18 @@ const patientController = require("../controllers/patientControllers.controller"
 // Registration with OTP flow
 router.post("/patient/register", patientController.registerPatient);
 router.post("/patient/verify-otp", patientController.verifyOTP);
-router.post("/patient/resend-otp", patientController.resendOTP);
 
+// Password reset routes
+router.post("/forgot-password", patientController.forgotPassword);
+router.post(
+  "/verify-forgot-password-otp",
+  patientController.verifyPasswordResetOTP
+);
+router.post("/reset-password", patientController.resetPassword);
+router.post(
+  "/resend-forgot-password-otp",
+  patientController.resendPasswordResetOTP
+);
 // Patient management
 router.get("/patient", patientController.getAllPatients);
 router.get("/patient/profile", patientController.getCurrentPatient);
