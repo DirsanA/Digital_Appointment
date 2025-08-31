@@ -8,7 +8,7 @@ router.get("/admin/getAllDoctors", doctorController.getAllDoctors);
 router.get("/admin/doctors/:id", doctorController.getDoctorById);
 router.post(
   "/admin/doctors",
-  upload.single("photo"), // Cloudinary upload middleware
+  upload.single("photo"),
   doctorController.doctorRegistration
 );
 router.put(

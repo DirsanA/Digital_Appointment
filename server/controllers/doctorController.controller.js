@@ -173,12 +173,12 @@ async function doctorRegistration(req, res) {
         );
       });
 
-      // Insert into users table for authentication
+      // Insert into users table for authentication - SET is_active = 1
       await new Promise((resolve, reject) => {
         db.query(
           `INSERT INTO users 
-          (email, password, role, reference_id)
-          VALUES (?, ?, 'doctor', ?)`,
+          (email, password, role, reference_id, is_active)
+          VALUES (?, ?, 'doctor', ?, 1)`, // Added is_active = 1 here
           [email, pwd, doctorInsert.insertId],
           (err) => {
             if (err) return reject(err);
