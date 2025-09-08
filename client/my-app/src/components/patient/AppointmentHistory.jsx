@@ -443,39 +443,37 @@ const AppointmentHistory = () => {
         handleLogout={handleLogout}
       />
 
-      <main className="flex-1 md:ml-30 mt-16 md:mt-0 overflow-x-auto">
-        <div className="w-full h-full p-2 md:p-6">
-         
-           <div
-                    className="relative flex flex-col justify-center shadow-md p-6 rounded-lg w-full h-48 md:h-60 text-white"
-                    style={{
-                      backgroundImage: `url(${bgImage})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                  >
-                    <h2 className="font-bold text-blue-500 text-3xl">
-                      Welcome, {patientName || "Patient"}
-                    </h2>
-                    <p className="mt-2 text-blue-500 text-sm">
-                      Manage your medical appointments - update, delete, or cancel them.
-                    </p>
-                  </div>
-          
+      <main className="flex-1 mt-16 md:mt-0 md:ml-30 overflow-x-auto">
+        <div className="p-2 md:p-6 w-full h-full">
+          <div
+            className="relative flex flex-col justify-center shadow-md p-6 rounded-lg w-full h-48 md:h-60 text-white"
+            style={{
+              backgroundImage: `url(${bgImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <h2 className="font-bold text-gray-600 text-3xl">
+              Welcome, {patientName || "Patient"}
+            </h2>
+            <p className="mt-2 text-gray-600 text-sm">
+              Manage your medical appointments - update, delete, or cancel them.
+            </p>
+          </div>
 
-          <div className="flex flex-col w-full bg-white shadow-md p-4 md:p-6 rounded-lg">
+          <div className="flex flex-col bg-white shadow-md p-4 md:p-6 rounded-lg w-full">
             <h3 className="flex items-center mb-4 md:mb-6 font-semibold text-gray-800 text-lg md:text-xl">
-              <FaHistory className="mr-2 text-blue-600" />
+              <FaHistory className="mr-2 text-gray-600" />
               Your Appointments
             </h3>
 
             {loading ? (
-              <div className="py-8 text-gray-500 text-center text-sm md:text-base">
+              <div className="py-8 text-gray-500 text-sm md:text-base text-center">
                 <FaSpinner className="inline-block mr-2 animate-spin" />
                 Loading appointments...
               </div>
             ) : error ? (
-              <div className="py-8 text-red-500 text-center text-sm md:text-base">
+              <div className="py-8 text-red-500 text-sm md:text-base text-center">
                 {error}
                 <button
                   onClick={() => window.location.reload()}
@@ -488,18 +486,36 @@ const AppointmentHistory = () => {
               <div className="relative">
                 <div className="overflow-x-auto">
                   <div className="max-h-[calc(100vh-400px)] overflow-y-auto">
-                    <table className="w-full border-collapse min-w-[1200px]">
-                      <thead className="sticky top-0 z-10">
+                    <table className="w-full min-w-[1200px] border-collapse">
+                      <thead className="top-0 z-10 sticky">
                         <tr className="bg-blue-600 text-white">
-                          <th className="p-2 md:p-3 rounded-l-lg text-left text-xs md:text-sm">Roll No.</th>
-                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Patient</th>
-                          <th className="hidden md:table-cell p-3 text-left text-sm">Department</th>
-                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Doctor</th>
-                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Date</th>
-                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Time</th>
-                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">Status</th>
-                          <th className="p-2 md:p-3 text-left text-xs md:text-sm">History</th>
-                          <th className="p-2 md:p-3 rounded-r-lg text-left text-xs md:text-sm">Actions</th>
+                          <th className="p-2 md:p-3 rounded-l-lg text-xs md:text-sm text-left">
+                            Roll No.
+                          </th>
+                          <th className="p-2 md:p-3 text-xs md:text-sm text-left">
+                            Patient
+                          </th>
+                          <th className="hidden md:table-cell p-3 text-sm text-left">
+                            Department
+                          </th>
+                          <th className="p-2 md:p-3 text-xs md:text-sm text-left">
+                            Doctor
+                          </th>
+                          <th className="p-2 md:p-3 text-xs md:text-sm text-left">
+                            Date
+                          </th>
+                          <th className="p-2 md:p-3 text-xs md:text-sm text-left">
+                            Time
+                          </th>
+                          <th className="p-2 md:p-3 text-xs md:text-sm text-left">
+                            Status
+                          </th>
+                          <th className="p-2 md:p-3 text-xs md:text-sm text-left">
+                            History
+                          </th>
+                          <th className="p-2 md:p-3 rounded-r-lg text-xs md:text-sm text-left">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="overflow-y-auto">
@@ -545,12 +561,17 @@ const AppointmentHistory = () => {
                                   disabled={filteredDoctors.length === 0}
                                 >
                                   {filteredDoctors.length === 0 ? (
-                                    <option value="">No doctors in this department</option>
+                                    <option value="">
+                                      No doctors in this department
+                                    </option>
                                   ) : (
                                     <>
                                       <option value="">Select Doctor</option>
                                       {filteredDoctors.map((doc) => (
-                                        <option key={`doc-${doc.id}`} value={doc.name}>
+                                        <option
+                                          key={`doc-${doc.id}`}
+                                          value={doc.name}
+                                        >
                                           {doc.name}
                                         </option>
                                       ))}
@@ -601,10 +622,13 @@ const AppointmentHistory = () => {
                             <td className="p-2 md:p-3">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  appointment.status.toLowerCase() === "approved"
+                                  appointment.status.toLowerCase() ===
+                                  "approved"
                                     ? "bg-green-100 text-green-800"
-                                    : appointment.status.toLowerCase() === "declined" ||
-                                      appointment.status.toLowerCase() === "cancelled"
+                                    : appointment.status.toLowerCase() ===
+                                        "declined" ||
+                                      appointment.status.toLowerCase() ===
+                                        "cancelled"
                                     ? "bg-red-100 text-red-800"
                                     : "bg-yellow-100 text-yellow-800"
                                 }`}
@@ -624,16 +648,19 @@ const AppointmentHistory = () => {
                             <td className="relative p-2 md:p-3">
                               <div className="relative">
                                 <button
-                                  onClick={(e) => toggleDropdown(appointment.id, e)}
+                                  onClick={(e) =>
+                                    toggleDropdown(appointment.id, e)
+                                  }
                                   className="hover:bg-gray-50 p-1 rounded-full text-gray-500 hover:text-gray-700"
                                   disabled={updating}
                                 >
-                                  {updating && dropdownOpen === appointment.id ? (
-                                    <FaSpinner className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                                  {updating &&
+                                  dropdownOpen === appointment.id ? (
+                                    <FaSpinner className="w-4 md:w-5 h-4 md:h-5 animate-spin" />
                                   ) : (
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
-                                      className="w-4 h-4 md:w-5 md:h-5"
+                                      className="w-4 md:w-5 h-4 md:h-5"
                                       viewBox="0 0 20 20"
                                       fill="currentColor"
                                     >
@@ -672,7 +699,9 @@ const AppointmentHistory = () => {
                                               : "text-green-600 hover:bg-green-50"
                                           }`}
                                         >
-                                          {updating ? "Saving..." : "Save Changes"}
+                                          {updating
+                                            ? "Saving..."
+                                            : "Save Changes"}
                                         </button>
                                         <button
                                           onClick={(e) => {
@@ -687,12 +716,15 @@ const AppointmentHistory = () => {
                                       </>
                                     ) : (
                                       <>
-                                        {appointment.status.toLowerCase() === "pending" && (
+                                        {appointment.status.toLowerCase() ===
+                                          "pending" && (
                                           <>
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleEditAppointment(appointment);
+                                                handleEditAppointment(
+                                                  appointment
+                                                );
                                               }}
                                               disabled={updating}
                                               className="block hover:bg-blue-50 px-3 md:px-4 py-2 w-full text-blue-600 text-xs md:text-sm text-left"
@@ -702,7 +734,9 @@ const AppointmentHistory = () => {
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleCancelAppointment(appointment.id);
+                                                handleCancelAppointment(
+                                                  appointment.id
+                                                );
                                               }}
                                               disabled={updating}
                                               className="block hover:bg-red-50 px-3 md:px-4 py-2 w-full text-red-600 text-xs md:text-sm text-left"
@@ -714,7 +748,9 @@ const AppointmentHistory = () => {
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleDeleteAppointment(appointment.id);
+                                            handleDeleteAppointment(
+                                              appointment.id
+                                            );
                                           }}
                                           disabled={updating}
                                           className="block hover:bg-gray-100 px-3 md:px-4 py-2 w-full text-gray-700 text-xs md:text-sm text-left"
@@ -737,7 +773,7 @@ const AppointmentHistory = () => {
             )}
 
             {!loading && appointments.length === 0 && !error && (
-              <div className="py-8 text-gray-500 text-center text-sm md:text-base">
+              <div className="py-8 text-gray-500 text-sm md:text-base text-center">
                 No appointment history found
               </div>
             )}

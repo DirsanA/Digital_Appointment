@@ -71,11 +71,11 @@ const BookAppointment = () => {
             email: patientDetails.email,
             phone: patientDetails.phone,
           });
-          setAppointment(prev => ({
+          setAppointment((prev) => ({
             ...prev,
             patientName: patientDetails.full_name,
             email: patientDetails.email,
-            phone: patientDetails.phone
+            phone: patientDetails.phone,
           }));
         }
       } catch (error) {
@@ -100,7 +100,6 @@ const BookAppointment = () => {
         const response = await axios.get(
           `http://localhost:5000/getDoctorsByDepartment?department=${appointment.department}`
         );
-
         if (response.data.success) {
           setDoctors(response.data.doctors || []);
         } else {
@@ -164,7 +163,7 @@ const BookAppointment = () => {
 
       if (response.data.success) {
         console.log("Appointment booked:", response.data);
-        alert("Appointment booked successfully!");
+        toast.success("Appointment booked successfully!");
 
         // Reset form
         setAppointment({
@@ -198,13 +197,14 @@ const BookAppointment = () => {
     localStorage.removeItem("role");
     localStorage.removeItem("patientId");
     setSidebarOpen(false);
+    toast.success("Logged out successfully!");
     navigate("/");
   };
 
   return (
     <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
       <ToastContainer />
-      
+
       {/* Use the shared PatientSidebar component with proper patient data */}
       <PatientSidebar
         sidebarOpen={sidebarOpen}
@@ -214,21 +214,21 @@ const BookAppointment = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-30 mt-16 md:mt-0 overflow-x-auto">
+      <main className="flex-1 mt-16 md:mt-0 md:ml-30 overflow-x-auto">
         <div className="mx-auto max-w-4xl">
           {/* Welcome Section */}
           <div
-            className="relative flex flex-col justify-center shadow-md mb-8 p-6 rounded-lg w-full h-48 text-white"
+            className="relative flex flex-col justify-center shadow-md mt-3.5 mb-8 p-6 rounded-lg w-full h-48 text-white"
             style={{
               backgroundImage: `url(${bgImage})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           >
-            <h2 className="font-bold text-blue-500 text-2xl">
+            <h2 className="font-bold text-gray-600 text-2xl">
               Welcome {patientData.full_name}
             </h2>
-            <p className="mt-2 text-blue-500">
+            <p className="mt-2 text-gray-600">
               Schedule your medical appointment with our specialists
             </p>
           </div>

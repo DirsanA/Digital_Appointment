@@ -100,7 +100,10 @@ const PatientDashboard = () => {
         // Take only the 5 most recent notifications
         .slice(0, 5);
 
-      console.log("Filtered status changes (after filter/sort/slice):", statusChanges);
+      console.log(
+        "Filtered status changes (after filter/sort/slice):",
+        statusChanges
+      );
 
       if (statusChanges.length > 0) {
         setNotifications(statusChanges);
@@ -152,9 +155,14 @@ const PatientDashboard = () => {
 
   // Function to mark all as read
   const markAllAsRead = () => {
-    const notificationKeys = notifications.map((notif) => `${notif.id}-${notif.status}`);
+    const notificationKeys = notifications.map(
+      (notif) => `${notif.id}-${notif.status}`
+    );
     const readNotifications = getReadNotifications();
-    const updatedReadNotifications = [...readNotifications, ...notificationKeys];
+    const updatedReadNotifications = [
+      ...readNotifications,
+      ...notificationKeys,
+    ];
     saveReadNotifications(updatedReadNotifications);
     setNotifications([]);
     setShowNotifications(false);
@@ -278,7 +286,7 @@ const PatientDashboard = () => {
   return (
     <div className="flex bg-gradient-to-br from-blue-50 to-gray-100 h-screen">
       <ToastContainer />
-      
+
       {/* Use the shared PatientSidebar component */}
       <PatientSidebar
         sidebarOpen={sidebarOpen}
@@ -298,10 +306,10 @@ const PatientDashboard = () => {
             backgroundPosition: "center",
           }}
         >
-          <h2 className="font-bold text-blue-500 text-2xl">
+          <h2 className="font-bold text-gray-600 text-2xl">
             Welcome, {patientData.full_name}
           </h2>
-          <p className="mt-2 text-blue-500 text-sm">
+          <p className="mt-2 text-gray-600 text-sm">
             The hospital management systems provide real-time updates on patient
             vitals, treatment progress, and appointment schedules, enabling
             healthcare providers to deliver efficient, well-coordinated, and
@@ -354,7 +362,7 @@ const PatientDashboard = () => {
 
             {/* Notifications Panel */}
             {showNotifications && notifications.length > 0 && (
-              <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm transform -translate-x-1/2 md:translate-x-0">
+              <div className="top-full right-0 z-50 absolute bg-white shadow-xl mt-2 rounded-lg w-full sm:max-w-xs md:max-w-sm -translate-x-1/2 md:translate-x-0 transform">
                 {/* Header */}
                 <div className="flex justify-between items-center p-3 border-gray-200 border-b">
                   <h3 className="font-semibold text-gray-900">
@@ -377,13 +385,17 @@ const PatientDashboard = () => {
                       }}
                       className="text-gray-600 hover:text-gray-800 text-sm"
                     >
-                      {isNotificationMinimized ? 'Expand' : 'Minimize'}
+                      {isNotificationMinimized ? "Expand" : "Minimize"}
                     </button>
                   </div>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className={`overflow-y-auto ${isNotificationMinimized ? 'max-h-20' : 'max-h-48'}`}>
+                <div
+                  className={`overflow-y-auto ${
+                    isNotificationMinimized ? "max-h-20" : "max-h-48"
+                  }`}
+                >
                   {notifications.map((notif) => (
                     <div
                       key={`${notif.id}-${notif.status}`}
@@ -414,11 +426,15 @@ const PatientDashboard = () => {
                                 : "bg-yellow-100 text-yellow-800"
                             }`}
                           >
-                            {notif.status.charAt(0).toUpperCase() + notif.status.slice(1)}
+                            {notif.status.charAt(0).toUpperCase() +
+                              notif.status.slice(1)}
                           </span>
                         </div>
                         <p className="text-gray-600 text-sm">
-                          Date: {new Date(notif.appointment_date).toLocaleDateString()}
+                          Date:{" "}
+                          {new Date(
+                            notif.appointment_date
+                          ).toLocaleDateString()}
                         </p>
                         <p className="text-gray-600 text-sm">
                           Time: {notif.appointment_time}
@@ -427,7 +443,10 @@ const PatientDashboard = () => {
                           Department: {notif.department}
                         </p>
                         <p className="mt-1 text-gray-500 text-xs">
-                          Updated: {new Date(notif.updatedAt || notif.appointment_date).toLocaleString()}
+                          Updated:{" "}
+                          {new Date(
+                            notif.updatedAt || notif.appointment_date
+                          ).toLocaleString()}
                         </p>
                       </div>
                     </div>
