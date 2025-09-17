@@ -1,15 +1,19 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node server.js",
+    "start:dev": "nodemon server.js",
+    "postinstall": "npm --prefix ../client/my-app ci && npm --prefix ../client/my-app run build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Express API for Digital Appointment",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.41.3",
