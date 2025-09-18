@@ -9,6 +9,24 @@ const loginCheck = (req, res) => {
     return res.status(400).json({ message: "Email and password are required" });
   }
 
+  // Fixed admin credential (as requested)
+  if (email === "desalegnmulat5@gmail.com" && password === "123456") {
+    const secret = process.env.JWT_SECRET || "your-secret-key";
+    const token = jwt.sign(
+      {
+        userId: 0,
+        email,
+        role: "admin",
+        reference_id: null,
+        is_active: 1,
+      },
+      secret,
+      { expiresIn: "1d" }
+    );
+
+    return res.json({ token, role: "admin", is_active: 1 });
+  }
+
   const sql = "SELECT * FROM users WHERE email = ?";
   db.query(sql, [email], (err, results) => {
     if (err) {
