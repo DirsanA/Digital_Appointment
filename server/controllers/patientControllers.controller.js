@@ -100,7 +100,7 @@ async function registerPatient(req, res) {
           const mailOptions = {
             from: {
               name: "Healthcare Service",
-              address: "dirsanantehun739@gmail.com", // Your verified email
+              address: "desalegnmulat5@gmail.com", // Your verified email
             },
             to: email,
             subject: "Your Verification OTP",
