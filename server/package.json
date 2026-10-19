@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
@@ -11,11 +12,16 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-fileupload": "^1.5.1",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.0"
+    "multer": "^2.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "mysql2": "^3.14.0",
+    "nodemailer": "^7.0.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

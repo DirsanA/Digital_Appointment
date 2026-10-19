@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="90" fill="#2563eb" />
+  
+  <!-- D² Text -->
+  <text x="100" y="120" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle">
+    D²
+  </text>
+  
+  <!-- Medical Cross -->
+  <g transform="translate(100, 100) scale(0.8)">
+    <rect x="-5" y="-25" width="10" height="50" fill="white" />
+    <rect x="-25" y="-5" width="50" height="10" fill="white" />
+  </g>
+</svg> 
