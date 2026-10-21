@@ -1,8 +1,8 @@
-const db = require('../config/db');
+const pool = require('../config/db');
 
 const appointmentHistoryController = {
     // Add history to an appointment
-    addHistory: (req, res) => {
+    addHistory: async (req, res) => {
         const appointmentId = req.params.appointmentId;
         const {
             prescription,
@@ -15,30 +15,53 @@ const appointmentHistoryController = {
             next_appointment_time
         } = req.body;
 
-        // First get the appointment details with patient information
-        db.query(
-            'SELECT a.*, p.id as patient_id FROM appointments a JOIN patient p ON a.patient_email = p.email WHERE a.id = ?',
-            [appointmentId],
-            (err, appointmentResults) => {
-                if (err) {
-                    console.error('Error fetching appointment:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Error fetching appointment details'
-                    });
-                }
+        try {
+            // First get the appointment details with patient information
+            const appointmentResult = await pool.query(
+                'SELECT a.*, p.id as patient_id FROM appointments a JOIN patient p ON a.patient_email = p.email WHERE a.id = $1',
+                [appointmentId]
+            );
 
-                if (appointmentResults.length === 0) {
-                    return res.status(404).json({
-                        success: false,
-                        message: 'Appointment not found'
-                    });
-                }
+            if (appointmentResult.rows.length === 0) {
+                return res.status(404).json({ success: false, message: 'Appointment not found' });
+            }
 
-                const appointment = appointmentResults[0];
+            const appointment = appointmentResult.rows[0];
 
-                // Now insert the history
-                const historyData = {
+            // Insert the history
+            const insertResult = await pool.query(
+                `INSERT INTO appointment_history 
+                 (appointment_id, patient_id, patient_name, prescription, diagnosis,
+                  medicine_name, medicine_dosage, medicine_frequency, medicine_duration,
+                  next_appointment_date, next_appointment_time, created_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+                 RETURNING id`,
+                [
+                    appointmentId,
+                    appointment.patient_id,
+                    appointment.patient_name,
+                    prescription || null,
+                    diagnosis || null,
+                    medicine_name || null,
+                    medicine_dosage || null,
+                    medicine_frequency || null,
+                    medicine_duration || null,
+                    next_appointment_date || null,
+                    next_appointment_time || null,
+                ]
+            );
+
+            // Update appointment status to completed (non-blocking)
+            pool.query(
+                'UPDATE appointments SET status = $1 WHERE id = $2',
+                ['completed', appointmentId]
+            ).catch((err) => console.error('Error updating appointment status:', err));
+
+            res.status(201).json({
+                success: true,
+                message: 'History added successfully',
+                data: {
+                    id: insertResult.rows[0].id,
                     appointment_id: appointmentId,
                     patient_id: appointment.patient_id,
                     patient_name: appointment.patient_name,
@@ -50,51 +73,19 @@ const appointmentHistoryController = {
                     medicine_duration: medicine_duration || null,
                     next_appointment_date: next_appointment_date || null,
                     next_appointment_time: next_appointment_time || null,
-                    created_at: new Date()
-                };
-
-                db.query(
-                    'INSERT INTO appointment_history SET ?',
-                    historyData,
-                    (err, result) => {
-                        if (err) {
-                            console.error('Error adding history:', err);
-                            return res.status(500).json({
-                                success: false,
-                                message: 'Error adding history'
-                            });
-                        }
-
-                        // Update appointment status to completed
-                        db.query(
-                            'UPDATE appointments SET status = ? WHERE id = ?',
-                            ['completed', appointmentId],
-                            (updateErr) => {
-                                if (updateErr) {
-                                    console.error('Error updating appointment status:', updateErr);
-                                }
-                            }
-                        );
-
-                        res.status(201).json({
-                            success: true,
-                            message: 'History added successfully',
-                            data: {
-                                id: result.insertId,
-                                ...historyData
-                            }
-                        });
-                    }
-                );
-            }
-        );
+                }
+            });
+        } catch (err) {
+            console.error('Error adding history:', err);
+            res.status(500).json({ success: false, message: 'Error adding history' });
+        }
     },
 
     // Get history for an appointment
-    getHistory: (req, res) => {
+    getHistory: async (req, res) => {
         try {
             const { appointmentId } = req.params;
-            const query = `
+            const result = await pool.query(`
                 SELECT 
                     ah.*,
                     a.appointment_date,
@@ -107,36 +98,22 @@ const appointmentHistoryController = {
                 JOIN appointments a ON ah.appointment_id = a.id
                 JOIN doctor d ON a.doctor_id = d.id
                 JOIN patient p ON ah.patient_id = p.id
-                WHERE ah.appointment_id = ?
+                WHERE ah.appointment_id = $1
                 ORDER BY ah.created_at DESC
-            `;
-            
-            db.query(query, [appointmentId], (err, history) => {
-                if (err) {
-                    console.error('Error fetching history:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Failed to fetch history',
-                        error: err.message
-                    });
-                }
-                res.json({ success: true, history });
-            });
+            `, [appointmentId]);
+
+            res.json({ success: true, history: result.rows });
         } catch (error) {
             console.error('Error fetching history:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch history',
-                error: error.message
-            });
+            res.status(500).json({ success: false, message: 'Failed to fetch history', error: error.message });
         }
     },
 
     // Get patient's history
-    getPatientHistory: (req, res) => {
+    getPatientHistory: async (req, res) => {
         try {
             const { patientId } = req.params;
-            const query = `
+            const result = await pool.query(`
                 SELECT 
                     ah.*,
                     a.appointment_date,
@@ -149,35 +126,21 @@ const appointmentHistoryController = {
                 JOIN appointments a ON ah.appointment_id = a.id
                 JOIN doctor d ON a.doctor_id = d.id
                 JOIN patient p ON ah.patient_id = p.id
-                WHERE ah.patient_id = ?
+                WHERE ah.patient_id = $1
                 ORDER BY ah.created_at DESC
-            `;
-            
-            db.query(query, [patientId], (err, history) => {
-                if (err) {
-                    console.error('Error fetching patient history:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Failed to fetch patient history',
-                        error: err.message
-                    });
-                }
-                res.json({ success: true, history });
-            });
+            `, [patientId]);
+
+            res.json({ success: true, history: result.rows });
         } catch (error) {
             console.error('Error fetching patient history:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch patient history',
-                error: error.message
-            });
+            res.status(500).json({ success: false, message: 'Failed to fetch patient history', error: error.message });
         }
     },
 
     // Get all history (admin view)
-    getAllHistory: (req, res) => {
+    getAllHistory: async (req, res) => {
         try {
-            const query = `
+            const result = await pool.query(`
                 SELECT 
                     ah.*,
                     a.appointment_date,
@@ -191,34 +154,20 @@ const appointmentHistoryController = {
                 JOIN doctor d ON a.doctor_id = d.id
                 JOIN patient p ON ah.patient_id = p.id
                 ORDER BY ah.created_at DESC
-            `;
-            
-            db.query(query, (err, history) => {
-                if (err) {
-                    console.error('Error fetching all history:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Failed to fetch history',
-                        error: err.message
-                    });
-                }
-                res.json({ success: true, history });
-            });
+            `);
+
+            res.json({ success: true, history: result.rows });
         } catch (error) {
             console.error('Error fetching all history:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch history',
-                error: error.message
-            });
+            res.status(500).json({ success: false, message: 'Failed to fetch history', error: error.message });
         }
     },
 
     // Get doctor's history
-    getDoctorHistory: (req, res) => {
+    getDoctorHistory: async (req, res) => {
         try {
             const { doctorId } = req.params;
-            const query = `
+            const result = await pool.query(`
                 SELECT 
                     ah.*,
                     a.appointment_date,
@@ -229,36 +178,22 @@ const appointmentHistoryController = {
                 FROM appointment_history ah
                 JOIN appointments a ON ah.appointment_id = a.id
                 JOIN patient p ON ah.patient_id = p.id
-                WHERE a.doctor_id = ?
+                WHERE a.doctor_id = $1
                 ORDER BY ah.created_at DESC
-            `;
-            
-            db.query(query, [doctorId], (err, history) => {
-                if (err) {
-                    console.error('Error fetching doctor history:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Failed to fetch doctor history',
-                        error: err.message
-                    });
-                }
-                res.json({ success: true, history });
-            });
+            `, [doctorId]);
+
+            res.json({ success: true, history: result.rows });
         } catch (error) {
             console.error('Error fetching doctor history:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch doctor history',
-                error: error.message
-            });
+            res.status(500).json({ success: false, message: 'Failed to fetch doctor history', error: error.message });
         }
     },
 
     // Get patient history for admin view
-    getPatientHistoryForAdmin: (req, res) => {
+    getPatientHistoryForAdmin: async (req, res) => {
         try {
             const { patientId } = req.params;
-            const query = `
+            const result = await pool.query(`
                 SELECT 
                     ah.*,
                     a.appointment_date,
@@ -275,33 +210,19 @@ const appointmentHistoryController = {
                 JOIN appointments a ON ah.appointment_id = a.id
                 JOIN doctor d ON a.doctor_id = d.id
                 JOIN patient p ON ah.patient_id = p.id
-                WHERE ah.patient_id = ?
+                WHERE ah.patient_id = $1
                 ORDER BY ah.created_at DESC
-            `;
-            
-            db.query(query, [patientId], (err, history) => {
-                if (err) {
-                    console.error('Error fetching patient history for admin:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Failed to fetch patient history',
-                        error: err.message
-                    });
-                }
-                res.json({ success: true, history });
-            });
+            `, [patientId]);
+
+            res.json({ success: true, history: result.rows });
         } catch (error) {
             console.error('Error fetching patient history for admin:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch patient history',
-                error: error.message
-            });
+            res.status(500).json({ success: false, message: 'Failed to fetch patient history', error: error.message });
         }
     },
 
     // Update history
-    updateHistory: (req, res) => {
+    updateHistory: async (req, res) => {
         try {
             const { id } = req.params;
             const {
@@ -315,20 +236,18 @@ const appointmentHistoryController = {
                 next_appointment_time
             } = req.body;
 
-            const query = `
+            await pool.query(`
                 UPDATE appointment_history 
-                SET prescription = ?, 
-                    diagnosis = ?, 
-                    medicine_name = ?,
-                    medicine_dosage = ?, 
-                    medicine_frequency = ?, 
-                    medicine_duration = ?,
-                    next_appointment_date = ?, 
-                    next_appointment_time = ?
-                WHERE id = ?
-            `;
-
-            const values = [
+                SET prescription = $1, 
+                    diagnosis = $2, 
+                    medicine_name = $3,
+                    medicine_dosage = $4, 
+                    medicine_frequency = $5, 
+                    medicine_duration = $6,
+                    next_appointment_date = $7, 
+                    next_appointment_time = $8
+                WHERE id = $9
+            `, [
                 prescription || null,
                 diagnosis || null,
                 medicine_name || null,
@@ -338,55 +257,26 @@ const appointmentHistoryController = {
                 next_appointment_date || null,
                 next_appointment_time || null,
                 id
-            ];
+            ]);
 
-            db.query(query, values, (err) => {
-                if (err) {
-                    console.error('Error updating history:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Failed to update history',
-                        error: err.message
-                    });
-                }
-                res.json({ success: true, message: 'History updated successfully' });
-            });
+            res.json({ success: true, message: 'History updated successfully' });
         } catch (error) {
             console.error('Error updating history:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to update history',
-                error: error.message
-            });
+            res.status(500).json({ success: false, message: 'Failed to update history', error: error.message });
         }
     },
 
     // Delete history
-    deleteHistory: (req, res) => {
+    deleteHistory: async (req, res) => {
         try {
             const { id } = req.params;
-            const query = 'DELETE FROM appointment_history WHERE id = ?';
-            
-            db.query(query, [id], (err) => {
-                if (err) {
-                    console.error('Error deleting history:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Failed to delete history',
-                        error: err.message
-                    });
-                }
-                res.json({ success: true, message: 'History deleted successfully' });
-            });
+            await pool.query('DELETE FROM appointment_history WHERE id = $1', [id]);
+            res.json({ success: true, message: 'History deleted successfully' });
         } catch (error) {
             console.error('Error deleting history:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to delete history',
-                error: error.message
-            });
+            res.status(500).json({ success: false, message: 'Failed to delete history', error: error.message });
         }
     }
 };
 
-module.exports = appointmentHistoryController; 
+module.exports = appointmentHistoryController;

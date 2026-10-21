@@ -41,6 +41,7 @@ const Doctors = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [departmentsList, setDepartmentsList] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,7 +76,25 @@ const Doctors = () => {
       }
     };
 
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/admin/getAllDepartments");
+        if (response.ok) {
+          const data = await response.json();
+          const list = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.departments)
+            ? data.departments
+            : [];
+          setDepartmentsList(list);
+        }
+      } catch (err) {
+        console.error("Failed to fetch departments in Doctors.jsx:", err);
+      }
+    };
+
     fetchData();
+    fetchDepartments();
   }, []);
 
   // Live search functionality
@@ -369,10 +388,18 @@ const DoctorTable = ({
                           onChange={handleEditChange}
                           className="px-2 py-1 border rounded w-full"
                         >
-                          <option value="Cardiology">Cardiology</option>
-                          <option value="Neurology">Neurology</option>
-                          <option value="Pediatrics">Pediatrics</option>
-                          <option value="Orthopedics">Orthopedics</option>
+                          <option value="">Select Department</option>
+                          {departmentsList.map((dept) => {
+                            const dName =
+                              typeof dept === "object"
+                                ? dept.department_name || dept.name
+                                : dept;
+                            return (
+                              <option key={dept.id || dName} value={dName}>
+                                {dName}
+                              </option>
+                            );
+                          })}
                         </select>
                       ) : (
                         doctor.department

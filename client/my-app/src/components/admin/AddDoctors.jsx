@@ -40,6 +40,9 @@ const AddDoctors = () => {
   });
   const [statsLoading, setStatsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [departmentsList, setDepartmentsList] = useState([]);
+  const [isCustomDept, setIsCustomDept] = useState(false);
+  const [customDept, setCustomDept] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -47,7 +50,25 @@ const AddDoctors = () => {
       fetchDoctorData(id);
     }
     fetchStats();
+    fetchDepartments();
   }, [id]);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/admin/getAllDepartments");
+      if (response.ok) {
+        const data = await response.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.departments)
+          ? data.departments
+          : [];
+        setDepartmentsList(list);
+      }
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
+  };
 
   const fetchDoctorData = async (id) => {
     try {
@@ -292,19 +313,66 @@ const AddDoctors = () => {
                 <label className="block mb-1 font-medium text-gray-700 text-sm">
                   Department:
                 </label>
-                <select
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  required
-                  className="px-4 py-2 border border-gray-300 rounded-lg w-full"
-                >
-                  <option value="">Select Departments</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Neurology">Neurology</option>
-                  <option value="Pediatrics">Pediatrics</option>
-                  <option value="Orthopedics">Orthopedics</option>
-                </select>
+                <div className="space-y-2">
+                  <select
+                    name="department"
+                    value={isCustomDept ? "__custom__" : formData.department}
+                    onChange={(e) => {
+                      if (e.target.value === "__custom__") {
+                        setIsCustomDept(true);
+                        setFormData((prev) => ({ ...prev, department: customDept }));
+                      } else {
+                        setIsCustomDept(false);
+                        setFormData((prev) => ({ ...prev, department: e.target.value }));
+                      }
+                    }}
+                    required={!isCustomDept}
+                    className="px-4 py-2 border border-gray-300 rounded-lg w-full"
+                  >
+                    <option value="">Select Department</option>
+                    {departmentsList.map((dept) => {
+                      const dName =
+                        typeof dept === "object"
+                          ? dept.department_name || dept.name
+                          : dept;
+                      return (
+                        <option key={dept.id || dName} value={dName}>
+                          {dName}
+                        </option>
+                      );
+                    })}
+                    <option value="__custom__">+ Add New Department...</option>
+                  </select>
+
+                  {isCustomDept && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Type new department name..."
+                        value={customDept}
+                        onChange={(e) => {
+                          setCustomDept(e.target.value);
+                          setFormData((prev) => ({
+                            ...prev,
+                            department: e.target.value,
+                          }));
+                        }}
+                        required
+                        className="px-4 py-2 border border-blue-500 rounded-lg w-full"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomDept(false);
+                          setFormData((prev) => ({ ...prev, department: "" }));
+                        }}
+                        className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block mb-1 font-medium text-gray-700 text-sm">
