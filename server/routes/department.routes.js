@@ -10,10 +10,20 @@ const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Doctor routes
+// Department routes
 router.get(
   "/admin/getAllDepartments",
   asyncHandler(departmentController.getAllDepartments)
+);
+
+router.post(
+  "/admin/addDepartment",
+  asyncHandler(departmentController.addDepartment)
+);
+
+router.delete(
+  "/admin/deleteDepartment/:id",
+  asyncHandler(departmentController.deleteDepartment)
 );
 
 module.exports = router;

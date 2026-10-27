@@ -1,26 +1,17 @@
-const db = require("../config/db");
+const pool = require("../config/db");
 
 const getDashboardStats = async (req, res) => {
   try {
-    // Get counts for different stats
-    const [patients] = await db
-      .promise()
-      .query("SELECT COUNT(*) as count FROM patient");
-    const [doctors] = await db
-      .promise()
-      .query("SELECT COUNT(*) as count FROM doctor");
-    const [appointments] = await db
-      .promise()
-      .query("SELECT COUNT(*) as count FROM appointments");
-    const [todayAppointments] = await db
-      .promise()
-      .query(
-        "SELECT COUNT(*) as count FROM appointments WHERE DATE(appointment_date) = CURDATE()"
-      );
+    const [patients, doctors, appointments, todayAppointments] = await Promise.all([
+      pool.query("SELECT COUNT(*) as count FROM patient"),
+      pool.query("SELECT COUNT(*) as count FROM doctor"),
+      pool.query("SELECT COUNT(*) as count FROM appointments"),
+      pool.query("SELECT COUNT(*) as count FROM appointments WHERE DATE(appointment_date) = CURRENT_DATE"),
+    ]);
 
     // Get status distribution
-    const [statusDistribution] = await db.promise().query(
-      `SELECT 
+    const statusResult = await pool.query(`
+      SELECT 
         status as name, 
         COUNT(*) as value,
         CASE status
@@ -31,68 +22,61 @@ const getDashboardStats = async (req, res) => {
           ELSE '#6B7280'
         END as color
       FROM appointments 
-      GROUP BY status`
-    );
+      GROUP BY status
+    `);
 
     res.json({
       success: true,
       data: {
-        totalPatients: patients[0].count,
-        totalDoctors: doctors[0].count,
-        totalAppointments: appointments[0].count,
-        todayAppointments: todayAppointments[0].count,
-        statusDistribution,
+        totalPatients: patients.rows[0].count,
+        totalDoctors: doctors.rows[0].count,
+        totalAppointments: appointments.rows[0].count,
+        todayAppointments: todayAppointments.rows[0].count,
+        statusDistribution: statusResult.rows,
       },
     });
   } catch (error) {
     console.error("Dashboard stats error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch dashboard stats",
-    });
+    res.status(500).json({ success: false, message: "Failed to fetch dashboard stats" });
   }
 };
 
 const getGraphData = async (req, res) => {
   try {
-    // First check if appointments table exists
-    const [tables] = await db
-      .promise()
-      .query("SHOW TABLES LIKE 'appointments'");
+    // Check if appointments table exists in PostgreSQL
+    const tableCheck = await pool.query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'appointments'
+      ) as exists`
+    );
 
-    if (tables.length === 0) {
-      return res.json({
-        success: true,
-        departmentDistribution: [], // Return empty array if no table
-      });
+    if (!tableCheck.rows[0].exists) {
+      return res.json({ success: true, departmentDistribution: [] });
     }
 
     // Check if department column exists
-    const [columns] = await db
-      .promise()
-      .query("SHOW COLUMNS FROM appointments LIKE 'department'");
+    const columnCheck = await pool.query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'appointments' AND column_name = 'department'
+      ) as exists`
+    );
 
-    if (columns.length === 0) {
-      return res.json({
-        success: true,
-        departmentDistribution: [], // Return empty array if no department column
-      });
+    if (!columnCheck.rows[0].exists) {
+      return res.json({ success: true, departmentDistribution: [] });
     }
 
-    // Get actual data
-    const [results] = await db.promise().query(`
+    const result = await pool.query(`
       SELECT 
-        IFNULL(department, 'Other') as name, 
+        COALESCE(department, 'Other') as name, 
         COUNT(*) as value
       FROM appointments
       GROUP BY department
       ORDER BY value DESC
     `);
 
-    res.json({
-      success: true,
-      departmentDistribution: results || [], // Ensure we always return an array
-    });
+    res.json({ success: true, departmentDistribution: result.rows || [] });
   } catch (error) {
     console.error("Error fetching graph data:", error);
     res.status(500).json({
@@ -105,64 +89,60 @@ const getGraphData = async (req, res) => {
 
 const getTodayAppointments = async (req, res) => {
   try {
-    // Get today's appointments with doctor information
-    const [appointments] = await db.promise().query(`
+    const result = await pool.query(`
       SELECT 
         a.*,
         d.doctorfullname as doctor_name,
         d.department as doctor_department,
-        DATE_FORMAT(a.appointment_date, '%Y-%m-%d') as formatted_date
+        TO_CHAR(a.appointment_date, 'YYYY-MM-DD') as formatted_date
       FROM 
         appointments a
         LEFT JOIN doctor d ON a.doctor_id = d.id
       WHERE 
-        DATE(a.appointment_date) = CURDATE()
+        DATE(a.appointment_date) = CURRENT_DATE
       ORDER BY 
         a.appointment_time ASC
     `);
 
-    // Log for debugging
-    console.log('Today\'s appointments query executed');
-    console.log('Current date:', new Date().toISOString().split('T')[0]);
-    console.log('Number of appointments found:', appointments.length);
+    console.log("Today's appointments query executed");
+    console.log("Current date:", new Date().toISOString().split("T")[0]);
+    console.log("Number of appointments found:", result.rows.length);
 
-    // Format the response
-    const formattedAppointments = appointments.map(apt => ({
+    const formattedAppointments = result.rows.map((apt) => ({
       id: apt.id,
       patient_name: apt.patient_name,
-      doctor_name: apt.doctor_name || 'Not Assigned',
+      doctor_name: apt.doctor_name || "Not Assigned",
       appointment_date: apt.formatted_date,
       appointment_time: apt.appointment_time,
-      department: apt.doctor_department || apt.department || 'General',
-      status: apt.status || 'scheduled',
-      patient_id: apt.patient_id
+      department: apt.doctor_department || apt.department || "General",
+      status: apt.status || "scheduled",
+      patient_id: apt.patient_id,
     }));
 
-    res.json({
-      success: true,
-      data: formattedAppointments
-    });
+    res.json({ success: true, data: formattedAppointments });
   } catch (error) {
     console.error("Error fetching today's appointments:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch today's appointments",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// New function to get all appointments for Excel export
+// Get all appointments for Excel export
 const getAllAppointmentsForExcel = async (req, res) => {
   try {
-    // First check if appointments table exists
-    const [tables] = await db.promise().query("SHOW TABLES LIKE 'appointments'");
-    
-    if (tables.length === 0) {
-      return res.json({
-        success: true,
-        data: []
-      });
+    // Check if appointments table exists
+    const tableCheck = await pool.query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'appointments'
+      ) as exists`
+    );
+
+    if (!tableCheck.rows[0].exists) {
+      return res.json({ success: true, data: [] });
     }
 
     const { year } = req.query;
@@ -186,44 +166,41 @@ const getAllAppointmentsForExcel = async (req, res) => {
         LEFT JOIN doctor d ON a.doctor_id = d.id
     `;
 
-    // Add year filter if provided
+    const params = [];
     if (year) {
-      query += ` WHERE YEAR(a.appointment_date) = ?`;
+      query += ` WHERE EXTRACT(YEAR FROM a.appointment_date) = $1`;
+      params.push(year);
     }
 
     query += ` ORDER BY a.appointment_date DESC, a.appointment_time ASC`;
 
-    const queryParams = year ? [year] : [];
-    const [appointments] = await db.promise().query(query, queryParams);
-
-    res.json({
-      success: true,
-      data: appointments
-    });
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error("Error fetching all appointments for Excel:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch appointments data",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// New function to get all doctors for Excel export
+// Get all doctors for Excel export
 const getAllDoctorsForExcel = async (req, res) => {
   try {
-    // First check if doctor table exists
-    const [tables] = await db.promise().query("SHOW TABLES LIKE 'doctor'");
-    
-    if (tables.length === 0) {
-      return res.json({
-        success: true,
-        data: []
-      });
+    const tableCheck = await pool.query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'doctor'
+      ) as exists`
+    );
+
+    if (!tableCheck.rows[0].exists) {
+      return res.json({ success: true, data: [] });
     }
 
-    const [doctors] = await db.promise().query(`
+    const result = await pool.query(`
       SELECT 
         id,
         doctorfullname as doctor_name,
@@ -238,36 +215,33 @@ const getAllDoctorsForExcel = async (req, res) => {
         doctorfullname ASC
     `);
 
-    console.log('Doctors data for Excel:', doctors.length, 'doctors found');
-
-    res.json({
-      success: true,
-      data: doctors
-    });
+    console.log("Doctors data for Excel:", result.rows.length, "doctors found");
+    res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error("Error fetching all doctors for Excel:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch doctors data",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// New function to get all patients for Excel export
+// Get all patients for Excel export
 const getAllPatientsForExcel = async (req, res) => {
   try {
-    // First check if patient table exists
-    const [tables] = await db.promise().query("SHOW TABLES LIKE 'patient'");
-    
-    if (tables.length === 0) {
-      return res.json({
-        success: true,
-        data: []
-      });
+    const tableCheck = await pool.query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'patient'
+      ) as exists`
+    );
+
+    if (!tableCheck.rows[0].exists) {
+      return res.json({ success: true, data: [] });
     }
 
-        const [patients] = await db.promise().query(`
+    const result = await pool.query(`
       SELECT 
         id,
         full_name as patient_name,
@@ -279,16 +253,13 @@ const getAllPatientsForExcel = async (req, res) => {
         full_name ASC
     `);
 
-    res.json({
-      success: true,
-      data: patients
-    });
+    res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error("Error fetching all patients for Excel:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch patients data",
-      error: error.message
+      error: error.message,
     });
   }
 };
