@@ -121,7 +121,6 @@ async function registerPatient(req, res) {
 
           const info = await transporter.sendMail(mailOptions);
           console.log("✅ OTP email sent successfully to:", email);
-          console.log("✅ Message ID:", info.messageId);
         } catch (err) {
           console.error("❌ Failed to send OTP email:", err.message);
         }

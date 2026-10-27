@@ -52,7 +52,7 @@ const LandingPage = () => {
       >
         <div className="flex items-center">
           <h1 className="font-bold text-lg sm:text-xl tracking-wide">
-            <span className="text-white">D²</span>
+            <span className="text-white">Digital</span>
             <span className="hidden sm:inline"> | Hospital Appointment</span>
           </h1>
         </div>
@@ -238,28 +238,9 @@ const LandingPage = () => {
         className="bg-blue-900 py-8 text-white"
       >
         <div className="mx-auto px-4 text-center container">
-          <div className="flex justify-center space-x-6 mb-4">
-            {["🏥", "💉", "🩺", "❤️"].map((emoji, i) => (
-              <motion.span
-                key={i}
-                animate={{ y: [0, -5, 0] }}
-                transition={{
-                  repeat: Infinity,
-                  delay: i * 0.2,
-                  duration: 2,
-                }}
-                className="text-2xl"
-              >
-                {emoji}
-              </motion.span>
-            ))}
-          </div>
           <p className="text-blue-300">
-            © {new Date().getFullYear()} D² Hospital Appointment. All rights
-            reserved.
-          </p>
-          <p className="mt-2 text-blue-400 text-sm">
-            Committed to your health and wellbeing
+            © {new Date().getFullYear()} Digital Hospital Appointment. All
+            rights reserved.
           </p>
         </div>
       </motion.footer>

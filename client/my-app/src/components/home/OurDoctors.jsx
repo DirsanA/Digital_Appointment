@@ -11,11 +11,6 @@ import {
 } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-// Import your local images (adjust paths as needed)
-// import drAbreham from "/assets/doc2.jpg";
-// import drSarah from "/assets/doc2.jpg";
-// import drMichael from "/assets/doc4.jpg";
-// import drEmily from "/assets/doc8.jpg";
 
 const OurDoctors = () => {
   const [showTableView, setShowTableView] = useState(false);
@@ -205,74 +200,80 @@ const OurDoctors = () => {
           </div>
         ) : (
           <>
-           <div className="overflow-x-auto pb-4">
-  <div className="flex flex-nowrap gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-4 px-4 sm:px-0">
-    {doctors.slice(0, 4).map((doctor) => (
-      <div
-        key={doctor.id}
-        className="flex-shrink-0 w-[300px] sm:w-full bg-white rounded-lg shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-      >
-        {/* Image Section - Improved with proper aspect ratio */}
-        <div className="relative h-64 w-full overflow-hidden">
-          {doctor.image ? (
-            <img
-              src={doctor.image}
-              alt={doctor.name}
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex justify-center items-center">
-              <FaUserCircle className="text-blue-300 text-7xl" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 p-4 w-full">
-            <h3 className="font-bold text-white text-xl">{doctor.name}</h3>
-            <p className="font-medium text-blue-200">{doctor.specialty}</p>
-          </div>
-        </div>
+            <div className="pb-4 overflow-x-auto">
+              <div className="flex flex-nowrap gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-4 px-4 sm:px-0">
+                {doctors.slice(0, 4).map((doctor) => (
+                  <div
+                    key={doctor.id}
+                    className="flex-shrink-0 bg-white shadow-lg hover:shadow-xl rounded-lg w-[300px] sm:w-full overflow-hidden transition-all hover:-translate-y-1 duration-300"
+                  >
+                    {/* Image Section - Improved with proper aspect ratio */}
+                    <div className="relative w-full h-64 overflow-hidden">
+                      {doctor.image ? (
+                        <img
+                          src={doctor.image}
+                          alt={doctor.name}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex justify-center items-center bg-gradient-to-br from-blue-50 to-blue-100 w-full h-full">
+                          <FaUserCircle className="text-blue-300 text-7xl" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                      <div className="bottom-0 left-0 absolute p-4 w-full">
+                        <h3 className="font-bold text-white text-xl">
+                          {doctor.name}
+                        </h3>
+                        <p className="font-medium text-blue-200">
+                          {doctor.specialty}
+                        </p>
+                      </div>
+                    </div>
 
-        {/* Content Section */}
-        <div className="p-5 space-y-4">
-          {/* Experience Badge */}
-          <div className="inline-flex items-center bg-blue-100 px-3 py-1 rounded-full text-sm font-medium text-blue-800">
-            {doctor.experience} experience
-          </div>
+                    {/* Content Section */}
+                    <div className="space-y-4 p-5">
+                      {/* Experience Badge */}
+                      <div className="inline-flex items-center bg-blue-100 px-3 py-1 rounded-full font-medium text-blue-800 text-sm">
+                        {doctor.experience} experience
+                      </div>
 
-          {/* Bio */}
-          <p className="text-gray-600 text-sm line-clamp-3">
-            {doctor.bio || "No biography available"}
-          </p>
+                      {/* Bio */}
+                      <p className="text-gray-600 text-sm line-clamp-3">
+                        {doctor.bio || "No biography available"}
+                      </p>
 
-          {/* Doctor Info */}
-          <div className="space-y-3">
-            <div className="flex items-start text-gray-600 text-sm">
-              <FaClock className="mt-0.5 mr-2 text-blue-500 flex-shrink-0" />
-              <span>{doctor.availability || "Not specified"}</span>
-            </div>
-            <div className="flex items-start text-gray-600 text-sm">
-              <FaPhone className="mt-0.5 mr-2 text-blue-500 flex-shrink-0" />
-              <span>{doctor.phone || "Not provided"}</span>
-            </div>
-            <div className="flex items-start text-gray-600 text-sm">
-              <FaEnvelope className="mt-0.5 mr-2 text-blue-500 flex-shrink-0" />
-              <span className="truncate">{doctor.email || "Not provided"}</span>
-            </div>
-          </div>
+                      {/* Doctor Info */}
+                      <div className="space-y-3">
+                        <div className="flex items-start text-gray-600 text-sm">
+                          <FaClock className="flex-shrink-0 mt-0.5 mr-2 text-blue-500" />
+                          <span>{doctor.availability || "Not specified"}</span>
+                        </div>
+                        <div className="flex items-start text-gray-600 text-sm">
+                          <FaPhone className="flex-shrink-0 mt-0.5 mr-2 text-blue-500" />
+                          <span>{doctor.phone || "Not provided"}</span>
+                        </div>
+                        <div className="flex items-start text-gray-600 text-sm">
+                          <FaEnvelope className="flex-shrink-0 mt-0.5 mr-2 text-blue-500" />
+                          <span className="truncate">
+                            {doctor.email || "Not provided"}
+                          </span>
+                        </div>
+                      </div>
 
-          {/* Action Button */}
-          <button
-            className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg transition-colors duration-200"
-            onClick={() => navigate("/patient-login")}
-          >
-            <FaCalendarAlt className="mr-2" />
-            Book Appointment
-          </button>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
+                      {/* Action Button */}
+                      <button
+                        className="flex justify-center items-center bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg w-full text-white transition-colors duration-200"
+                        onClick={() => navigate("/patient-login")}
+                      >
+                        <FaCalendarAlt className="mr-2" />
+                        Book Appointment
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="mt-12 text-center">
               <button

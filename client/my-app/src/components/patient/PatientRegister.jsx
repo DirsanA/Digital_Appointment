@@ -290,7 +290,7 @@ const PatientRegister = () => {
                   <div className="bg-white/20 p-2 rounded-full">
                     <FaShieldAlt className="text-lg" />
                   </div>
-                  <p className="text-sm">Secure & HIPAA Compliant</p>
+                  <p className="text-sm">Secure & WHO Compliant</p>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/10 p-3 rounded-lg">

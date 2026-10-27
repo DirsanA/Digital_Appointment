@@ -92,7 +92,7 @@ const ContactForm = () => {
           email: formData.email,
           phone: formData.phone,
           message: formData.message,
-          subject: "Dersan Desu  Hospital",
+          subject: "Digital Appointment From Customer",
         }),
       });
 
@@ -134,7 +134,7 @@ const ContactForm = () => {
     {
       icon: <FaMapMarkerAlt className="text-2xl" />,
       title: "LOCATION",
-      details: ["Addis Ababa, Ethiopia", "Bole Subcity, Woreda 03"],
+      details: ["Bahir Dar, Ethiopia", " Subcity, Keble  03"],
       color: "bg-gradient-to-br from-emerald-500 to-emerald-600",
       delay: 0.4,
     },

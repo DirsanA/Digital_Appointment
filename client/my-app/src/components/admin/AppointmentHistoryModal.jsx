@@ -11,10 +11,10 @@ import {
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
-const HOSPITAL_NAME = "D² Digital Appointmnt Medical Center";
-const HOSPITAL_ADDRESS = "Addis Abeba, Megenagna";
+const HOSPITAL_NAME = "Digital Appointment Medical Center";
+const HOSPITAL_ADDRESS = "Bahir Dar, Keble 03";
 const HOSPITAL_PHONE = "+251 907 412 708";
-const HOSPITAL_EMAIL = "D²@gmail.com";
+const HOSPITAL_EMAIL = "dirsanantehun739@gmail.com";
 
 const AppointmentHistoryModal = ({
   showModal,
@@ -24,9 +24,20 @@ const AppointmentHistoryModal = ({
 }) => {
   if (!showModal || !selectedAppointment) return null;
 
+  // Use the correct property names from your data structure
+  const patientName =
+    selectedAppointment.patient_name ||
+    selectedAppointment.patientName ||
+    "N/A";
+  const doctorName =
+    selectedAppointment.doctorfullname || selectedAppointment.doctor || "N/A";
+  const department = selectedAppointment.department || "N/A";
+  const appointmentTime =
+    selectedAppointment.time || selectedAppointment.appointment_time || "N/A";
+
   const handlePrintSingleRecord = (record) => {
-    const printWindow = window.open('', '_blank');
-    
+    const printWindow = window.open("", "_blank");
+
     if (!record) {
       printWindow.document.write(`
         <html>
@@ -52,13 +63,12 @@ const AppointmentHistoryModal = ({
       return;
     }
 
-    // Use appointment date from record, fallback to created_at
     const appointmentDate = record.appointment_date || record.created_at;
 
     const printContent = `
       <html>
         <head>
-          <title>Medical History - ${selectedAppointment.patient_name}</title>
+          <title>Medical History - ${patientName}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             .header { text-align: center; margin-bottom: 30px; }
@@ -89,7 +99,6 @@ const AppointmentHistoryModal = ({
         </head>
         <body>
           <div class="header">
-            <img src="/hospital-logo.svg" alt="D² Medical Center Logo" class="logo" />
             <div class="hospital-info">
               <div class="hospital-name">${HOSPITAL_NAME}</div>
               <div class="hospital-details">
@@ -100,43 +109,56 @@ const AppointmentHistoryModal = ({
             </div>
             <h1 style="margin: 0;">Medical History</h1>
             <div class="appointment-date">
-              Appointment Date: ${new Date(appointmentDate).toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric"
-              })}
+              Appointment Date: ${new Date(appointmentDate).toLocaleDateString(
+                "en-US",
+                {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }
+              )}
             </div>
           </div>
           
           <div class="patient-info">
-            <p><strong>Patient:</strong> ${selectedAppointment.patient_name}</p>
-            <p><strong>Doctor:</strong> ${selectedAppointment.doctorfullname}</p>
-            <p><strong>Department:</strong> ${selectedAppointment.department}</p>
-            <p><strong>Appointment Time:</strong> ${selectedAppointment.time}</p>
-            <p><strong>Record Created:</strong> ${new Date(record.created_at).toLocaleString()}</p>
+            <p><strong>Patient:</strong> ${patientName}</p>
+            <p><strong>Doctor:</strong> ${doctorName}</p>
+            <p><strong>Department:</strong> ${department}</p>
+            <p><strong>Appointment Time:</strong> ${appointmentTime}</p>
+            <p><strong>Record Created:</strong> ${new Date(
+              record.created_at
+            ).toLocaleString()}</p>
           </div>
 
           <div class="record">
             <div class="record-header">
               <h3>Medical Record</h3>
-              <span class="record-time">Created: ${new Date(record.created_at).toLocaleTimeString([], {
+              <span class="record-time">Created: ${new Date(
+                record.created_at
+              ).toLocaleTimeString([], {
                 hour: "2-digit",
-                minute: "2-digit"
+                minute: "2-digit",
               })}</span>
             </div>
             
             <div class="section">
               <div class="section-title">Diagnosis</div>
-              <div class="section-content">${record.diagnosis || "No diagnosis recorded"}</div>
+              <div class="section-content">${
+                record.diagnosis || "No diagnosis recorded"
+              }</div>
             </div>
             
             <div class="section">
               <div class="section-title">Prescription</div>
-              <div class="section-content">${record.prescription || "No prescription recorded"}</div>
+              <div class="section-content">${
+                record.prescription || "No prescription recorded"
+              }</div>
             </div>
             
-            ${record.medicine_name ? `
+            ${
+              record.medicine_name
+                ? `
               <div class="section">
                 <div class="section-title">Medication</div>
                 <div class="section-content">
@@ -160,14 +182,22 @@ const AppointmentHistoryModal = ({
                   </div>
                 </div>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
             
-            ${record.next_appointment_date ? `
+            ${
+              record.next_appointment_date
+                ? `
               <div class="next-appointment">
                 <div class="section-title">Next Appointment</div>
-                <div>${new Date(record.next_appointment_date).toLocaleDateString()} at ${record.next_appointment_time}</div>
+                <div>${new Date(
+                  record.next_appointment_date
+                ).toLocaleDateString()} at ${record.next_appointment_time}</div>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
           </div>
 
           <div class="footer">
@@ -187,143 +217,145 @@ const AppointmentHistoryModal = ({
 
   const handleDownloadSingleRecord = async (record) => {
     const doc = new jsPDF();
-    
-    // Use appointment date from record, fallback to created_at
     const appointmentDate = record.appointment_date || record.created_at;
 
     try {
-      const logo = await fetch('/hospital-logo.svg').then(res => res.blob());
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const imgData = event.target.result;
-        doc.addImage(imgData, 'SVG', 20, 10, 30, 30);
-        
-        // Add hospital info
-        doc.setFontSize(16);
-        doc.setTextColor(37, 99, 235); // Blue color
-        doc.text(HOSPITAL_NAME, 60, 20);
-        
-        doc.setFontSize(10);
-        doc.setTextColor(102, 102, 102); // Gray color
-        doc.text(HOSPITAL_ADDRESS, 60, 27);
-        doc.text(`Phone: ${HOSPITAL_PHONE}`, 60, 34);
-        doc.text(`Email: ${HOSPITAL_EMAIL}`, 60, 41);
-        
-        // Add header text
-        doc.setFontSize(20);
-        doc.setTextColor(0, 0, 0); // Black color
-        doc.text("Medical History", 105, 55, { align: "center" });
-        
-        // Add appointment date
-        doc.setFontSize(14);
-        doc.setTextColor(37, 99, 235); // Blue color
-        doc.text(
-          `Appointment Date: ${new Date(appointmentDate).toLocaleDateString("en-US", {
+      // Add hospital info
+      doc.setFontSize(16);
+      doc.setTextColor(37, 99, 235);
+      doc.text(HOSPITAL_NAME, 105, 20, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setTextColor(102, 102, 102);
+      doc.text(HOSPITAL_ADDRESS, 105, 27, { align: "center" });
+      doc.text(`Phone: ${HOSPITAL_PHONE}`, 105, 34, { align: "center" });
+      doc.text(`Email: ${HOSPITAL_EMAIL}`, 105, 41, { align: "center" });
+
+      // Add header text
+      doc.setFontSize(20);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Medical History", 105, 55, { align: "center" });
+
+      // Add appointment date
+      doc.setFontSize(14);
+      doc.setTextColor(37, 99, 235);
+      doc.text(
+        `Appointment Date: ${new Date(appointmentDate).toLocaleDateString(
+          "en-US",
+          {
             weekday: "long",
             year: "numeric",
             month: "long",
-            day: "numeric"
-          })}`,
-          105,
-          65,
-          { align: "center" }
-        );
-        
-        // Add patient info
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0); // Black color
-        doc.text(`Patient: ${selectedAppointment.patient_name}`, 20, 80);
-        doc.text(`Doctor: ${selectedAppointment.doctorfullname}`, 20, 87);
-        doc.text(`Department: ${selectedAppointment.department}`, 20, 94);
-        doc.text(`Appointment Time: ${selectedAppointment.time}`, 20, 101);
-        doc.text(`Record Created: ${new Date(record.created_at).toLocaleString()}`, 20, 108);
-        
-        let yPosition = 120;
-        
-        // Add record content
-        doc.setFontSize(14);
+            day: "numeric",
+          }
+        )}`,
+        105,
+        65,
+        { align: "center" }
+      );
+
+      // Add patient info
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Patient: ${patientName}`, 20, 80);
+      doc.text(`Doctor: ${doctorName}`, 20, 87);
+      doc.text(`Department: ${department}`, 20, 94);
+      doc.text(`Appointment Time: ${appointmentTime}`, 20, 101);
+      doc.text(
+        `Record Created: ${new Date(record.created_at).toLocaleString()}`,
+        20,
+        108
+      );
+
+      let yPosition = 120;
+
+      // Add record content
+      doc.setFontSize(14);
+      doc.setFont(undefined, "bold");
+      doc.text("Medical Record", 20, yPosition);
+      yPosition += 10;
+
+      // Diagnosis
+      doc.setFontSize(12);
+      doc.setFont(undefined, "bold");
+      doc.text("Diagnosis:", 20, yPosition);
+      yPosition += 7;
+      doc.setFont(undefined, "normal");
+      doc.text(record.diagnosis || "No diagnosis recorded", 20, yPosition);
+      yPosition += 15;
+
+      // Prescription
+      doc.setFont(undefined, "bold");
+      doc.text("Prescription:", 20, yPosition);
+      yPosition += 7;
+      doc.setFont(undefined, "normal");
+      doc.text(
+        record.prescription || "No prescription recorded",
+        20,
+        yPosition
+      );
+      yPosition += 15;
+
+      // Medication
+      if (record.medicine_name) {
         doc.setFont(undefined, "bold");
-        doc.text("Medical Record", 20, yPosition);
-        yPosition += 10;
-        
-        // Diagnosis
-        doc.setFontSize(12);
-        doc.setFont(undefined, "bold");
-        doc.text("Diagnosis:", 20, yPosition);
+        doc.text("Medication:", 20, yPosition);
         yPosition += 7;
         doc.setFont(undefined, "normal");
-        doc.text(record.diagnosis || "No diagnosis recorded", 20, yPosition);
-        yPosition += 15;
-        
-        // Prescription
+
+        const medicationData = [
+          ["Name", record.medicine_name],
+          ["Dosage", record.medicine_dosage],
+          ["Frequency", record.medicine_frequency],
+          ["Duration", record.medicine_duration],
+        ];
+
+        doc.autoTable({
+          startY: yPosition,
+          head: [["Property", "Value"]],
+          body: medicationData,
+          theme: "grid",
+          headStyles: { fillColor: [37, 99, 235] },
+          margin: { left: 20 },
+        });
+
+        yPosition = doc.lastAutoTable.finalY + 10;
+      }
+
+      // Next Appointment
+      if (record.next_appointment_date) {
         doc.setFont(undefined, "bold");
-        doc.text("Prescription:", 20, yPosition);
+        doc.text("Next Appointment:", 20, yPosition);
         yPosition += 7;
         doc.setFont(undefined, "normal");
-        doc.text(record.prescription || "No prescription recorded", 20, yPosition);
-        yPosition += 15;
-        
-        // Medication
-        if (record.medicine_name) {
-          doc.setFont(undefined, "bold");
-          doc.text("Medication:", 20, yPosition);
-          yPosition += 7;
-          doc.setFont(undefined, "normal");
-          
-          const medicationData = [
-            ["Name", record.medicine_name],
-            ["Dosage", record.medicine_dosage],
-            ["Frequency", record.medicine_frequency],
-            ["Duration", record.medicine_duration],
-          ];
-          
-          doc.autoTable({
-            startY: yPosition,
-            head: [["Property", "Value"]],
-            body: medicationData,
-            theme: "grid",
-            headStyles: { fillColor: [37, 99, 235] }, // Blue color
-            margin: { left: 20 },
-          });
-          
-          yPosition = doc.lastAutoTable.finalY + 10;
-        }
-        
-        // Next Appointment
-        if (record.next_appointment_date) {
-          doc.setFont(undefined, "bold");
-          doc.text("Next Appointment:", 20, yPosition);
-          yPosition += 7;
-          doc.setFont(undefined, "normal");
-          doc.text(
-            `${new Date(record.next_appointment_date).toLocaleDateString()} at ${
-              record.next_appointment_time
-            }`,
-            20,
-            yPosition
-          );
-        }
-        
-        // Add footer
-        doc.setFontSize(8);
-        doc.setTextColor(102, 102, 102); // Gray color
         doc.text(
-          `Generated by ${HOSPITAL_NAME}`,
-          105,
-          doc.internal.pageSize.height - 10,
-          { align: "center" }
+          `${new Date(record.next_appointment_date).toLocaleDateString()} at ${
+            record.next_appointment_time
+          }`,
+          20,
+          yPosition
         );
-        
-        // Save the PDF
-        doc.save(`medical_history_${selectedAppointment.patient_name.replace(/\s+/g, '_')}_${new Date(record.created_at).toISOString().split('T')[0]}.pdf`);
-      };
-      reader.readAsDataURL(logo);
+      }
+
+      // Add footer
+      doc.setFontSize(8);
+      doc.setTextColor(102, 102, 102);
+      doc.text(
+        `Generated by ${HOSPITAL_NAME}`,
+        105,
+        doc.internal.pageSize.height - 10,
+        { align: "center" }
+      );
+
+      // Save the PDF
+      doc.save(
+        `medical_history_${patientName.replace(/\s+/g, "_")}_${
+          new Date(record.created_at).toISOString().split("T")[0]
+        }.pdf`
+      );
     } catch (error) {
-      console.error('Error loading logo:', error);
-      // If logo loading fails, continue without it
-      doc.setFontSize(20);
-      doc.text("Medical History", 105, 20, { align: "center" });
-      // ... rest of the PDF generation code ...
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to download PDF");
     }
   };
 
@@ -337,6 +369,9 @@ const AppointmentHistoryModal = ({
         <div className="top-0 z-10 sticky flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-700 p-4 border-b border-blue-500 rounded-t-xl">
           <div>
             <h2 className="font-bold text-white text-xl">Medical History</h2>
+            <p className="text-blue-100 text-sm">
+              {patientName} - {doctorName}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -348,13 +383,13 @@ const AppointmentHistoryModal = ({
         </div>
 
         {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 p-4 overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="border-b-2 border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
             </div>
           ) : !selectedAppointment.history?.length ? (
-            <div className="text-center text-gray-500 py-8">
+            <div className="py-8 text-gray-500 text-center">
               No history found for this appointment
             </div>
           ) : (
@@ -362,18 +397,21 @@ const AppointmentHistoryModal = ({
               {selectedAppointment.history.map((record, index) => (
                 <div
                   key={index}
-                  className="bg-white border border-blue-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  className="bg-white shadow-sm hover:shadow-md p-4 border border-blue-100 rounded-lg transition-shadow duration-200"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div>
                       <h3 className="font-semibold text-blue-800">
-                        {new Date(record.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        {new Date(record.created_at).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }
+                        )}
                       </h3>
-                      <p className="text-sm text-blue-600">
+                      <p className="text-blue-600 text-sm">
                         {new Date(record.created_at).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -383,7 +421,7 @@ const AppointmentHistoryModal = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handlePrintSingleRecord(record)}
-                        className="inline-flex items-center px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors border border-blue-200"
+                        className="inline-flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-1.5 border border-blue-200 rounded-lg text-blue-700 transition-colors"
                         title="Print Record"
                       >
                         <FaPrint className="mr-2" />
@@ -391,7 +429,7 @@ const AppointmentHistoryModal = ({
                       </button>
                       <button
                         onClick={() => handleDownloadSingleRecord(record)}
-                        className="inline-flex items-center px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors border border-blue-200"
+                        className="inline-flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-1.5 border border-blue-200 rounded-lg text-blue-700 transition-colors"
                         title="Download PDF"
                       >
                         <FaDownload className="mr-2" />
@@ -402,47 +440,55 @@ const AppointmentHistoryModal = ({
 
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                      <h4 className="flex items-center mb-2 font-medium text-blue-800">
                         <FaNotesMedical className="mr-2 text-blue-600" />
                         Diagnosis
                       </h4>
-                      <p className="text-gray-700 bg-blue-50 p-3 rounded border border-blue-100">
+                      <p className="bg-blue-50 p-3 border border-blue-100 rounded text-gray-700">
                         {record.diagnosis || "No diagnosis recorded"}
                       </p>
                     </div>
 
                     <div>
-                      <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                      <h4 className="flex items-center mb-2 font-medium text-blue-800">
                         <FaPrescriptionBottle className="mr-2 text-blue-600" />
                         Prescription
                       </h4>
-                      <p className="text-gray-700 bg-blue-50 p-3 rounded border border-blue-100">
+                      <p className="bg-blue-50 p-3 border border-blue-100 rounded text-gray-700">
                         {record.prescription || "No prescription recorded"}
                       </p>
                     </div>
 
                     {record.medicine_name && (
                       <div>
-                        <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                        <h4 className="flex items-center mb-2 font-medium text-blue-800">
                           <FaPills className="mr-2 text-blue-600" />
                           Medication
                         </h4>
-                        <div className="grid grid-cols-2 gap-4 bg-blue-50 p-3 rounded border border-blue-100">
+                        <div className="gap-4 grid grid-cols-2 bg-blue-50 p-3 border border-blue-100 rounded">
                           <div>
-                            <p className="text-sm text-blue-600">Name</p>
-                            <p className="text-gray-700">{record.medicine_name}</p>
+                            <p className="text-blue-600 text-sm">Name</p>
+                            <p className="text-gray-700">
+                              {record.medicine_name}
+                            </p>
                           </div>
                           <div>
-                            <p className="text-sm text-blue-600">Dosage</p>
-                            <p className="text-gray-700">{record.medicine_dosage}</p>
+                            <p className="text-blue-600 text-sm">Dosage</p>
+                            <p className="text-gray-700">
+                              {record.medicine_dosage}
+                            </p>
                           </div>
                           <div>
-                            <p className="text-sm text-blue-600">Frequency</p>
-                            <p className="text-gray-700">{record.medicine_frequency}</p>
+                            <p className="text-blue-600 text-sm">Frequency</p>
+                            <p className="text-gray-700">
+                              {record.medicine_frequency}
+                            </p>
                           </div>
                           <div>
-                            <p className="text-sm text-blue-600">Duration</p>
-                            <p className="text-gray-700">{record.medicine_duration}</p>
+                            <p className="text-blue-600 text-sm">Duration</p>
+                            <p className="text-gray-700">
+                              {record.medicine_duration}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -450,13 +496,15 @@ const AppointmentHistoryModal = ({
 
                     {record.next_appointment_date && (
                       <div>
-                        <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                        <h4 className="flex items-center mb-2 font-medium text-blue-800">
                           <FaCalendarAlt className="mr-2 text-blue-600" />
                           Next Appointment
                         </h4>
-                        <p className="text-gray-700 bg-blue-50 p-3 rounded border border-blue-100">
-                          {new Date(record.next_appointment_date).toLocaleDateString()} at{" "}
-                          {record.next_appointment_time}
+                        <p className="bg-blue-50 p-3 border border-blue-100 rounded text-gray-700">
+                          {new Date(
+                            record.next_appointment_date
+                          ).toLocaleDateString()}{" "}
+                          at {record.next_appointment_time}
                         </p>
                       </div>
                     )}
