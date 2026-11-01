@@ -28,9 +28,12 @@ pool.connect(async (err, client, release) => {
     console.error("❌ Error connecting to PostgreSQL database:", err.message);
     return;
   }
-  console.log(`✅ Connected to PostgreSQL database: "${process.env.PG_DATABASE || "digital_app"}"`);
 
   try {
+    const dbInfo = await client.query("SELECT current_database() as db_name, NOW() as current_time");
+    const activeDb = dbInfo.rows[0]?.db_name || process.env.PG_DATABASE || "digital_app";
+    console.log(`✅ Connected to PostgreSQL database: "${activeDb}" at ${dbInfo.rows[0]?.current_time}`);
+
     const schemaPath = path.join(__dirname, "..", "schema.sql");
     if (fs.existsSync(schemaPath)) {
       const schemaSql = fs.readFileSync(schemaPath, "utf8");

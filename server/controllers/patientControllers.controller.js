@@ -69,7 +69,7 @@ async function registerPatient(req, res) {
         const mailOptions = {
           from: {
             name: "Healthcare Service",
-            address: "desalegnmulat5@gmail.com",
+            address: process.env.SEND_EMAIL || "dirsanantehun739@gmail.com",
           },
           to: email,
           subject: "Your Verification OTP",
@@ -388,13 +388,15 @@ async function getCurrentPatient(req, res) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
 
-    if (!decoded.id || decoded.role !== "patient") {
+    const patientId = decoded.reference_id || decoded.id || decoded.userId;
+
+    if (!patientId || decoded.role !== "patient") {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
     const result = await pool.query(
       "SELECT id, full_name, email, phone FROM patient WHERE id = $1",
-      [decoded.id]
+      [patientId]
     );
 
     if (result.rows.length === 0) {
@@ -535,8 +537,7 @@ async function resetPassword(req, res) {
       const user = userResult.rows[0];
       let updateQuery = "";
       if (user.role === "patient") updateQuery = "UPDATE patient SET password = $1 WHERE id = $2";
-      else if (user.role === "doctor") updateQuery = "UPDATE doctor SET password = $1 WHERE id = $2";
-      else if (user.role === "admin") updateQuery = "UPDATE admin SET password = $1 WHERE id = $2";
+      else if (user.role === "doctor") updateQuery = "UPDATE doctor SET pwd = $1 WHERE id = $2";
 
       if (updateQuery) {
         await client.query(updateQuery, [newPassword, user.reference_id]);

@@ -38,14 +38,22 @@ router.put(
   appointmentController.updateAppointment
 );
 
-// Original routes
+// Original routes (supporting both singular and plural paths for resilience)
 router.get("/appointments", appointmentController.getAllAppointments);
 router.patch(
   "/appointments/:id",
   appointmentController.updateAppointmentStatus
 );
+router.patch(
+  "/appointment/:id",
+  appointmentController.updateAppointmentStatus
+);
 router.delete(
   "/appointment/:appointmentId",
+  appointmentController.deleteAppointment
+);
+router.delete(
+  "/appointments/:appointmentId",
   appointmentController.deleteAppointment
 );
 

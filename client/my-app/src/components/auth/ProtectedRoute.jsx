@@ -66,7 +66,8 @@ const ProtectedRoute = ({ children }) => {
   if (path === "/Patient-Dashbord" && userRole !== "patient") {
     return <Navigate to="/login" replace />;
   }
-  if (path === "/AdminDashboard" && userRole !== "admin") {
+  const adminRoutes = ["/AdminDashboard", "/admin/getAllDoctors", "/admin/doctors", "/Appointments", "/Departments"];
+  if (adminRoutes.includes(path) && userRole !== "admin") {
     return <Navigate to="/login" replace />;
   }
 

@@ -29,14 +29,16 @@ const loginCheck = async (req, res) => {
 
     const user = result.rows[0];
 
+    if (user.password !== password) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
     if (user.is_active !== true && user.is_active !== 1) {
       return res.status(401).json({
         message: "Account not activated. Please verify your email or contact administrator.",
+        needsVerification: true,
+        email: user.email,
       });
-    }
-
-    if (user.password !== password) {
-      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const secret = process.env.JWT_SECRET || "your-secret-key";

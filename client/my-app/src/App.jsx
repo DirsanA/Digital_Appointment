@@ -40,13 +40,50 @@ const App = () => {
           path="/patient-login"
           element={<Navigate to="/login" replace />}
         />
-        <Route path="/admin/doctors" element={<AddDoctors />} />
-        <Route path="/Appointments" element={<Appointments />} />
-        <Route path="/Departments" element={<Departments />} />
-        <Route path="/admin/getAllDoctors" element={<Doctors />} />
-        <Route path="appointment" element={<AppointmentsContent />} />
         <Route path="/BookAppointment" element={<BookAppointment />} />
         <Route path="/AppointmentHistory" element={<AppointmentHistory />} />
+
+        {/* Protected Routes - Only these require authentication */}
+        <Route
+          path="/admin/doctors"
+          element={
+            <ProtectedRoute>
+              <AddDoctors />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/Appointments"
+          element={
+            <ProtectedRoute>
+              <Appointments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/Departments"
+          element={
+            <ProtectedRoute>
+              <Departments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/getAllDoctors"
+          element={
+            <ProtectedRoute>
+              <Doctors />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/appointment"
+          element={
+            <ProtectedRoute>
+              <AppointmentsContent />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected Routes - Only these require authentication */}
         <Route

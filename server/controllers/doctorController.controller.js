@@ -184,7 +184,10 @@ const changePassword = async (req, res) => {
 // Update doctor by ID
 async function updateDoctorById(req, res) {
   const id = req.params.id;
-  const { doctorfullname, email, contact, pwd, department, experiance } = req.body;
+  const { doctorfullname, doctor_name, email, email_id, contact, pwd, department, experiance, experience } = req.body;
+  const finalDoctorName = doctorfullname || doctor_name;
+  const finalEmail = email || email_id;
+  const finalExperiance = experiance !== undefined ? experiance : experience;
 
   const client = await pool.connect();
   try {
@@ -209,12 +212,12 @@ async function updateDoctorById(req, res) {
     const values = [];
     let idx = 1;
 
-    if (doctorfullname && doctorfullname !== existingDoctor.doctorfullname) { fieldsToUpdate.push(`doctorfullname = $${idx++}`); values.push(doctorfullname); }
-    if (email && email !== existingDoctor.email) { fieldsToUpdate.push(`email = $${idx++}`); values.push(email); }
-    if (contact && contact !== existingDoctor.contact) { fieldsToUpdate.push(`contact = $${idx++}`); values.push(contact); }
-    if (pwd && pwd !== existingDoctor.pwd) { fieldsToUpdate.push(`pwd = $${idx++}`); values.push(pwd); }
-    if (department && department !== existingDoctor.department) { fieldsToUpdate.push(`department = $${idx++}`); values.push(department); }
-    if (experiance && experiance !== existingDoctor.experiance) { fieldsToUpdate.push(`experiance = $${idx++}`); values.push(experiance); }
+    if (finalDoctorName && finalDoctorName !== existingDoctor.doctorfullname) { fieldsToUpdate.push(`doctorfullname = ${idx++}`); values.push(finalDoctorName); }
+    if (finalEmail && finalEmail !== existingDoctor.email) { fieldsToUpdate.push(`email = ${idx++}`); values.push(finalEmail); }
+    if (contact && contact !== existingDoctor.contact) { fieldsToUpdate.push(`contact = ${idx++}`); values.push(contact); }
+    if (pwd && pwd !== existingDoctor.pwd) { fieldsToUpdate.push(`pwd = ${idx++}`); values.push(pwd); }
+    if (department && department !== existingDoctor.department) { fieldsToUpdate.push(`department = ${idx++}`); values.push(department); }
+    if (finalExperiance && finalExperiance !== existingDoctor.experiance) { fieldsToUpdate.push(`experiance = ${idx++}`); values.push(finalExperiance); }
     if (req.file) { fieldsToUpdate.push(`photo_url = $${idx++}`); values.push(photo_url); }
 
     if (fieldsToUpdate.length === 0) {

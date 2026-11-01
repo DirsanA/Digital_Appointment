@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // Brevo uses STARTTLS on port 587
   auth: {
-    user: process.env.SMTP_USER, // Your Brevo login email
-    pass: process.env.SMTP_PASS, // Your Brevo SMTP key (NOT your password)
+    user: process.env.SMTP_USER || "9480df002@smtp-brevo.com",
+    pass: process.env.SMTP_PASS || "pZIgwHELf1cjx7Rb",
   },
 });
 

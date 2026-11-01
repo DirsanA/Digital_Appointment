@@ -45,6 +45,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Logout Button at the top */}
           <button
             onClick={() => {
+              localStorage.clear();
               navigate("/");
               setSidebarOpen(false);
             }}

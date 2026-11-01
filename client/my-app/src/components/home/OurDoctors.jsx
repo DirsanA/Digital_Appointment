@@ -38,7 +38,7 @@ const OurDoctors = () => {
         if (doctorsData.length > 0) {
           // Format doctor IDs and ensure photo_url exists
           const formattedDoctors = doctorsData.map((doctor, index) => ({
-            id: doctor._id || index, // Use _id if available, otherwise index
+            id: doctor.id || doctor._id || index, // Use id if available, otherwise _id or index
             name: doctor.doctorfullname,
             specialty: doctor.department,
             image: doctor.photo_url || null,

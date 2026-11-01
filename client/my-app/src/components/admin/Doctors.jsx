@@ -167,8 +167,8 @@ const Doctors = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            doctorfullname: editFormData.doctor_name,
-            email: editFormData.email_id,
+            doctorfullname: editFormData.doctorfullname || editFormData.doctor_name,
+            email: editFormData.email || editFormData.email_id,
             department: editFormData.department,
             contact: editFormData.contact,
             experiance: editFormData.experiance,
