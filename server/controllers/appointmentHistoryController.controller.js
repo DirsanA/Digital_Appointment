@@ -278,7 +278,6 @@ const appointmentHistoryController = {
             res.status(500).json({ success: false, message: 'Failed to delete history', error: error.message });
         }
     }
-  },
-};
+  };
 
 module.exports = appointmentHistoryController;
